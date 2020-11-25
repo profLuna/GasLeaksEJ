@@ -184,7 +184,6 @@ B03002_totrace <- get_acs(geography = "block group", variables = c(
               names_glue = "{variable}_{.value}",
               values_from = c(E, M, UC, LC))
 
-
 # Next acquire estimates for Hispanic and nonWhite groups in long format to create aggregated minority variable
 B03002_minority <- get_acs(geography = "block group", variables = c(
     nhblackpop = "B03002_004",
@@ -202,31 +201,66 @@ B03002_minority <- get_acs(geography = "block group", variables = c(
          minority_LC = ifelse(
            minority_E < minority_M, 0, minority_E - minority_M))
 
-# Join with all race pops and compute derived proportions
+# Join with all race pops and compute proportions
 race_pct <- B03002_totrace %>% 
   left_join(., B03002_minority, by = "GEOID") %>% 
   mutate(across(ends_with("_E"),
                 ~ if_else(totalpop_E == 0, 0, .x/totalpop_E), 
-                .names = "{col}_p")) %>% 
-  mutate(across(ends_with("_M"),
-                ~ moe_prop(num = minorityE, 
-                           denom = totalpop_E, 
-                           moe_num = .x, 
-                           moe_denom = totalpop_M), 
                 .names = "{col}_p"))
 
-  mutate(minority_pE = ifelse(
-    totalpopE == 0, 0, minority_E/totalpop_E),
-    minority_pM = moe_prop(num = minorityE, 
-                           denom = totalpopE, 
-                           moe_num = minorityM, 
-                           moe_denom = totalpopM),
-    minority_pctE = minority_pE*100,
-    minority_pctM = minority_pM*100,
-    minority_pctE_UC = minority_pctE + minority_pctM,
-    minority_pctE_LC = ifelse(
-      minority_pctE < minority_pctM, 0, minority_pctE - minority_pctM)) %>% 
-  select(-minority_pE,-minority_pM)
+# Compute MOEs for derived proportions
+# First, extract unique names for variables to be computed
+unique_names <- race_pct %>% 
+  select(-ends_with("_p")) %>% 
+  names() %>% 
+  str_extract(.,"^.+(?=_)") %>% 
+  unique() %>% 
+  .[!is.na(.)]
+
+# Next, subset data frame to estimates and moe variables only
+estimatesDF <- race_pct %>% 
+  select(-c(GEOID,NAME), -ends_with(c("UC","LC","_p")))
+
+# Use purrr::map_dfc to match unique names to variables and pass along to moe_prop function and cbind back to race_pct df and then convert proportion to percentages
+race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
+                          select(matches(.x), totalpop_E, totalpop_M) %>%
+                          mutate(!!paste0(.x, "_M_p") := 
+                                   moe_prop(num = .[[1]], 
+                                            denom = totalpop_E, 
+                                            moe_num = .[[2]], 
+                                            moe_denom = totalpop_M))) %>% 
+  select(ends_with("_p")) %>% 
+  cbind(race_pct, .) %>% 
+  mutate(across(ends_with("_p"), ~(.x * 100)))
+
+# Calculate upper and lower confidence values for percentages
+# First, extract unique names for variables to be computed
+unique_names <- race_pct %>% 
+  select(-ends_with("_p")) %>% 
+  names() %>% 
+  str_extract(.,"^.+(?=_)") %>% 
+  unique() %>% 
+  .[!is.na(.)]
+
+# Next, subset data frame to estimates and moe variables only
+estimatesDF <- race_pct %>% 
+  select(ends_with("_p"))
+
+# Match unique names to variables and pass along to calculate upper and lower estimates and cbind back to race_pct
+race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
+                  select(matches(.x)) %>% 
+                  mutate(!!paste0(.x, "_pctUC") := 
+                           .[[1]] + .[[2]])) %>% 
+  select(ends_with("_pctUC")) %>% 
+  cbind(race_pct, .)
+
+race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
+                  select(matches(.x)) %>% 
+                  mutate(!!paste0(.x, "_pctLC") := 
+                           if_else(.[[1]] < .[[2]], 0, .[[1]] - .[[2]]))) %>% 
+  select(ends_with("_pctLC")) %>% 
+  cbind(race_pct, .)
+
 # clean up
 rm(list = ls(pattern = "B03002"))
 
