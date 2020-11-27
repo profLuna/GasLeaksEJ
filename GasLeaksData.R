@@ -1,295 +1,302 @@
-# Environmental Justice analysis of gas leaks across Massachusetts
+# Import geocoded gas leaks data from HEET - kmls downloaded Nov 14, 2020
 
-library(tidycensus)
 library(tidyverse)
-library(tmap)
 library(sf)
+library(tmap)
+library(tmaptools)
 library(tigris)
-options(tigris_use_cache = TRUE, tigris_class = "sf")
+library(lubridate)
 
-# Load list of variables to identify tables of interest
-v18 <- load_variables(2018, "acs5", cache = TRUE)
+# create vector of text and regex to remove descriptors and : from Description column but leave <br> to separate columns
+removeTxt <- c("description: <br>", 
+               "(?<=<br>).*?: ")
 
-# Download ACS 5-year estimates of demographic data
-# Block groups
-ma_blkgrps18 <- get_acs(geography = "block group", 
-                        variables = c(totalpop = "B03002_001", 
-                                      medhhinc = "B19013_001",
-                                      households = "B19001_001"),
-                        state = "MA", output = "wide", geometry = TRUE) %>% 
-  mutate(totalpopE_UC = totalpopE + totalpopM,
-         totalpopE_LC = ifelse(
-           totalpopE < totalpopM, 0, totalpopE - totalpopM),
-         medhhincE_UC = medhhincE + medhhincM,
-         medhhincE_LC = ifelse(
-           medhhincE < medhhincM, 0, medhhincE - medhhincM),
-         STATE = str_extract(NAME, '\\b[^,]+$'))
+# create vector of characters and regex to remove from extraneous characters from file names to identify utilities
+removeFile <- c("^.*/", 
+                " - 2019 REPAIRED.kml",
+                " - 2019 UNREPAIRED.kml", 
+                "[0-9]", "_")
 
-# Tracts
-ma_tracts18 <- get_acs(geography = "tract", 
-                        variables = c(totalpop = "B03002_001", 
-                                      medhhinc = "B19013_001",
-                                      households = "B19001_001"),
-                        state = "MA", output = "wide", geometry = TRUE) %>% 
-  mutate(totalpopE_UC = totalpopE + totalpopM,
-         totalpopE_LC = ifelse(
-           totalpopE < totalpopM, 0, totalpopE - totalpopM),
-         medhhincE_UC = medhhincE + medhhincM,
-         medhhincE_LC = ifelse(
-           medhhincE < medhhincM, 0, medhhincE - medhhincM),
-         STATE = str_extract(NAME, '\\b[^,]+$'))
+# # Bring in kml file and separate Description column into separate columns
+# BerkshireGas2019 <- st_read("KML/leaks2019/Berkshire Gas - 2019.kml") %>% 
+#   mutate(Description = str_remove_all(Description, 
+#                                       paste(removeTxt, collapse = "|"))) %>%
+#   separate(Description, c("ReptAddress", "Date", "Class", "LeakNo", 
+#                           "RepairDate", "RptLoc", "RptTown", "MapAddress"), 
+#            sep = "<br>", extra = "merge")
+# 
+# BerkshireGas2019Unrepaired <- st_read("KML/leaks2019/Berkshire Gas - 2019 UNREPAIRED.kml") %>% 
+#   mutate(Description = str_remove_all(Description, 
+#                                       paste(removeTxt, collapse = "|"))) %>%
+#   separate(Description, c("ReptAddress", "Date", "Class", "LeakNo", 
+#                           "RptLoc", "RptTown", "MapAddress"), 
+#            sep = "<br>", extra = "merge")
 
-# County subdivisions (i.e., cities and towns)
-ma_cosub18 <- get_acs(geography = "county subdivision", 
-                      variables = c(totalpop = "B03002_001", 
-                                    medhhinc = "B19013_001",
-                                    households = "B19001_001"),
-                      state = "MA", output = "wide", geometry = TRUE) %>% 
-  mutate(totalpopE_UC = totalpopE + totalpopM,
-         totalpopE_LC = ifelse(
-           totalpopE < totalpopM, 0, totalpopE - totalpopM),
-         medhhincE_UC = medhhincE + medhhincM,
-         medhhincE_LC = ifelse(
-           medhhincE < medhhincM, 0, medhhincE - medhhincM),
-         STATE = str_extract(NAME, '\\b[^,]+$'))
+# # NOTE THAT Eversource Energy, Fitchburg Gas, and Liberty Utilities DO NOT HAVE A FIELD FOR LEAK NUMBER, SO NEED TO BE TREATED SEPARATELY
+# 
+# # Read in all unrepaired kml and merge to one layer; clean up columns
+# unrepaired2019 <- list.files(path = "KML/leaks2019", pattern = "UNREPAIRED.kml",
+#                              full.names = TRUE) %>% 
+#   lapply(., function(x){
+#     ret <- st_read(x)
+#     ret$Utility <- str_remove_all(x, paste(removeFile, collapse = "|"))
+#     ret
+#   }) %>% 
+#   do.call(rbind, .) %>% 
+#   mutate(Description = str_remove_all(Description, 
+#                                       paste(removeTxt, collapse = "|"))) %>%
+#   separate(Description, c("ReptAddress", "Date", "Class", "LeakNo", 
+#                           "RptLoc", "RptTown", "MapAddress"), 
+#            sep = "<br>", extra = "merge")
+# 
+# 
+# # Pull in leaks for utilities with leak number field
+# unrepaired2019a <- list.files(path = "KML/leaks2019", pattern = "UNREPAIRED.kml",
+#                              full.names = TRUE) %>% 
+#   lapply(., function(x){
+#     ret <- st_read(x)
+#     ret$Utility <- str_remove_all(x, paste(removeFile, collapse = "|"))
+#     ret
+#   }) %>% 
+#   do.call(rbind, .) %>% 
+#   mutate(Description = str_remove_all(Description, 
+#                                       paste(removeTxt, collapse = "|"))) %>%
+#   filter(!Utility %in% c("Eversource Energy", 
+#                         "Fitchburg Gas", "Liberty Utilities")) %>% 
+#   separate(Description, c("ReptAddress", "Date", "Class", "LeakNo", 
+#                           "RptLoc", "RptTown", "MapAddress"), 
+#            sep = "<br>", extra = "merge")
+# 
+# # Pull in leaks for utilities without leak number field
+# unrepaired2019b <- list.files(path = "KML/leaks2019", pattern = "UNREPAIRED.kml",
+#                               full.names = TRUE) %>% 
+#   lapply(., function(x){
+#     ret <- st_read(x)
+#     ret$Utility <- str_remove_all(x, paste(removeFile, collapse = "|"))
+#     ret
+#   }) %>% 
+#   do.call(rbind, .) %>% 
+#   mutate(Description = str_remove_all(Description, 
+#                                       paste(removeTxt, collapse = "|"))) %>%
+#   filter(Utility %in% c("Eversource Energy", 
+#                          "Fitchburg Gas", "Liberty Utilities")) %>% 
+#   separate(Description, c("ReptAddress", "Date", "Class",  
+#                           "RptLoc", "RptTown", "MapAddress"), 
+#            sep = "<br>", extra = "merge")
+# 
+# # bring leaks together with a common set of variables
+# unrepaired2019 <- unrepaired2019b %>% 
+#   add_column(LeakNo = NA, .after = "Class") %>% 
+#   rbind(unrepaired2019a) %>% 
+#   arrange(Utility)
+# 
+# 
+# # Need to reconcile possible fields in Description column
+# unrepaired2019 <- list.files(path = "KML/leaks2019", pattern = "UNREPAIRED.kml",
+#                              full.names = TRUE) %>% 
+#   lapply(., function(x){
+#     ret <- st_read(x)
+#     ret$Utility <- str_remove_all(x, paste(removeFile, collapse = "|"))
+#     ret
+#   }) %>% 
+#   do.call(rbind, .)
+# 
+# # pull out one row from each utility
+# utilSamples <- unrepaired2019 %>% 
+#   as.data.frame() %>% 
+#   group_by(Utility) %>% 
+#   slice(1)
+# # inspect Description field of each utility to discern differences and similarities
+# as.character(utilSamples[2,2])
+# 
+# # this works to replace descriptors with <br>
+# str_replace_all(utilSamples[1,2], "<br>.*?: ", "<br>")
+# # this works to remove descriptors, although it also takes out <br>
+# str_remove_all(utilSamples[1,2], "<br>.*?: ")
+# # this works to remove descriptors and :, but leave <br>
+# str_remove_all(utilSamples[1,2], "(?<=<br>).*?: ")
 
-# Isolate MA statewide median household income for EJ threshold
-MA_MED_HHINC <- get_acs(geography = "state", 
-                        variables = c(totalpop = "B03002_001",
-                                      medhhinc = "B19013_001"),
-                        state = "MA", output = "wide") %>% 
-  dplyr::select(medhhincE) %>% 
-  pull()
 
-# add variables to identify EJ criteria thresholds for 2021 EJ policy
-ma_cosub18 <- ma_cosub18 %>% 
-  mutate(MA_INC_BELOW150 = if_else(medhhincE <= 1.5*MA_MED_HHINC,"Y","N"),
-         MA_INC_BELOW150_UC = if_else(medhhincE_UC <= 1.5*MA_MED_HHINC,"Y","N"),
-         MA_INC_BELOW150_LC = if_else(medhhincE_LC <= 1.5*MA_MED_HHINC,"Y","N"))
+# Need to reconcile differences in Description column between different utilities before merging them
+# Bring in all KML files for all unrepaired leaks
+unrepaired2019 <- list.files(path = "KML/leaks2019", pattern = "UNREPAIRED.kml",
+                             full.names = TRUE) %>% 
+  lapply(., function(x){
+    ret <- st_read(x)
+    ret$Utility <- str_remove_all(x, paste(removeFile, collapse = "|"))
+    ret
+  }) %>% 
+  do.call(rbind, .) %>% 
+  mutate(Description = str_remove_all(Description, 
+                                      paste(removeTxt, collapse = "|")))
 
-###### DEMOGRAPHIC DATA FRAMES BLOCK GROUP LEVEL ##############
+# Isolate individual utilities in order to correctly parse out Description column with separate. Note that not all fields are shared between utilities (e.g., leak id, leak class) AND some fields for National Grid are in different order from all other utilities. 
+# National Grid
+natlGrid2019unrepaired <- unrepaired2019 %>%
+  filter(Utility %in% c("National Grid - Boston Gas", 
+                        "National Grid - Colonial Gas")) %>% 
+  separate(Description, c("ReptAddress", "Class", "LeakNo", 
+                          "RptLoc", "RptDate", "RptTown", "MapAddress"), 
+           sep = "<br>", extra = "merge")
 
-## HOUSEHOLDS BY INCOME
-# this is for 2017 MA EJ Policy
-# download table of counts of household income categories, sum up households in categories below 65% of MA statewide median
-B19001 <- get_acs(geography = "block group", table = "B19001", state = "MA")
-# Isolate estimate of total households
-medhhinc_total <- B19001 %>%
-  filter(variable == "B19001_001") %>%
-  transmute(GEOID = GEOID,
-            householdsE = estimate,
-            householdsM = moe)
-# Isolate household counts less than 65% of MA statewide median of $77,378, which is $50,295.70. Closest range is 45 - 49,9.
-# create vector of patterns for medhhinc levels below 50k
-med_strings <- rep(c(2:10)) %>%
-  formatC(width = 3, format = "d", flag = "0") # add leading 0s
-# filter cases by patterns, compute derived sum estimates and MOEs
-medhhinclt50 <- B19001 %>%
-  filter(str_detect(variable,paste(med_strings,collapse = "|"))) %>%
-  group_by(GEOID) %>%
-  summarize(medhhinclt50E = sum(estimate),
-            medhhinclt50M = moe_sum(moe, estimate)) %>%
-  mutate(medhhinclt50_UC = medhhinclt50E + medhhinclt50M,
-         medhhinclt50_LC = ifelse(
-           medhhinclt50E < medhhinclt50M, 0, medhhinclt50E - medhhinclt50M))
-# Join total households and compute derived proportions
-medhhinclt50_pct <- medhhinclt50 %>%
-  left_join(., medhhinc_total, by = "GEOID") %>%
-  mutate(r2medhhincE = ifelse(householdsE <= 0, 0, medhhinclt50E/householdsE),
-    r2medhhincM = moe_prop(medhhinclt50E,householdsE,medhhinclt50M,householdsM),
-    pct_medhhinclt50E = r2medhhincE*100,
-    pct_medhhinclt50M = r2medhhincM*100,
-    pct_medhhinclt50E_UC = pct_medhhinclt50E + pct_medhhinclt50M,
-    pct_medhhinclt50E_LC = ifelse(
-      pct_medhhinclt50E < pct_medhhinclt50M, 0,
-      pct_medhhinclt50E - pct_medhhinclt50M)) %>%
-  select(-starts_with("r2m"))
-# add variables to identify EJ criteria thresholds
-medhhinclt50_pct <- medhhinclt50_pct %>%
-  mutate(MA_INCOME = if_else(pct_medhhinclt50E >= 25, "I", NULL),
-         MA_INCOME_UC = if_else(pct_medhhinclt50E_UC >= 25, "I", NULL),
-         MA_INCOME_LC = if_else(pct_medhhinclt50E_LC >= 25, "I", NULL))
-# clean up
-rm(B19001,med_strings,medhhinc_total,medhhinclt50)
+# Columbia Gas
+columbia2019unrepaired <- unrepaired2019 %>%
+  filter(Utility == "Columbia Gas") %>% 
+  separate(Description, c("ReptAddress", "RptDate", "Class", "LeakNo", 
+                          "RptLoc", "RptTown", "Status", "MapAddress"), 
+           sep = "<br>", extra = "merge")
 
-# join town data with MA income threshold to block groups in order to allow for definition of minority threshold for 2021 MA EJ POLICY
-ma_blkgrps18 <- ma_cosub18 %>% 
-  transmute(TOWN = NAME, MA_INC_BELOW150 = MA_INC_BELOW150, 
-            MA_INC_BELOW150_UC = MA_INC_BELOW150_UC,
-            MA_INC_BELOW150_LC = MA_INC_BELOW150_LC) %>% 
-  st_join(ma_blkgrps18, ., largest = TRUE)
-# add variables to identify EJ criteria thresholds
-ma_blkgrps18 <- ma_blkgrps18 %>%
-  mutate(medhhincE_UC = medhhincE + medhhincM,
-         medhhincE_LC = medhhincE - medhhincM,
-         MA_INCOME21 = if_else(medhhincE <= .65*MA_MED_HHINC, "I", NULL),
-         MA_INCOME21_UC = if_else(medhhincE_UC <= .65*MA_MED_HHINC, "I", NULL),
-         MA_INCOME21_LC = if_else(medhhincE_LC <= .65*MA_MED_HHINC, "I", NULL))
+# Berkshire Gas
+berkshire2019unrepaired <- unrepaired2019 %>%
+  filter(Utility == "Berkshire Gas") %>% 
+  separate(Description, c("ReptAddress", "RptDate", "Class", "LeakNo", 
+                          "RptLoc", "RptTown", "MapAddress"), 
+           sep = "<br>", extra = "merge")
 
-### RATIO OF INCOME TO POVERTY LEVEL
-# Download ratio of income to poverty level in the past 12 months to calculate the number or percent of a block group’s population in households where the household income is less than or equal to twice the federal “poverty level.” More precisely, percent low-income is calculated as a percentage of those for whom the poverty ratio was known, as reported by the Census Bureau, which may be less than the full population in some block groups. More information on the federally-defined poverty threshold is available at http://www.census.gov/hhes/www/poverty/methods/definitions.html. Note also that poverty status is not determined for people living in institutional group quarters (i.e. prisons, college dormitories, military barracks, nursing homes), so these populations are not included in the poverty estimates (https://www.census.gov/topics/income-poverty/poverty/guidance/poverty-measures.html).
-# First, download table of ratio of income to poverty level
-C17002 <- get_acs(geography = "block group", table = "C17002", state = "MA")
-# Isolate universe pop for whom poverty status is known
-povknown <- C17002 %>% 
-  filter(variable == "C17002_001") %>% 
-  transmute(GEOID = GEOID,
-            povknownE = estimate,
-            povknownM = moe,
-            povknownE_UC = povknownE + povknownM,
-            povknownE_LC = ifelse(
-              povknownE < povknownM, 0, povknownE - povknownM))
-# Isolate population less than 2x poverty level and compute derived sum esimate along with MOE and UC and LC
-num2pov <- C17002 %>% 
-  filter(!variable %in% c("C17002_001", "C17002_008")) %>% 
-  group_by(GEOID) %>% 
-  summarize(num2povE = sum(estimate),
-            num2povM = moe_sum(moe, estimate)) %>% 
-  mutate(num2povE_UC = num2povE + num2povM,
-         num2povE_LC = ifelse(
-           num2povE < num2povM, 0, num2povE - num2povM))
-# Join tables and compute derived ratios and MOEs and then pcts with UC and LC
-poverty_pct <- povknown %>% 
-  left_join(., num2pov, by = "GEOID") %>% 
-  mutate(r2povE = ifelse(
-    povknownE == 0, 0, num2povE/povknownE),
-    r2povM = moe_ratio(num2povE,povknownE,num2povM,povknownM),
-    pct2povE = r2povE * 100,
-    pct2povM = r2povM * 100,
-    pct2povE_UC = pct2povE + pct2povM,
-    pct2povE_LC = ifelse(
-      pct2povE < pct2povM, 0, pct2povE - pct2povM)) %>% 
-  select(-starts_with("r2p"))
-# clean up
-rm(C17002,num2pov,povknown)
+# Fitchburg Gas
+fitchburg2019unrepaired <- unrepaired2019 %>%
+  filter(Utility == "Fitchburg Gas") %>% 
+  separate(Description, c("ReptAddress", "RptDate", "LeakNo", 
+                          "RptLoc", "RptTown", "MapAddress"), 
+           sep = "<br>", extra = "merge") %>% 
+  mutate(Class = NA)
 
-### RACE AND ETHNICITY
-# Download B03002 HISPANIC OR LATINO ORIGIN BY RACE in two sets. 
-# Start with total pop and all races in wide format and compute upper and lower confidence values. 
-B03002_totrace <- get_acs(geography = "block group", variables = c(
-    totalpop = "B03002_001",
-    nhwhitepop = "B03002_003",
-    nhblackpop = "B03002_004",
-    nhamerindpop = "B03002_005",
-    nhasianpop = "B03002_006",
-    nhnativpop = "B03002_007",
-    nhotherpop = "B03002_008",
-    nh2morepop = "B03002_009",
-    hisppop = "B03002_012"),
-    state = "MA") %>% 
-  mutate(UC = estimate + moe,
-         LC = if_else(estimate < moe, 0, estimate - moe)) %>% 
-  rename(E = estimate, M = moe) %>% 
-  pivot_wider(names_from = "variable", 
-              names_glue = "{variable}_{.value}",
-              values_from = c(E, M, UC, LC))
+# Eversource Energy and Liberty Utilities
+everLiberty2019unrepaired <- unrepaired2019 %>%
+  filter(Utility %in% c("Eversource Energy", "Liberty Utilities")) %>% 
+  separate(Description, c("ReptAddress", "RptDate", "Class", 
+                          "RptLoc", "RptTown", "MapAddress"), 
+           sep = "<br>", extra = "merge") %>% 
+  mutate(LeakNo = NA)
 
-# Next acquire estimates for Hispanic and nonWhite groups in long format to create aggregated minority variable
-B03002_minority <- get_acs(geography = "block group", variables = c(
-    nhblackpop = "B03002_004",
-    nhamerindpop = "B03002_005",
-    nhasianpop = "B03002_006",
-    nhnativhpop = "B03002_007",
-    nhotherpop = "B03002_008",
-    nh2morepop = "B03002_009",
-    hisppop = "B03002_012"),
-    state = "MA") %>% 
-  group_by(GEOID) %>% 
-  summarize(minority_E = sum(estimate),
-            minority_M = moe_sum(moe,estimate)) %>% 
-  mutate(minority_UC = minority_E + minority_M,
-         minority_LC = ifelse(
-           minority_E < minority_M, 0, minority_E - minority_M))
+# bring them together in a merged file with common fields
+unrepaired2019final <- mget(ls(pattern = "unrepaired$")) %>% 
+  lapply(., function(x){
+    x %>% 
+      select(Name, RptDate, Class, LeakNo, Utility)
+  }) %>% 
+  do.call(rbind, .) %>% 
+  rename(Address = Name) %>% 
+  mutate(RptDate = mdy(RptDate))
 
-# Join with all race pops and compute proportions
-race_pct <- B03002_totrace %>% 
-  left_join(., B03002_minority, by = "GEOID") %>% 
-  mutate(across(ends_with("_E"),
-                ~ if_else(totalpop_E == 0, 0, .x/totalpop_E), 
-                .names = "{col}_p"))
+# write it out to shapefile
+unrepaired2019final %>% 
+  st_zm(., drop = TRUE) %>% 
+  st_write(., "KML/leaks2019/HEETunrepaired2019.shp")
 
-# Compute MOEs for derived proportions
-# First, extract unique names for variables to be computed
-unique_names <- race_pct %>% 
-  select(-ends_with("_p")) %>% 
-  names() %>% 
-  str_extract(.,"^.+(?=_)") %>% 
-  unique() %>% 
-  .[!is.na(.)]
+#### Bring in repaired leaks for 2019 ####
+# Bring in all KML files for all repaired leaks
+repaired2019 <- list.files(path = "KML/leaks2019", pattern = " REPAIRED.kml",
+                           full.names = TRUE) %>% 
+  lapply(., function(x){
+    ret <- st_read(x)
+    ret$Utility <- str_remove_all(x, paste(removeFile, collapse = "|"))
+    ret
+  }) %>% 
+  do.call(rbind, .) %>% 
+  mutate(Description = str_remove_all(Description, 
+                                      paste(removeTxt, collapse = "|")))
 
-# Next, subset data frame to estimates and moe variables only
-estimatesDF <- race_pct %>% 
-  select(-c(GEOID,NAME), -ends_with(c("UC","LC","_p")))
+# # pull out one row from each utility to inspect formatting
+# utilSamples <- repaired2019 %>%
+#   as.data.frame() %>%
+#   group_by(Utility) %>%
+#   slice(1)
+# # inspect Description field of each utility to discern differences and similarities
+# as.character(utilSamples[3,2])
 
-# Use purrr::map_dfc to match unique names to variables and pass along to moe_prop function and cbind back to race_pct df and then convert proportion to percentages
-race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
-                          select(matches(.x), totalpop_E, totalpop_M) %>%
-                          mutate(!!paste0(.x, "_M_p") := 
-                                   moe_prop(num = .[[1]], 
-                                            denom = totalpop_E, 
-                                            moe_num = .[[2]], 
-                                            moe_denom = totalpop_M))) %>% 
-  select(ends_with("_p")) %>% 
-  cbind(race_pct, .) %>% 
-  mutate(across(ends_with("_p"), ~(.x * 100)))
+# Isolate individual utilities in order to correctly parse out Description column with separate. Note that not all fields are shared between utilities (e.g., leak id, leak class) AND some fields for National Grid are in different order from all other utilities. 
+# National Grid
+natlGrid2019repaired <- repaired2019 %>%
+  filter(Utility %in% c("National Grid - Boston Gas", 
+                        "National Grid - Colonial Gas")) %>% 
+  separate(Description, c("ReptAddress", "Class", "LeakNo", "RepairDate",
+                          "RptLoc", "RptDate", "RptTown", "MapAddress"), 
+           sep = "<br>", extra = "merge")
 
-# Calculate upper and lower confidence values for percentages
-# First, extract unique names for variables to be computed
-unique_names <- race_pct %>% 
-  select(-ends_with("_p")) %>% 
-  names() %>% 
-  str_extract(.,"^.+(?=_)") %>% 
-  unique() %>% 
-  .[!is.na(.)]
+# Columbia Gas
+columbia2019repaired <- repaired2019 %>%
+  filter(Utility == "Columbia Gas") %>% 
+  separate(Description, c("ReptAddress", "RptDate", "Class", "LeakNo", 
+                          "RepairDate", "RptLoc", "RptTown", "Status",
+                          "MapAddress"), 
+           sep = "<br>", extra = "merge")
 
-# Next, subset data frame to estimates and moe variables only
-estimatesDF <- race_pct %>% 
-  select(ends_with("_p"))
+# Berkshire Gas
+berkshire2019repaired <- repaired2019 %>%
+  filter(Utility == "Berkshire Gas") %>% 
+  separate(Description, c("ReptAddress", "RptDate", "Class", "LeakNo", 
+                          "RepairDate", "RptLoc", "RptTown", "MapAddress"), 
+           sep = "<br>", extra = "merge")
 
-# Match unique names to variables and pass along to calculate upper and lower estimates and cbind back to race_pct
-race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
-                  select(matches(.x)) %>% 
-                  mutate(!!paste0(.x, "_pctUC") := 
-                           .[[1]] + .[[2]])) %>% 
-  select(ends_with("_pctUC")) %>% 
-  cbind(race_pct, .)
+# Fitchburg Gas
+fitchburg2019repaired <- repaired2019 %>%
+  filter(Utility == "Fitchburg Gas") %>% 
+  separate(Description, c("ReptAddress", "RptDate", "LeakNo", "RepairDate",
+                          "RptLoc", "RptTown", "MapAddress"), 
+           sep = "<br>", extra = "merge") %>% 
+  mutate(Class = NA)
 
-race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
-                  select(matches(.x)) %>% 
-                  mutate(!!paste0(.x, "_pctLC") := 
-                           if_else(.[[1]] < .[[2]], 0, .[[1]] - .[[2]]))) %>% 
-  select(ends_with("_pctLC")) %>% 
-  cbind(race_pct, .)
+# # Check Eversource Energy for parsing problems because some dates aren't being converted. 
+# temp <- st_read("KML/leaks2019/Eversource Energy - 2019 REPAIRED.kml")
+# temp %>% as.data.frame() %>% select(Description) %>% head()
+# temp2 <- temp %>% 
+#   mutate(Description = str_remove_all(Description, 
+#                                       paste(removeTxt, collapse = "|"))) %>% 
+#   separate(Description, c("ReptAddress", "RepairDate", "RptDate", 
+#                           "Class", "RptIntSt", "RptStreet", "RptStNo", 
+#                           "RptTown", "MapAddress"), sep = "<br>") %>% 
+#   mutate(LeakNo = NA, 
+#          RptDate = dmy(RptDate), 
+#          RepairDate = dmy(RepairDate))
+# # identify the dates that aren't being converted
+# temp[is.na(temp2$RptDate),"RptDate"]
+# # need to allow for different date formats
 
-# clean up
-rm(list = ls(pattern = "B03002"))
+# Eversource Energy
+eversource2019repaired <- repaired2019 %>%
+  filter(Utility == "Eversource Energy") %>% 
+  separate(Description, c("ReptAddress", "RepairDate", "RptDate", "Class", 
+                          "RptIntSt", "RptStreet", "RptStNo", "RptTown", 
+                          "MapAddress"), 
+           sep = "<br>") %>% 
+  mutate(LeakNo = NA)
 
-# add variables to identify EJ criteria thresholds
-minority_pct <- minority_pct %>% 
-  mutate(minority_pctile = percent_rank(minority_pctE),
-         minority_pctile_UC = percent_rank(minority_pctE_UC),
-         minority_pctile_LC = percent_rank(minority_pctE_LC),
-         # MA_MINORITY = if_else(minority_pctE >= 25, "M", NULL),
-         # MA_MINORITY_UC = if_else(minority_pctE_UC >= 25, "M", NULL),
-         # MA_MINORITY_LC = if_else(minority_pctE_LC >= 25, "M", NULL),
-         RI_MINORITY = if_else(minority_pctile >= 0.85, "M", NULL),
-         RI_MINORITY_UC = if_else(minority_pctile_UC >= 0.85, "M", NULL),
-         RI_MINORITY_LC = if_else(minority_pctile_LC >= 0.85, "M", NULL))
-# join non-white group estimates
-# first download nonwhite estimates in wide format for easier joining
-B03002_nonwhite_wide <- map_df(ne_states, function(x) {
-  get_acs(geography = "block group", variables = c(
-    nhblackpop = "B03002_004",
-    nhamerindpop = "B03002_005",
-    nhasianpop = "B03002_006",
-    nhnativhpop = "B03002_007",
-    nhotherpop = "B03002_008",
-    nh2morepop = "B03002_009",
-    hisppop = "B03002_012"),
-    state = x, output = "wide")})
-# join to minority_pct
-minority_pct <- B03002_nonwhite_wide %>% 
-  select(-NAME) %>% 
-  left_join(minority_pct, ., by = "GEOID")
-# clean up
-rm(list = ls(pattern = "B03002"))
+# Liberty Utilities
+liberty2019repaired <- repaired2019 %>%
+  filter(Utility == "Liberty Utilities") %>% 
+  separate(Description, c("ReptAddress", "RptDate", "Class", 
+                          "RptLoc", "RptTown", "RepairDate", "MapAddress"), 
+           sep = "<br>", extra = "merge") %>% 
+  mutate(LeakNo = NA, Class = str_extract(Class, "[0-9]"))
+
+# bring them together in a merged file with common fields. note that there are inconsistencies in date format (only for Eversource) AND some some report and repair dates are reversed (hence the abs() for getting interval)
+repaired2019final <- mget(ls(pattern = "9repaired$")) %>% 
+  lapply(., function(x){
+    x %>% 
+      select(Name, RptDate, Class, LeakNo, RepairDate, Utility)
+  }) %>% 
+  do.call(rbind, .) %>% 
+  rename(Address = Name) %>% 
+  mutate(RptDate = parse_date_time(RptDate, orders = c("dmy","mdy")), 
+         RepairDate = parse_date_time(RepairDate, orders = c("dmy","mdy")),
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
+
+# compare by utility
+repaired2019final %>% 
+  group_by(Utility) %>% 
+  summarize(n(), min(DaysToRepair), mean(DaysToRepair), median(DaysToRepair), 
+            max(DaysToRepair))
+
+# write it out to shapefile
+repaired2019final %>% 
+  st_zm(., drop = TRUE) %>% 
+  st_write(., "KML/leaks2019/HEETrepaired2019.shp")
+
+# map it out
+tmap_mode("view")
+tm_shape(unrepaired2019final) + tm_dots()
+tm_shape(unrepaired2019final) + tm_dots(col = "Utility")
+
+tm_shape(repaired2019final) + tm_dots()
+tm_shape(repaired2019final) + tm_dots(col = "DaysToRepair", style = "quantile")
