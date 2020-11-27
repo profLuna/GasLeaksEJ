@@ -11,7 +11,7 @@ library(lubridate)
 removeTxt <- c("description: <br>", 
                "(?<=<br>).*?: ")
 
-# create vector of characters and regex to remove from extraneous characters from file names to identify utilities
+# create vector of characters and regex to remove extraneous characters from file names to identify utilities
 removeFile <- c("^.*/", 
                 " - 2019 REPAIRED.kml",
                 " - 2019 UNREPAIRED.kml", 
@@ -119,7 +119,7 @@ removeFile <- c("^.*/",
 
 # Need to reconcile differences in Description column between different utilities before merging them
 # Bring in all KML files for all unrepaired leaks
-unrepaired2019 <- list.files(path = "KML/leaks2019", pattern = "UNREPAIRED.kml",
+unrepaired2019 <- list.files(path = "Data/leaks2019", pattern = "UNREPAIRED.kml",
                              full.names = TRUE) %>% 
   lapply(., function(x){
     ret <- st_read(x)
@@ -128,7 +128,8 @@ unrepaired2019 <- list.files(path = "KML/leaks2019", pattern = "UNREPAIRED.kml",
   }) %>% 
   do.call(rbind, .) %>% 
   mutate(Description = str_remove_all(Description, 
-                                      paste(removeTxt, collapse = "|")))
+                                      paste(removeTxt, collapse = "|"))) %>% 
+  st_transform(., crs = 2805)
 
 # Isolate individual utilities in order to correctly parse out Description column with separate. Note that not all fields are shared between utilities (e.g., leak id, leak class) AND some fields for National Grid are in different order from all other utilities. 
 # National Grid
@@ -182,11 +183,11 @@ unrepaired2019final <- mget(ls(pattern = "unrepaired$")) %>%
 # write it out to shapefile
 unrepaired2019final %>% 
   st_zm(., drop = TRUE) %>% 
-  st_write(., "KML/leaks2019/HEETunrepaired2019.shp")
+  st_write(., delete_layer = TRUE, "Data/HEETunrepaired2019.shp")
 
 #### Bring in repaired leaks for 2019 ####
 # Bring in all KML files for all repaired leaks
-repaired2019 <- list.files(path = "KML/leaks2019", pattern = " REPAIRED.kml",
+repaired2019 <- list.files(path = "Data/leaks2019", pattern = " REPAIRED.kml",
                            full.names = TRUE) %>% 
   lapply(., function(x){
     ret <- st_read(x)
@@ -195,7 +196,8 @@ repaired2019 <- list.files(path = "KML/leaks2019", pattern = " REPAIRED.kml",
   }) %>% 
   do.call(rbind, .) %>% 
   mutate(Description = str_remove_all(Description, 
-                                      paste(removeTxt, collapse = "|")))
+                                      paste(removeTxt, collapse = "|"))) %>% 
+  st_transform(., crs = 2805)
 
 # # pull out one row from each utility to inspect formatting
 # utilSamples <- repaired2019 %>%
@@ -291,7 +293,10 @@ repaired2019final %>%
 # write it out to shapefile
 repaired2019final %>% 
   st_zm(., drop = TRUE) %>% 
-  st_write(., "KML/leaks2019/HEETrepaired2019.shp")
+  st_write(., delete_layer = TRUE, "Data/HEETrepaired2019.shp")
+
+# save everything
+save(unrepaired2019final, repaired2019final, file = "Data/HEET2019Leaks.rds")
 
 # map it out
 tmap_mode("view")
