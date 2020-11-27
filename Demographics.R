@@ -495,14 +495,17 @@ ma_blkgrps18 <- ma_blkgrps18 %>%
   left_join(., housing_age, by = "GEOID")
 
 
-
+# save output
+save(ma_blkgrps18, file = "/Data/Demographics.rds")
+# clear environment
+rm(list = ls())
 
 
 
 ### DEMOGRAPHICS AT TRACT LEVEL
 
 # Tracts
-ma_tracts18 <- get_acs(geography = "tract", 
+ma_tracts18 <- get_acs(geography = "tract", survey = "acs5", year = 2018,
                        variables = c(totalpop = "B03002_001", 
                                      medhhinc = "B19013_001"),
                        state = "MA", output = "wide", geometry = TRUE) %>% 
@@ -516,12 +519,350 @@ ma_tracts18 <- get_acs(geography = "tract",
   st_transform(., crs = 2805)
 
 
+### RATIO OF INCOME TO POVERTY LEVEL
+# Download ratio of income to poverty level in the past 12 months to calculate the number or percent of a tract’s population in households where the household income is less than or equal to twice the federal “poverty level.” More precisely, percent low-income is calculated as a percentage of those for whom the poverty ratio was known, as reported by the Census Bureau, which may be less than the full population in some tracts. More information on the federally-defined poverty threshold is available at http://www.census.gov/hhes/www/poverty/methods/definitions.html. Note also that poverty status is not determined for people living in institutional group quarters (i.e. prisons, college dormitories, military barracks, nursing homes), so these populations are not included in the poverty estimates (https://www.census.gov/topics/income-poverty/poverty/guidance/poverty-measures.html).
+# First, download table of ratio of income to poverty level
+C17002 <- get_acs(geography = "tract", table = "C17002", state = "MA")
+# Isolate universe pop for whom poverty status is known
+povknown <- C17002 %>% 
+  filter(variable == "C17002_001") %>% 
+  transmute(GEOID = GEOID,
+            povknownE = estimate,
+            povknownM = moe,
+            povknownE_UC = povknownE + povknownM,
+            povknownE_LC = ifelse(
+              povknownE < povknownM, 0, povknownE - povknownM))
+# Isolate population less than 2x poverty level and compute derived sum esimate along with MOE and UC and LC
+num2pov <- C17002 %>% 
+  filter(!variable %in% c("C17002_001", "C17002_008")) %>% 
+  group_by(GEOID) %>% 
+  summarize(num2povE = sum(estimate),
+            num2povM = moe_sum(moe, estimate)) %>% 
+  mutate(num2povE_UC = num2povE + num2povM,
+         num2povE_LC = ifelse(
+           num2povE < num2povM, 0, num2povE - num2povM))
+# Join tables and compute derived ratios and MOEs and then pcts with UC and LC
+poverty_pct <- povknown %>% 
+  left_join(., num2pov, by = "GEOID") %>% 
+  mutate(r2povE = ifelse(
+    povknownE == 0, 0, num2povE/povknownE),
+    r2povM = moe_ratio(num2povE,povknownE,num2povM,povknownM),
+    pct2povE = r2povE * 100,
+    pct2povM = r2povM * 100,
+    pct2povE_UC = pct2povE + pct2povM,
+    pct2povE_LC = ifelse(
+      pct2povE < pct2povM, 0, pct2povE - pct2povM)) %>% 
+  select(-starts_with("r2p"))
+# clean up
+rm(C17002,num2pov,povknown)
 
 
+### RACE AND ETHNICITY
+# Download B03002 HISPANIC OR LATINO ORIGIN BY RACE in two sets. 
+# Start with total pop and all races in wide format and compute upper and lower confidence values. 
+B03002_totrace <- get_acs(geography = "tract", variables = c(
+  totalpop = "B03002_001",
+  nhwhitepop = "B03002_003",
+  nhblackpop = "B03002_004",
+  nhamerindpop = "B03002_005",
+  nhasianpop = "B03002_006",
+  nhnativpop = "B03002_007",
+  nhotherpop = "B03002_008",
+  nh2morepop = "B03002_009",
+  hisppop = "B03002_012"),
+  state = "MA") %>% 
+  mutate(UC = estimate + moe,
+         LC = if_else(estimate < moe, 0, estimate - moe)) %>% 
+  rename(E = estimate, M = moe) %>% 
+  pivot_wider(names_from = "variable", 
+              names_glue = "{variable}_{.value}",
+              values_from = c(E, M, UC, LC))
+
+# Next acquire estimates for Hispanic and nonWhite groups in long format to create aggregated minority variable
+B03002_minority <- get_acs(geography = "tract", variables = c(
+  nhblackpop = "B03002_004",
+  nhamerindpop = "B03002_005",
+  nhasianpop = "B03002_006",
+  nhnativhpop = "B03002_007",
+  nhotherpop = "B03002_008",
+  nh2morepop = "B03002_009",
+  hisppop = "B03002_012"),
+  state = "MA") %>% 
+  group_by(GEOID) %>% 
+  summarize(minority_E = sum(estimate),
+            minority_M = moe_sum(moe,estimate)) %>% 
+  mutate(minority_UC = minority_E + minority_M,
+         minority_LC = ifelse(
+           minority_E < minority_M, 0, minority_E - minority_M))
+
+# Join with all race pops and compute proportions
+race_pct <- B03002_totrace %>% 
+  left_join(., B03002_minority, by = "GEOID") %>% 
+  mutate(across(ends_with("_E"),
+                ~ if_else(totalpop_E == 0, 0, .x/totalpop_E), 
+                .names = "{col}_p"))
+
+# Compute MOEs for derived proportions
+# First, extract unique names for variables to be computed
+unique_names <- race_pct %>% 
+  select(-ends_with("_p")) %>% 
+  names() %>% 
+  str_extract(.,"^.+(?=_)") %>% 
+  unique() %>% 
+  .[!is.na(.)]
+
+# Next, subset data frame to estimates and moe variables only
+estimatesDF <- race_pct %>% 
+  select(-c(GEOID,NAME), -ends_with(c("UC","LC","_p")))
+
+# Use purrr::map_dfc to match unique names to variables and pass along to moe_prop function and cbind back to race_pct df and then convert proportion to percentages
+race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
+                      select(matches(.x), totalpop_E, totalpop_M) %>%
+                      mutate(!!paste0(.x, "_M_p") := 
+                               moe_prop(num = .[[1]], 
+                                        denom = totalpop_E, 
+                                        moe_num = .[[2]], 
+                                        moe_denom = totalpop_M))) %>% 
+  select(ends_with("_p")) %>% 
+  cbind(race_pct, .) %>% 
+  mutate(across(ends_with("_p"), ~(.x * 100)))
+
+# Calculate upper and lower confidence values for percentages
+# First, extract unique names for variables to be computed
+unique_names <- race_pct %>% 
+  select(-ends_with("_p")) %>% 
+  names() %>% 
+  str_extract(.,"^.+(?=_)") %>% 
+  unique() %>% 
+  .[!is.na(.)]
+
+# Next, subset data frame to estimates and moe variables only
+estimatesDF <- race_pct %>% 
+  select(ends_with("_p"))
+
+# Match unique names to variables and pass along to calculate upper and lower estimates and cbind back to race_pct
+race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
+                      select(matches(.x)) %>% 
+                      mutate(!!paste0(.x, "_pctUC") := 
+                               .[[1]] + .[[2]])) %>% 
+  select(ends_with("_pctUC")) %>% 
+  cbind(race_pct, .)
+
+race_pct <- map_dfc(unique_names, ~estimatesDF %>% 
+                      select(matches(.x)) %>% 
+                      mutate(!!paste0(.x, "_pctLC") := 
+                               if_else(.[[1]] < .[[2]], 0, .[[1]] - .[[2]]))) %>% 
+  select(ends_with("_pctLC")) %>% 
+  cbind(race_pct, .) %>% 
+  select(-NAME)
+
+# clean up
+rm(list = ls(pattern = paste(c("B03002","estimatesDF","unique"), 
+                             collapse = "|")))
 
 
+### ENGLISH LANGUAGE ISOLATION
+# Download C16002. Household Language by Household Limited English Speaking Status. Note that this table is a collapsed version of table B16002. EPA and MA use the latter, but there is no significant difference since we are not interested in disaggregating categories.
+eng_limited <- get_acs(geography = "tract", 
+                       variables = c("C16002_001",
+                                     "C16002_004", 
+                                     "C16002_007",
+                                     "C16002_010",
+                                     "C16002_013"), 
+                       state = "MA")
+
+# Isolate limited English speaking households and compute derived estimates and MOEs
+eng_limited_est <- eng_limited %>% 
+  filter(variable != "C16002_001") %>% 
+  group_by(GEOID) %>% 
+  summarize(eng_limitE = sum(estimate),
+            eng_limitM = moe_sum(moe,estimate))
+# Join with total households and calculate derived proportions and MOEs, along with upper and lower confidence interval values from MOE. Rename columns and remove proportion variables. 
+eng_limited_pct <- eng_limited %>% 
+  filter(variable == "C16002_001") %>% 
+  group_by(GEOID) %>% 
+  left_join(., eng_limited_est, by = "GEOID") %>% 
+  transmute(eng_hhE = estimate,
+            eng_hhM = moe,
+            eng_hh_UC = estimate + moe,
+            eng_hh_LC = ifelse(estimate < moe, 0, estimate - moe),
+            eng_limitE = eng_limitE,
+            eng_limitM = eng_limitM,
+            eng_li_pE = ifelse(estimate==0,0,eng_limitE/estimate),
+            eng_li_pM = moe_prop(eng_limitE,estimate,eng_limitM,moe),
+            eng_limit_pctE = eng_li_pE*100,
+            eng_limit_pctM = eng_li_pM*100,
+            eng_limit_pctE_UC = eng_limit_pctE + eng_limit_pctM,
+            eng_limit_pctE_LC = ifelse(
+              eng_limit_pctE < eng_limit_pctM, 0, 
+              eng_limit_pctE - eng_limit_pctM)) %>% 
+  select(-eng_li_pE,-eng_li_pM)
+
+# clean up
+rm(eng_limited,eng_limited_est)
 
 
+### EDUCATIONAL ATTAINMENT FOR THOSE AGE 25+
+# Less than high school education: The number or percent of people age 25 or older in a tract whose education is short of a high school diploma.
+# Download Table B15002 SEX BY EDUCATIONAL ATTAINMENT FOR THE POPULATION 25 YEARS AND OVER
+B15002 <- get_acs(geography = "tract", table = "B15002", state = "MA")
+
+# Isolate universe of population 25+
+age25up <- B15002 %>% 
+  filter(variable == "B15002_001") %>% 
+  transmute(GEOID = GEOID,
+            age25upE = estimate,
+            age25upM = moe,
+            age25upE_UC = age25upE + age25upM,
+            age25upE_LC = ifelse(
+              age25upE < age25upM, 0, age25upE - age25upM))
+# Isolate populations with less than HS diploma
+# create vector of patterns for male and female variables less than HS
+lths_strings <- rep(c(3:10,20:27)) %>% 
+  formatC(width = 3, format = "d", flag = "0") # add leading 0s
+# filter cases by patterns, compute derived sum estimates and MOEs
+lths_num <- B15002 %>% 
+  filter(str_detect(variable,paste(lths_strings,collapse = "|"))) %>% 
+  group_by(GEOID) %>% 
+  summarize(lthsE = sum(estimate),
+            lthsM = moe_sum(moe,estimate)) %>% 
+  mutate(lthsE_UC = lthsE + lthsM,
+         lthsE_LC = ifelse(
+           lthsE < lthsM, 0, lthsE - lthsM))
+# Isolate populations with college degree or higher
+# create vector of patterns for male and female variables with college+
+col_strings <- rep(c(15:18,32:35)) %>% 
+  formatC(width = 3, format = "d", flag = "0") # add leading 0s
+# filter cases by patterns, compute derived sum estimates and MOEs
+col_num <- B15002 %>% 
+  filter(str_detect(variable,paste(col_strings,collapse = "|"))) %>% 
+  group_by(GEOID) %>% 
+  summarize(collegeE = sum(estimate),
+            collegeM = moe_sum(moe,estimate)) %>% 
+  mutate(collegeE_UC = collegeE + collegeM,
+         collegeE_LC = ifelse(
+           collegeE < collegeM, 0, collegeE - collegeM))
+# Join tables and compute derived proportion and MOE
+lths_pct <- age25up %>% 
+  left_join(.,lths_num, by = "GEOID") %>% 
+  mutate(r_lthsE = ifelse(
+    age25upE == 0, 0, lthsE/age25upE),
+    r_lthsM = moe_ratio(lthsE,age25upE,lthsM,age25upM),
+    pct_lthsE = r_lthsE * 100,
+    pct_lthsM = r_lthsM * 100,
+    pct_lthsE_UC = pct_lthsE + pct_lthsM,
+    pct_lthsE_LC = ifelse(
+      pct_lthsE < pct_lthsM, 0, pct_lthsE - pct_lthsM)) %>% 
+  left_join(.,col_num, by = "GEOID") %>% 
+  mutate(r_collegeE = ifelse(
+    age25upE == 0, 0, collegeE/age25upE),
+    r_collegeM = moe_ratio(collegeE,age25upE,collegeM,age25upM),
+    pct_collegeE = r_collegeE * 100,
+    pct_collegeM = r_collegeM * 100,
+    pct_collegeE_UC = pct_collegeE + pct_collegeM,
+    pct_collegeE_LC = ifelse(
+      pct_collegeE < pct_collegeM, 0, pct_collegeE - pct_collegeM)) %>% 
+  select(-starts_with("r_"))
+# clean up
+rm(age25up,B15002,lths_num,lths_strings,col_num,col_strings)
+
+
+### AGE UNDER 5 AND OVER 64
+# Individuals under age 5: The number or percent of people in a tract under the age of 5.
+# Individuals over age 64: The number or percent of people in a tract over the age of 64.
+# Download Table B01001 TOTAL POPULATION COUNTS AND AGES
+B01001 <- get_acs(geography = "tract", table = "B01001", state = "MA")
+
+# Isolate universe of population for all sex and ages
+allAges <- B01001 %>% 
+  filter(variable == "B01001_001") %>% 
+  transmute(GEOID = GEOID,
+            allAgesE = estimate,
+            allAgesM = moe,
+            allAgesE_UC = allAgesE + allAgesM,
+            allAgesE_LC = ifelse(
+              allAgesE < allAgesM, 0, allAgesE - allAgesM))
+# Isolate under 5 pop, compute derived sum estimates and MOEs
+under5 <- B01001 %>% 
+  filter(variable %in% c("B01001_003", "B01001_027")) %>% 
+  group_by(GEOID) %>% 
+  summarize(under5E = sum(estimate),
+            under5M = moe_sum(moe,estimate)) %>% 
+  mutate(under5E_UC = under5E + under5M,
+         under5E_LC = ifelse(
+           under5E < under5M, 0, under5E - under5M))
+
+# Isolate over 64 pop
+# create vector of patterns for male and female variables 65+
+ovr64_strings <- rep(c(20:25,44:49)) %>% 
+  formatC(width = 3, format = "d", flag = "0") # add leading 0s
+# filter cases by patterns, compute derived sum estimates and MOEs
+over64 <- B01001 %>% 
+  filter(str_detect(variable,paste(ovr64_strings,collapse = "|"))) %>% 
+  group_by(GEOID) %>% 
+  summarize(over64E = sum(estimate),
+            over64M = moe_sum(moe,estimate)) %>% 
+  mutate(over64E_UC = over64E + over64M,
+         over64E_LC = ifelse(
+           over64E < over64M, 0, over64E - over64M))
+# Join the tables and compute derived proportions with MOEs
+age5_64_pct <- allAges %>% 
+  left_join(., under5, by = "GEOID") %>% 
+  mutate(r_under5E = ifelse(
+    allAgesE == 0, 0, under5E/allAgesE),
+    r_under5M = moe_ratio(under5E,allAgesE,under5M,allAgesM),
+    pct_under5E = r_under5E * 100,
+    pct_under5M = r_under5M * 100,
+    pct_under5E_UC = pct_under5E + pct_under5M,
+    pct_under5E_LC = ifelse(
+      pct_under5E < pct_under5M, 0, pct_under5E - pct_under5M)) %>% 
+  left_join(., over64, by = "GEOID") %>% 
+  mutate(r_over64E = ifelse(
+    allAgesE == 0, 0, over64E/allAgesE),
+    r_over64M = moe_ratio(over64E,allAgesE,over64M,allAgesM),
+    pct_over64E = r_over64E * 100,
+    pct_over64M = r_over64M * 100,
+    pct_over64E_UC = pct_over64E + pct_over64M,
+    pct_over64E_LC = ifelse(
+      pct_over64E < pct_over64M, 0, pct_over64E - pct_over64M)) %>% 
+  select(-starts_with("r_"))
+# clean up
+rm(allAges,B01001,over64,under5,ovr64_strings)
+
+
+### MEDIAN AGE OF HOUSING 
+# Based on median year structure built. 
+housing_age <- get_acs(geography = "tract", survey = "acs5",
+                       variables = c(housing_yr_built = "B25035_001"), 
+                       state = "MA", output = "wide") %>% 
+  mutate(housing_age_est = if_else(housing_yr_builtE > 1700, 2020 - housing_yr_builtE, NULL),
+         housing_age_est_UC = housing_age_est + housing_yr_builtM,
+         housing_age_est_LC = housing_age_est - housing_yr_builtM) %>% 
+  select(-NAME)
+
+
+### TENURE
+# Based on number and percent of renters in occupied housing units
+renters <- get_acs(geography = "tract", year = 2018, survey = "acs5",
+                   variables = c(total_occ_units = "B25003_001",
+                                 renter_occ_units = "B25003_003"),
+                   state = "MA", output = "wide") %>% 
+  mutate(renter_occ_units_UC = renter_occ_unitsE + renter_occ_unitsM,
+         renter_occ_units_LC = if_else(renter_occ_unitsE < renter_occ_unitsM, 0, 
+                                       renter_occ_unitsE - renter_occ_unitsM),
+         renter_occ_units_p = if_else(total_occ_unitsE <= 0, 0, 
+                                      renter_occ_unitsE/total_occ_unitsE),
+         renter_occ_units_p_moe = moe_prop(num = renter_occ_unitsE,
+                                           denom = total_occ_unitsE,
+                                           moe_num = renter_occ_unitsM,
+                                           moe_denom = total_occ_unitsM),
+         renter_occ_units_pct = renter_occ_units_p * 100,
+         renter_occ_units_pct_UC = 
+           (renter_occ_units_p + renter_occ_units_p_moe) * 100,
+         renter_occ_units_pct_LC = if_else(
+           renter_occ_units_p < renter_occ_units_p_moe, 0, 
+           (renter_occ_units_p - renter_occ_units_p_moe) * 100)) %>% 
+  select(-NAME)
 
 
 
@@ -567,7 +908,8 @@ house_burdened <- get_acs(geography = "tract", year = 2018,
            (house_burdened_p + house_burdened_p_moe) * 100,
          house_burdened_pct_LC = if_else(
            house_burdened_p < house_burdened_p_moe, 0, 
-           (house_burdened_p - house_burdened_p_moe) * 100)) 
+           (house_burdened_p - house_burdened_p_moe) * 100)) %>% 
+  select(-NAME)
 
 
 ### DISABILITY
@@ -621,5 +963,28 @@ disabilityOver18_pct <- over18 %>%
   select(-starts_with("r_"))
 # clean up
 rm(B18101,disabledOver18,disabledOvr18_strings,over18,ovr18_strings)
+
+
+######### JOIN DATA FRAMES TO POLYGONS #############
+
+# join demographic df to block groups
+ma_tracts18 <- ma_tracts18 %>% 
+  left_join(., race_pct, by = "GEOID") %>% 
+  left_join(., age5_64_pct, by = "GEOID") %>% 
+  left_join(., eng_limited_pct, by = "GEOID") %>% 
+  left_join(., poverty_pct, by = "GEOID") %>% 
+  left_join(., lths_pct, by = "GEOID") %>% 
+  left_join(., renters, by = "GEOID") %>%
+  left_join(., housing_age, by = "GEOID") %>% 
+  left_join(., house_burdened, by = "GEOID") %>% 
+  left_join(., disabilityOver18_pct, by = "GEOID")
+
+# save output
+load("/Data/Demographics.rds")
+save(ma_blkgrps18, ma_tracts18, file = "/Data/Demographics.rds")
+# clear environment
+rm(list = ls())
+
+
 
 
