@@ -6,6 +6,8 @@ library(tmap)
 library(sf)
 library(tigris)
 options(tigris_use_cache = TRUE, tigris_class = "sf")
+(wdir <- getwd())
+setwd(wdir)
 
 # Load list of variables to identify tables of interest
 v18 <- load_variables(2018, "acs5", cache = TRUE)
@@ -1468,8 +1470,8 @@ ma_cosub18 <- ma_cosub18 %>%
 
 # save output
 load("/Data/Demographics.rds")
-save(ma_blkgrps18, ma_tracts18, ma_cosub18, file = "/Data/Demographics.rds")
+save(ma_blkgrps18, ma_tracts18, ma_cosub18, file = "C:/Users/Marcos/Documents/Research/GasLeaksEJ/Data/Demographics.rds")
 
 
-
+getwd()
 
