@@ -178,7 +178,10 @@ unrepaired2019final <- mget(ls(pattern = "unrepaired$")) %>%
   }) %>% 
   do.call(rbind, .) %>% 
   rename(Address = Name) %>% 
-  mutate(RptDate = mdy(RptDate))
+  mutate(RptDate = mdy(RptDate),
+         Class = recode(Class, "Grade 2" = "2",
+                        "Grade 3" = "3",
+                        "2A" = "2"))
 
 # write it out to shapefile
 unrepaired2019final %>% 
@@ -282,7 +285,8 @@ repaired2019final <- mget(ls(pattern = "9repaired$")) %>%
   rename(Address = Name) %>% 
   mutate(RptDate = parse_date_time(RptDate, orders = c("dmy","mdy")), 
          RepairDate = parse_date_time(RepairDate, orders = c("dmy","mdy")),
-         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)),
+         Class = recode(Class, "2A" = "2"))
 
 # compare by utility
 repaired2019final %>% 
