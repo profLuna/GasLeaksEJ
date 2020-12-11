@@ -336,7 +336,7 @@ raceLeakDensityJoined %>%
   theme_minimal() 
 
 
-# create a facet wrap bar graph by leak grade
+# create a facet wrap bar graph by leak grade and ordered by leaks
 raceLeakDensityJoined %>% 
   select(-(ends_with("LC") | ends_with("UC"))) %>% 
   pivot_longer(wLeaksPerSqKm:wLeaksPerSqKmC3, 
