@@ -11,9 +11,6 @@ library(foreign)
 load("Data/Demographics.rds")
 load("Data/HEET2019Leaks.rds")
 
-# check for duplicates
-ma_blkgrps18[duplicated(ma_blkgrps18$GEOID),c(1,3)]
-
 # Load natural gas utility service areas dbf from MassGIS and join to MassGIS towns layer
 ng_dbf <- read.dbf("Data/pubutil/TOWNS_POLY_UTILITIES.dbf")
 
@@ -132,7 +129,16 @@ ma_blkgrps18 <- lapply(list(unrepaired2019_by_blkgrp,
                                 select(-geometry)}) %>% 
   reduce(full_join, by = "GEOID") %>% 
   # distinct(GEOID, .keep_all = TRUE) %>% # get rid of duplicate rows
-  left_join(ma_blkgrps18, ., by = "GEOID")
+  left_join(ma_blkgrps18, ., by = "GEOID") %>% 
+  mutate(area_sqkm = as.numeric(st_area(.)/10^6),
+         leaks_sqkm = if_else(unrepaired2019total > 0,
+                              unrepaired2019total/area_sqkm, 0),
+         leaks_sqkmC1 = if_else(unrepaired2019totalC1 > 0,
+                              unrepaired2019totalC1/area_sqkm, 0),
+         leaks_sqkmC2 = if_else(unrepaired2019totalC2 > 0,
+                                unrepaired2019totalC2/area_sqkm, 0),
+         leaks_sqkmC3 = if_else(unrepaired2019totalC3 > 0,
+                                unrepaired2019totalC3/area_sqkm, 0))
   
 
 # ma_blkgrps18 <- unrepaired2019_by_utility %>% 
@@ -230,7 +236,7 @@ summary(ma_blkgrps18$unrepaired2019totalC3)
 
 # comparison of population-weighted leak frequency and density by demographic group, restricting to areas served by gas utilities for which we have leak data
 raceLeakDensity <- ma_blkgrps18 %>% 
-  st_filter(., ng_service_areas) %>%
+  # st_filter(., ng_service_areas) %>%
   as.data.frame() %>% 
   select(ends_with("_E"), leaks_sqkm) %>% 
   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
