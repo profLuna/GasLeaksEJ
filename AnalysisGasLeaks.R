@@ -353,8 +353,9 @@ raceLeakDensityJoined %>%
   theme_minimal() +
   facet_wrap(~ leakClass, scales = "free") +
   labs(x = NULL, 
-       y = "Population-weighted leak density (leaks/SqKm)",
-       title = "Race and Gas Leaks by Leak Class")
+       y = expression(paste("Population-weighted mean leak density (leaks/", 
+                            km^2, ")", sep = "")),
+       title = "Race and Gas Leaks across Massachusetts")
 
 
 # Facet wrap by utility
