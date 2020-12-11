@@ -238,11 +238,14 @@ summary(ma_blkgrps18$unrepaired2019totalC3)
 raceLeakDensity <- ma_blkgrps18 %>% 
   # st_filter(., ng_service_areas) %>%
   as.data.frame() %>% 
-  select(ends_with("_E"), leaks_sqkm) %>% 
+  select(ends_with("_E"), starts_with("leaks_")) %>% 
   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
-  summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop)) %>% 
+  summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop),
+            wLeaksPerSqKmC1 = weighted.mean(x = leaks_sqkmC1, w = Pop),
+            wLeaksPerSqKmC2 = weighted.mean(x = leaks_sqkmC2, w = Pop),
+            wLeaksPerSqKmC3 = weighted.mean(x = leaks_sqkmC3, w = Pop)) %>% 
   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
                 "minority_E" = "People of Color",
                 "nh2morepop_E" = "Two or more races",
@@ -255,7 +258,7 @@ raceLeakDensity <- ma_blkgrps18 %>%
                 "totalpop_E" = "Total Population"))
 
 raceLeakDensityUC <- ma_blkgrps18 %>% 
-  st_filter(., ng_service_areas) %>%
+  # st_filter(., ng_service_areas) %>%
   as.data.frame() %>% 
   select(ends_with("_UC") & starts_with("nh"), hisppop_UC, minority_UC, 
          totalpop_UC, leaks_sqkm) %>% 
@@ -276,7 +279,7 @@ raceLeakDensityUC <- ma_blkgrps18 %>%
                         "totalpop_UC" = "Total Population"))
 
 raceLeakDensityLC <- ma_blkgrps18 %>% 
-  st_filter(., ng_service_areas) %>%
+  # st_filter(., ng_service_areas) %>%
   as.data.frame() %>% 
   select(ends_with("_LC") & starts_with("nh"), hisppop_LC, minority_LC, 
          totalpop_LC, leaks_sqkm) %>% 
@@ -302,13 +305,34 @@ raceLeakDensityJoined <- raceLeakDensity %>%
   left_join(., raceLeakDensityLC, by = "Group") %>% 
   left_join(., raceLeakDensityUC, by = "Group")
 
-# create a bar plot with error bars
+# create a bar plot of total leaks with error bars
 raceLeakDensityJoined %>% 
   ggplot(aes(x = reorder(Group,wLeaksPerSqKm), y = wLeaksPerSqKm)) + 
   geom_col() + coord_flip() + xlab("") + 
   ylab("Population-weighted leak density (leaks/SqKm)") +
   theme_minimal() +
   geom_errorbar(aes(ymin = wLeaksPerSqKmUC, ymax = wLeaksPerSqKmLC))
+
+# create a bar plot of Class 3 leaks
+raceLeakDensityJoined %>% 
+  ggplot(aes(x = reorder(Group,wLeaksPerSqKmC3), y = wLeaksPerSqKmC3)) + 
+  geom_col() + coord_flip() + xlab("") + 
+  ylab("Population-weighted leak density (Class 3 leaks/SqKm)") +
+  theme_minimal() 
+
+# create a bar plot of Class 2 leaks
+raceLeakDensityJoined %>% 
+  ggplot(aes(x = reorder(Group,wLeaksPerSqKmC2), y = wLeaksPerSqKmC2)) + 
+  geom_col() + coord_flip() + xlab("") + 
+  ylab("Population-weighted leak density (Class 2 leaks/SqKm)") +
+  theme_minimal() 
+
+# create a bar plot of Class 1 leaks
+raceLeakDensityJoined %>% 
+  ggplot(aes(x = reorder(Group,wLeaksPerSqKmC1), y = wLeaksPerSqKmC1)) + 
+  geom_col() + coord_flip() + xlab("") + 
+  ylab("Population-weighted leak density (Class 1 leaks/SqKm)") +
+  theme_minimal() 
 
 
 # Facet wrap by utility
