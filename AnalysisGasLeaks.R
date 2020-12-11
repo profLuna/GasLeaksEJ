@@ -5,7 +5,8 @@ library(sf)
 library(tigris)
 library(tmap)
 library(ggplot2)
-library(foreign)
+library(foreign) # for reading in dbf
+library(tidytext) # for reordering within ggplot2 facets
 
 # Load demographic and gas leaks data
 load("Data/Demographics.rds")
@@ -333,6 +334,27 @@ raceLeakDensityJoined %>%
   geom_col() + coord_flip() + xlab("") + 
   ylab("Population-weighted leak density (Class 1 leaks/SqKm)") +
   theme_minimal() 
+
+
+# create a facet wrap bar graph by leak grade
+raceLeakDensityJoined %>% 
+  select(-(ends_with("LC") | ends_with("UC"))) %>% 
+  pivot_longer(wLeaksPerSqKm:wLeaksPerSqKmC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(leakClass = recode(leakClass, "wLeaksPerSqKm" = "All Leaks",
+                        "wLeaksPerSqKmC1" = "Class 1 Leaks",
+                        "wLeaksPerSqKmC2" = "Class 2 Leaks",
+                        "wLeaksPerSqKmC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass)) %>% 
+  ggplot(aes(x = Group, y = leakDensity, fill = leakClass)) + 
+  geom_col(show.legend = FALSE) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal() +
+  facet_wrap(~ leakClass, scales = "free") +
+  labs(x = NULL, 
+       y = "Population-weighted leak density (leaks/SqKm)",
+       title = "Race and Gas Leaks by Leak Class")
 
 
 # Facet wrap by utility
