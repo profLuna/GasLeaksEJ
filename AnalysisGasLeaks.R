@@ -36,20 +36,6 @@ ma_blkgrps18 <- ng_service_areas %>%
   filter(!st_is_empty(.))
 
 
-# # spatially aggregate leaks by block groups
-# blkgrp_unrepaired <- ma_blkgrps18 %>% 
-#   st_join(unrepaired2019final) %>% 
-#   group_by(GEOID) %>% 
-#   summarize(unrepaired2019 = n()) %>% 
-#   as.data.frame() %>% 
-#   select(-geometry) %>% 
-#   left_join(ma_blkgrps18, ., by = "GEOID")
-
-# # assign block group GEOID to each unrepaired leak that falls within it
-# unrepaired2019_toblkgrp <- ma_blkgrps18 %>% 
-#   select(GEOID) %>% 
-#   st_join(unrepaired2019final, .)
-
 # assign block group data to each unrepaired leak it intersects. 
 # join block group info to each leak that falls within it
 unrepaired2019_with_blkgrp <- ma_blkgrps18 %>% 
@@ -142,26 +128,6 @@ ma_blkgrps18 <- lapply(list(unrepaired2019_by_blkgrp,
                                 unrepaired2019totalC3/area_sqkm, 0))
   
 
-# ma_blkgrps18 <- unrepaired2019_by_utility %>% 
-#   as.data.frame() %>% # to prevent dplyr trying to re-add grouping variable
-#   select(-Utility) %>% # get rid of redundant grouping variable
-#   left_join(ma_blkgrps18, ., by = "GEOID")
-# 
-# ma_blkgrps18 <- unrepaired2019_by_utilityC1 %>% 
-#   as.data.frame() %>% # to prevent dplyr trying to re-add grouping variable
-#   select(-Utility) %>% # get rid of redundant grouping variable
-#   left_join(ma_blkgrps18, ., by = "GEOID")
-# 
-# ma_blkgrps18 <- unrepaired2019_by_utilityC2 %>% 
-#   as.data.frame() %>% # to prevent dplyr trying to re-add grouping variable
-#   select(-Utility) %>% # get rid of redundant grouping variable
-#   left_join(ma_blkgrps18, ., by = "GEOID")
-# 
-# ma_blkgrps18 <- unrepaired2019_by_utilityC3 %>% 
-#   as.data.frame() %>% # to prevent dplyr trying to re-add grouping variable
-#   select(-Utility) %>% # get rid of redundant grouping variable
-#   left_join(ma_blkgrps18, ., by = "GEOID")
-
 # join leak counts by utility to the block group demographics
 ma_blkgrps18 <- list(ma_blkgrps18, unrepaired2019_by_utility2, 
                           unrepaired2019_by_utility2C1,
@@ -192,47 +158,6 @@ ma_blkgrps18 %>%
   ggplot(aes(x = unrepaired2019totalC3)) + geom_histogram()
 
 summary(ma_blkgrps18$unrepaired2019totalC3)
-
-# # create summary of total unrepaired leaks by block group
-# # all leaks
-# blkgrp_total_unrepaired <- unrepaired2019_toblkgrp %>% 
-#   as.data.frame() %>% 
-#   group_by(GEOID) %>% 
-#   summarize(unrepaired2019total = n())
-
-# # class 1 leaks
-# blkgrp_class1_unrepaired <- unrepaired2019_toblkgrp %>% 
-#   as.data.frame() %>% 
-#   filter(Class == 1) %>% 
-#   group_by(GEOID) %>% 
-#   summarize(unrepaired2019class1 = n())
-# 
-# # class 2 leaks
-# blkgrp_class2_unrepaired <- unrepaired2019_toblkgrp %>% 
-#   as.data.frame() %>% 
-#   filter(Class == 2) %>% 
-#   group_by(GEOID) %>% 
-#   summarize(unrepaired2019class2 = n())
-# 
-# # class 3 leaks
-# blkgrp_class3_unrepaired <- unrepaired2019_toblkgrp %>% 
-#   as.data.frame() %>% 
-#   filter(Class == 3) %>% 
-#   group_by(GEOID) %>% 
-#   summarize(unrepaired2019class3 = n())
-# 
-# # join unrepaired leak counts to block group layer
-# ma_blkgrps18 <- ma_blkgrps18 %>% 
-#   left_join(., blkgrp_total_unrepaired, by = "GEOID") %>% 
-#   left_join(., blkgrp_class1_unrepaired, by = "GEOID") %>%
-#   left_join(., blkgrp_class2_unrepaired, by = "GEOID") %>%
-#   left_join(., blkgrp_class3_unrepaired, by = "GEOID") %>%
-#   mutate(area_sqkm = as.numeric(st_area(.)/10^6),
-#          leaks_sqkm = if_else(unrepaired2019total > 0, 
-#                               unrepaired2019total/area_sqkm, 0)) %>% 
-#   replace_na(list(unrepaired2019total = 0, unrepaired2019class1= 0, 
-#                   unrepaired2019class2 = 0, unrepaired2019class3 = 0, 
-#                   leaks_sqkm = 0))
 
 
 # comparison of population-weighted leak frequency and density by demographic group, restricting to areas served by gas utilities for which we have leak data
@@ -523,12 +448,6 @@ raceLeakDensityJoinedU %>%
                             km^2, ")", sep = "")),
        title = "Race and Gas Leaks by Utility across Massachusetts")
 
-# inspect differences by utility
-test <- ng_service_areas %>% 
-  select(-TOWN) %>% 
-  mutate(GAS = as.character(GAS)) %>% 
-  st_join(ma_blkgrps18, ., largest = TRUE) %>% 
-  as.data.frame()
 
 # conduct a weighted t-test to determine if differences are statistically significant
 library(weights)
