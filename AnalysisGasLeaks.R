@@ -324,142 +324,31 @@ ppLeakDensity %>%
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
                             km^2, ")", sep = "")),
-       title = "Priority Populations and Gas Leaks across Massachusetts")
+       title = "Priority Populations and Unrepaired Gas Leaks in 2018 across Massachusetts")
 
-  
-
-raceLeakDensity <- ma_blkgrps18 %>% 
-  # st_filter(., ng_service_areas) %>%
-  as.data.frame() %>% 
-  select(ends_with("_E"), starts_with("leaks_")) %>% 
-  pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
-               values_to = "Pop", values_drop_na = TRUE) %>% 
-  group_by(Group) %>% 
-  summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop),
-            wLeaksPerSqKmC1 = weighted.mean(x = leaks_sqkmC1, w = Pop),
-            wLeaksPerSqKmC2 = weighted.mean(x = leaks_sqkmC2, w = Pop),
-            wLeaksPerSqKmC3 = weighted.mean(x = leaks_sqkmC3, w = Pop)) %>% 
-  mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
-                "minority_E" = "People of Color",
-                "nh2morepop_E" = "Two or more races",
-                "nhamerindpop_E" = "Native American",
-                "nhasianpop_E" = "Asian",
-                "nhblackpop_E" = "Black",
-                "nhnativpop_E" = "Native Pacific Islander",
-                "nhotherpop_E" = "Other race",
-                "nhwhitepop_E" = "White",
-                "totalpop_E" = "Total Population"))
-
-raceLeakDensityUC <- ma_blkgrps18 %>% 
-  # st_filter(., ng_service_areas) %>%
-  as.data.frame() %>% 
-  select(ends_with("_UC") & starts_with("nh"), hisppop_UC, minority_UC, 
-         totalpop_UC, leaks_sqkm) %>% 
-  pivot_longer(., cols = ends_with("_UC"), names_to = "Group", 
-               values_to = "Pop", values_drop_na = TRUE) %>% 
-  group_by(Group) %>% 
-  summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop)) %>% 
-  rename(., wLeaksPerSqKmUC = wLeaksPerSqKm) %>%
-  mutate(Group = recode(Group, "hisppop_UC" = "Hispanic", 
-                        "minority_UC" = "People of Color",
-                        "nh2morepop_UC" = "Two or more races",
-                        "nhamerindpop_UC" = "Native American",
-                        "nhasianpop_UC" = "Asian",
-                        "nhblackpop_UC" = "Black",
-                        "nhnativpop_UC" = "Native Pacific Islander",
-                        "nhotherpop_UC" = "Other race",
-                        "nhwhitepop_UC" = "White",
-                        "totalpop_UC" = "Total Population"))
-
-raceLeakDensityLC <- ma_blkgrps18 %>% 
-  # st_filter(., ng_service_areas) %>%
-  as.data.frame() %>% 
-  select(ends_with("_LC") & starts_with("nh"), hisppop_LC, minority_LC, 
-         totalpop_LC, leaks_sqkm) %>% 
-  pivot_longer(., cols = ends_with("_LC"), names_to = "Group", 
-               values_to = "Pop", values_drop_na = TRUE) %>% 
-  group_by(Group) %>% 
-  summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop)) %>% 
-  rename(., wLeaksPerSqKmLC = wLeaksPerSqKm) %>% 
-  mutate(Group = recode(Group, "hisppop_LC" = "Hispanic", 
-                        "minority_LC" = "People of Color",
-                        "nh2morepop_LC" = "Two or more races",
-                        "nhamerindpop_LC" = "Native American",
-                        "nhasianpop_LC" = "Asian",
-                        "nhblackpop_LC" = "Black",
-                        "nhnativpop_LC" = "Native Pacific Islander",
-                        "nhotherpop_LC" = "Other race",
-                        "nhwhitepop_LC" = "White",
-                        "totalpop_LC" = "Total Population")) %>% 
-  replace_na(., list(wLeaksPerSqKmLC = 0))
-
-# bring df together
-raceLeakDensityJoined <- raceLeakDensity %>% 
-  left_join(., raceLeakDensityLC, by = "Group") %>% 
-  left_join(., raceLeakDensityUC, by = "Group")
-
-# create a bar plot of total leaks with error bars
-raceLeakDensityJoined %>% 
-  ggplot(aes(x = reorder(Group,wLeaksPerSqKm), y = wLeaksPerSqKm)) + 
-  geom_col() + coord_flip() + xlab("") + 
-  ylab("Population-weighted leak density (leaks/SqKm)") +
-  theme_minimal() +
-  geom_errorbar(aes(ymin = wLeaksPerSqKmUC, ymax = wLeaksPerSqKmLC))
-
-# create a bar plot of Class 3 leaks
-raceLeakDensityJoined %>% 
-  ggplot(aes(x = reorder(Group,wLeaksPerSqKmC3), y = wLeaksPerSqKmC3)) + 
-  geom_col() + coord_flip() + xlab("") + 
-  ylab("Population-weighted leak density (Class 3 leaks/SqKm)") +
-  theme_minimal() 
-
-# create a bar plot of Class 2 leaks
-raceLeakDensityJoined %>% 
-  ggplot(aes(x = reorder(Group,wLeaksPerSqKmC2), y = wLeaksPerSqKmC2)) + 
-  geom_col() + coord_flip() + xlab("") + 
-  ylab("Population-weighted leak density (Class 2 leaks/SqKm)") +
-  theme_minimal() 
-
-# create a bar plot of Class 1 leaks
-raceLeakDensityJoined %>% 
-  ggplot(aes(x = reorder(Group,wLeaksPerSqKmC1), y = wLeaksPerSqKmC1)) + 
-  geom_col() + coord_flip() + xlab("") + 
-  ylab("Population-weighted leak density (Class 1 leaks/SqKm)") +
-  theme_minimal() 
-
-
-# create a facet wrap bar graph by leak grade and ordered by leaks
-raceLeakDensityJoined %>% 
-  select(-(ends_with("LC") | ends_with("UC"))) %>% 
-  pivot_longer(wLeaksPerSqKm:wLeaksPerSqKmC3, 
-               names_to = "leakClass", values_to = "leakDensity") %>% 
-  mutate(leakClass = recode(leakClass, "wLeaksPerSqKm" = "All Leaks",
-                        "wLeaksPerSqKmC1" = "Class 1 Leaks",
-                        "wLeaksPerSqKmC2" = "Class 2 Leaks",
-                        "wLeaksPerSqKmC3" = "Class 3 Leaks"),
-         Group = reorder_within(Group, leakDensity, leakClass)) %>% 
-  ggplot(aes(x = Group, y = leakDensity, fill = leakClass)) + 
-  geom_col(show.legend = FALSE) +
-  coord_flip() + 
-  scale_x_reordered() +
-  theme_minimal() +
-  facet_wrap(~ leakClass, scales = "free") +
-  labs(x = NULL, 
-       y = expression(paste("Population-weighted mean leak density (leaks/", 
-                            km^2, ")", sep = "")),
-       title = "Race and Gas Leaks across Massachusetts")
 
 # Compare leak density distribution by utility
 # National Grid; includes both NG-Boston and NG-Colonial Gas
-raceLeakDensityNG <- ma_blkgrps18 %>% 
+ppLeakDensityNG <- ma_blkgrps18 %>% 
   as.data.frame() %>% 
   filter(str_detect(GAS, "^National") | 
            GAS == "Colonial Gas") %>% # limit to BGs in NG/Colonial svc area
   mutate(leaks_sqkmNG = (`National Grid - Boston Gas_19unrepaired` +
                            `National Grid - Colonial Gas_19unrepaired`)/area_sqkm) %>% 
-  select(ends_with("_E"), (starts_with("National") & ends_with("ed")), 
-         leaks_sqkmNG) %>% 
-  pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+  mutate(MA_INCOME17 = if_else(MA_INCOME17 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME17 = replace_na(MA_INCOME17,0)) %>% 
+  mutate(MA_INCOME21 = if_else(MA_INCOME21 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME21 = replace_na(MA_INCOME21,0)) %>% 
+  mutate(MA_MINORITY17 = if_else(MA_MINORITY17 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY17 = replace_na(MA_MINORITY17,0)) %>% 
+  mutate(MA_MINORITY21 = if_else(MA_MINORITY21 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY21 = replace_na(MA_MINORITY21,0)) %>% 
+  mutate(MA_ENGLISH = if_else(MA_ENGLISH == "E", totalpop_E,0)) %>%
+  mutate(MA_ENGLISH = replace_na(MA_ENGLISH,0)) %>%
+  select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
+         eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+         ends_with("unitsE"), leaks_sqkmNG) %>% 
+  pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
   summarize(wLeaksPerSqKmNG = weighted.mean(x = leaks_sqkmNG, w = Pop)) %>% 
@@ -472,16 +361,36 @@ raceLeakDensityNG <- ma_blkgrps18 %>%
                         "nhnativpop_E" = "Native Pacific Islander",
                         "nhotherpop_E" = "Other race",
                         "nhwhitepop_E" = "White",
-                        "totalpop_E" = "Total Population"))
+                        "totalpop_E" = "Total Population",
+                        "eng_hhE" = "Total Households",
+                        "under5E" = "Under 5",
+                        "over64E" = "Over 64",
+                        "eng_limitE" = "Limited English HH",
+                        "num2povE" = "Low Income",
+                        "lthsE" = "No HS Diploma",
+                        "total_occ_unitsE" = "Total Occupied HU",
+                        "renter_occ_unitsE" = "Renter Occupied HU"))
 
 # Eversource Energy
-raceLeakDensityEV <- ma_blkgrps18 %>% 
+ppLeakDensityEV <- ma_blkgrps18 %>% 
   as.data.frame() %>% 
   filter(str_detect(GAS, "^Eversource") | 
            str_detect(GAS, "Energy$")) %>% # limit to BGs in Eversource svc area
-  mutate(leaks_sqkmEV = (`Eversource Energy_19unrepaired`)/area_sqkm) %>% 
-  select(ends_with("_E"), leaks_sqkmEV) %>% 
-  pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+  mutate(leaks_sqkmEV = (`Eversource Energy_19unrepaired`)/area_sqkm) %>%
+  mutate(MA_INCOME17 = if_else(MA_INCOME17 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME17 = replace_na(MA_INCOME17,0)) %>% 
+  mutate(MA_INCOME21 = if_else(MA_INCOME21 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME21 = replace_na(MA_INCOME21,0)) %>% 
+  mutate(MA_MINORITY17 = if_else(MA_MINORITY17 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY17 = replace_na(MA_MINORITY17,0)) %>% 
+  mutate(MA_MINORITY21 = if_else(MA_MINORITY21 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY21 = replace_na(MA_MINORITY21,0)) %>% 
+  mutate(MA_ENGLISH = if_else(MA_ENGLISH == "E", totalpop_E,0)) %>%
+  mutate(MA_ENGLISH = replace_na(MA_ENGLISH,0)) %>%
+  select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
+         eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+         ends_with("unitsE"), leaks_sqkmEV) %>% 
+  pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
   summarize(wLeaksPerSqKmEV = weighted.mean(x = leaks_sqkmEV, w = Pop)) %>% 
@@ -494,16 +403,36 @@ raceLeakDensityEV <- ma_blkgrps18 %>%
                         "nhnativpop_E" = "Native Pacific Islander",
                         "nhotherpop_E" = "Other race",
                         "nhwhitepop_E" = "White",
-                        "totalpop_E" = "Total Population"))
+                        "totalpop_E" = "Total Population",
+                        "eng_hhE" = "Total Households",
+                        "under5E" = "Under 5",
+                        "over64E" = "Over 64",
+                        "eng_limitE" = "Limited English HH",
+                        "num2povE" = "Low Income",
+                        "lthsE" = "No HS Diploma",
+                        "total_occ_unitsE" = "Total Occupied HU",
+                        "renter_occ_unitsE" = "Renter Occupied HU"))
 
 # Columbia Gas
-raceLeakDensityCG <- ma_blkgrps18 %>% 
+ppLeakDensityCG <- ma_blkgrps18 %>% 
   as.data.frame() %>% 
   filter(str_detect(GAS, "^Columbia") | 
            str_detect(GAS, "Columbia Gas$")) %>% # limit to BGs in CG svc area
-  mutate(leaks_sqkmCG = (`Columbia Gas_19unrepaired`)/area_sqkm) %>% 
-  select(ends_with("_E"), leaks_sqkmCG) %>% 
-  pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+  mutate(leaks_sqkmCG = (`Columbia Gas_19unrepaired`)/area_sqkm) %>%
+  mutate(MA_INCOME17 = if_else(MA_INCOME17 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME17 = replace_na(MA_INCOME17,0)) %>% 
+  mutate(MA_INCOME21 = if_else(MA_INCOME21 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME21 = replace_na(MA_INCOME21,0)) %>% 
+  mutate(MA_MINORITY17 = if_else(MA_MINORITY17 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY17 = replace_na(MA_MINORITY17,0)) %>% 
+  mutate(MA_MINORITY21 = if_else(MA_MINORITY21 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY21 = replace_na(MA_MINORITY21,0)) %>% 
+  mutate(MA_ENGLISH = if_else(MA_ENGLISH == "E", totalpop_E,0)) %>%
+  mutate(MA_ENGLISH = replace_na(MA_ENGLISH,0)) %>%
+  select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
+         eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+         ends_with("unitsE"), leaks_sqkmCG) %>% 
+  pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
   summarize(wLeaksPerSqKmCG = weighted.mean(x = leaks_sqkmCG, w = Pop)) %>% 
@@ -516,19 +445,40 @@ raceLeakDensityCG <- ma_blkgrps18 %>%
                         "nhnativpop_E" = "Native Pacific Islander",
                         "nhotherpop_E" = "Other race",
                         "nhwhitepop_E" = "White",
-                        "totalpop_E" = "Total Population"))
+                        "totalpop_E" = "Total Population",
+                        "eng_hhE" = "Total Households",
+                        "under5E" = "Under 5",
+                        "over64E" = "Over 64",
+                        "eng_limitE" = "Limited English HH",
+                        "num2povE" = "Low Income",
+                        "lthsE" = "No HS Diploma",
+                        "total_occ_unitsE" = "Total Occupied HU",
+                        "renter_occ_unitsE" = "Renter Occupied HU"))
 
 # Fitchburg Gas aka Unitil
-raceLeakDensityFG <- ma_blkgrps18 %>% 
+ppLeakDensityFG <- ma_blkgrps18 %>% 
   as.data.frame() %>% 
   filter(str_detect(GAS, "^Unitil") | 
            str_detect(GAS, "Unitil$")) %>% # limit to BGs in FG svc area
-  mutate(leaks_sqkmFG = (`Fitchburg Gas_19unrepaired`)/area_sqkm) %>% 
-  select(ends_with("_E"), leaks_sqkmFG) %>% 
-  pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+  mutate(leaks_sqkmFG = (`Fitchburg Gas_19unrepaired`)/area_sqkm) %>%
+  mutate(MA_INCOME17 = if_else(MA_INCOME17 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME17 = replace_na(MA_INCOME17,0)) %>% 
+  mutate(MA_INCOME21 = if_else(MA_INCOME21 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME21 = replace_na(MA_INCOME21,0)) %>% 
+  mutate(MA_MINORITY17 = if_else(MA_MINORITY17 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY17 = replace_na(MA_MINORITY17,0)) %>% 
+  mutate(MA_MINORITY21 = if_else(MA_MINORITY21 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY21 = replace_na(MA_MINORITY21,0)) %>% 
+  mutate(MA_ENGLISH = if_else(MA_ENGLISH == "E", totalpop_E,0)) %>%
+  mutate(MA_ENGLISH = replace_na(MA_ENGLISH, 0)) %>%
+  select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
+         eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+         ends_with("unitsE"), leaks_sqkmFG) %>% 
+  pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
-  summarize(wLeaksPerSqKmFG = weighted.mean(x = leaks_sqkmFG, w = Pop)) %>% 
+  summarize(wLeaksPerSqKmFG = weighted.mean(x = leaks_sqkmFG, w = Pop, 
+                                            na.rm = TRUE)) %>% 
   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
                         "minority_E" = "People of Color",
                         "nh2morepop_E" = "Two or more races",
@@ -538,18 +488,39 @@ raceLeakDensityFG <- ma_blkgrps18 %>%
                         "nhnativpop_E" = "Native Pacific Islander",
                         "nhotherpop_E" = "Other race",
                         "nhwhitepop_E" = "White",
-                        "totalpop_E" = "Total Population"))
+                        "totalpop_E" = "Total Population",
+                        "eng_hhE" = "Total Households",
+                        "under5E" = "Under 5",
+                        "over64E" = "Over 64",
+                        "eng_limitE" = "Limited English HH",
+                        "num2povE" = "Low Income",
+                        "lthsE" = "No HS Diploma",
+                        "total_occ_unitsE" = "Total Occupied HU",
+                        "renter_occ_unitsE" = "Renter Occupied HU"))
 
 # Liberty Utilities
-raceLeakDensityLU <- ma_blkgrps18 %>% 
+ppLeakDensityLU <- ma_blkgrps18 %>% 
   as.data.frame() %>% 
   filter(GAS == "Liberty Utilities") %>% # limit to BGs in LU svc area
-  mutate(leaks_sqkmLU = (`Liberty Utilities_19unrepaired`)/area_sqkm) %>% 
-  select(ends_with("_E"), leaks_sqkmLU) %>% 
-  pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+  mutate(leaks_sqkmLU = (`Liberty Utilities_19unrepaired`)/area_sqkm) %>%
+  mutate(MA_INCOME17 = if_else(MA_INCOME17 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME17 = replace_na(MA_INCOME17,0)) %>% 
+  mutate(MA_INCOME21 = if_else(MA_INCOME21 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME21 = replace_na(MA_INCOME21,0)) %>% 
+  mutate(MA_MINORITY17 = if_else(MA_MINORITY17 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY17 = replace_na(MA_MINORITY17,0)) %>% 
+  mutate(MA_MINORITY21 = if_else(MA_MINORITY21 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY21 = replace_na(MA_MINORITY21,0)) %>% 
+  mutate(MA_ENGLISH = if_else(MA_ENGLISH == "E", totalpop_E,0)) %>%
+  mutate(MA_ENGLISH = replace_na(MA_ENGLISH, 0)) %>%
+  select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
+         eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+         ends_with("unitsE"), leaks_sqkmLU) %>% 
+  pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
-  summarize(wLeaksPerSqKmLU = weighted.mean(x = leaks_sqkmLU, w = Pop)) %>% 
+  summarize(wLeaksPerSqKmLU = weighted.mean(x = leaks_sqkmLU, w = Pop, 
+                                            na.rm = TRUE)) %>% 
   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
                         "minority_E" = "People of Color",
                         "nh2morepop_E" = "Two or more races",
@@ -559,18 +530,39 @@ raceLeakDensityLU <- ma_blkgrps18 %>%
                         "nhnativpop_E" = "Native Pacific Islander",
                         "nhotherpop_E" = "Other race",
                         "nhwhitepop_E" = "White",
-                        "totalpop_E" = "Total Population"))
+                        "totalpop_E" = "Total Population",
+                        "eng_hhE" = "Total Households",
+                        "under5E" = "Under 5",
+                        "over64E" = "Over 64",
+                        "eng_limitE" = "Limited English HH",
+                        "num2povE" = "Low Income",
+                        "lthsE" = "No HS Diploma",
+                        "total_occ_unitsE" = "Total Occupied HU",
+                        "renter_occ_unitsE" = "Renter Occupied HU"))
 
-# The Berkshire Gas Company
-raceLeakDensityBG <- ma_blkgrps18 %>% 
+# The Berkshire Gas Company 
+ppLeakDensityBG <- ma_blkgrps18 %>% 
   as.data.frame() %>% 
   filter(GAS == "The Berkshire Gas Company") %>% # limit to BGs in BG svc area
-  mutate(leaks_sqkmBG = (`Berkshire Gas_19unrepaired`)/area_sqkm) %>% 
-  select(ends_with("_E"), leaks_sqkmBG) %>% 
-  pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+  mutate(leaks_sqkmBG = (`Berkshire Gas_19unrepaired`)/area_sqkm) %>%
+  mutate(MA_INCOME17 = if_else(MA_INCOME17 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME17 = replace_na(MA_INCOME17,0)) %>% 
+  mutate(MA_INCOME21 = if_else(MA_INCOME21 == "I", totalpop_E, 0)) %>% 
+  mutate(MA_INCOME21 = replace_na(MA_INCOME21,0)) %>% 
+  mutate(MA_MINORITY17 = if_else(MA_MINORITY17 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY17 = replace_na(MA_MINORITY17,0)) %>% 
+  mutate(MA_MINORITY21 = if_else(MA_MINORITY21 == "M", totalpop_E,0)) %>%
+  mutate(MA_MINORITY21 = replace_na(MA_MINORITY21,0)) %>% 
+  mutate(MA_ENGLISH = if_else(MA_ENGLISH == "E", totalpop_E,0)) %>%
+  mutate(MA_ENGLISH = replace_na(MA_ENGLISH, 0)) %>%
+  select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
+         eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+         ends_with("unitsE"), leaks_sqkmBG) %>% 
+  pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
-  summarize(wLeaksPerSqKmBG = weighted.mean(x = leaks_sqkmBG, w = Pop)) %>% 
+  summarize(wLeaksPerSqKmBG = weighted.mean(x = leaks_sqkmBG, w = Pop, 
+                                            na.rm = TRUE)) %>% 
   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
                         "minority_E" = "People of Color",
                         "nh2morepop_E" = "Two or more races",
@@ -580,27 +572,36 @@ raceLeakDensityBG <- ma_blkgrps18 %>%
                         "nhnativpop_E" = "Native Pacific Islander",
                         "nhotherpop_E" = "Other race",
                         "nhwhitepop_E" = "White",
-                        "totalpop_E" = "Total Population"))
+                        "totalpop_E" = "Total Population",
+                        "eng_hhE" = "Total Households",
+                        "under5E" = "Under 5",
+                        "over64E" = "Over 64",
+                        "eng_limitE" = "Limited English HH",
+                        "num2povE" = "Low Income",
+                        "lthsE" = "No HS Diploma",
+                        "total_occ_unitsE" = "Total Occupied HU",
+                        "renter_occ_unitsE" = "Renter Occupied HU"))
+
 
 # Join the utility df together
-raceLeakDensityJoinedU <- list(raceLeakDensityBG,
-                               raceLeakDensityCG,
-                               raceLeakDensityEV,
-                               raceLeakDensityFG,
-                               raceLeakDensityLU,
-                               raceLeakDensityNG) %>% 
+ppLeakDensityJoinedU <- list(ppLeakDensityBG,
+                               ppLeakDensityCG,
+                               ppLeakDensityEV,
+                               ppLeakDensityFG,
+                               ppLeakDensityLU,
+                               ppLeakDensityNG) %>% 
   reduce(left_join, by = "Group")
 
 
 # Facet wrap by utility
-raceLeakDensityJoinedU %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(wLeaksPerSqKmBG:wLeaksPerSqKmNG, 
                names_to = "Utility", values_to = "leakDensity") %>% 
   drop_na(leakDensity) %>% 
   mutate(Utility = recode(Utility, "wLeaksPerSqKmBG" = "Berkshire Gas",
-                            "wLeaksPerSqKmCG" = "Columbia Gas",
-                            "wLeaksPerSqKmEV" = "Eversource Energy",
-                            "wLeaksPerSqKmUN" = "Unitil/Fitchburg Gas",
+                          "wLeaksPerSqKmCG" = "Columbia Gas",
+                          "wLeaksPerSqKmEV" = "Eversource Energy",
+                          "wLeaksPerSqKmFG" = "Unitil/Fitchburg Gas",
                           "wLeaksPerSqKmLU" = "Liberty Utilities",
                           "wLeaksPerSqKmNG" = "National Grid"),
          Group = reorder_within(Group, leakDensity, Utility)) %>% 
@@ -613,7 +614,300 @@ raceLeakDensityJoinedU %>%
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
                             km^2, ")", sep = "")),
-       title = "Race and Gas Leaks by Utility across Massachusetts")
+       title = "Piority Populations and Unrepaired Gas Leaks by Utility for 2018 across Massachusetts")
+
+
+
+
+
+  
+# # Look only at race and ethnicity
+# raceLeakDensity <- ma_blkgrps18 %>% 
+#   # st_filter(., ng_service_areas) %>%
+#   as.data.frame() %>% 
+#   select(ends_with("_E"), starts_with("leaks_")) %>% 
+#   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop),
+#             wLeaksPerSqKmC1 = weighted.mean(x = leaks_sqkmC1, w = Pop),
+#             wLeaksPerSqKmC2 = weighted.mean(x = leaks_sqkmC2, w = Pop),
+#             wLeaksPerSqKmC3 = weighted.mean(x = leaks_sqkmC3, w = Pop)) %>% 
+#   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
+#                 "minority_E" = "People of Color",
+#                 "nh2morepop_E" = "Two or more races",
+#                 "nhamerindpop_E" = "Native American",
+#                 "nhasianpop_E" = "Asian",
+#                 "nhblackpop_E" = "Black",
+#                 "nhnativpop_E" = "Native Pacific Islander",
+#                 "nhotherpop_E" = "Other race",
+#                 "nhwhitepop_E" = "White",
+#                 "totalpop_E" = "Total Population"))
+# 
+# raceLeakDensityUC <- ma_blkgrps18 %>% 
+#   # st_filter(., ng_service_areas) %>%
+#   as.data.frame() %>% 
+#   select(ends_with("_UC") & starts_with("nh"), hisppop_UC, minority_UC, 
+#          totalpop_UC, leaks_sqkm) %>% 
+#   pivot_longer(., cols = ends_with("_UC"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop)) %>% 
+#   rename(., wLeaksPerSqKmUC = wLeaksPerSqKm) %>%
+#   mutate(Group = recode(Group, "hisppop_UC" = "Hispanic", 
+#                         "minority_UC" = "People of Color",
+#                         "nh2morepop_UC" = "Two or more races",
+#                         "nhamerindpop_UC" = "Native American",
+#                         "nhasianpop_UC" = "Asian",
+#                         "nhblackpop_UC" = "Black",
+#                         "nhnativpop_UC" = "Native Pacific Islander",
+#                         "nhotherpop_UC" = "Other race",
+#                         "nhwhitepop_UC" = "White",
+#                         "totalpop_UC" = "Total Population"))
+# 
+# raceLeakDensityLC <- ma_blkgrps18 %>% 
+#   # st_filter(., ng_service_areas) %>%
+#   as.data.frame() %>% 
+#   select(ends_with("_LC") & starts_with("nh"), hisppop_LC, minority_LC, 
+#          totalpop_LC, leaks_sqkm) %>% 
+#   pivot_longer(., cols = ends_with("_LC"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop)) %>% 
+#   rename(., wLeaksPerSqKmLC = wLeaksPerSqKm) %>% 
+#   mutate(Group = recode(Group, "hisppop_LC" = "Hispanic", 
+#                         "minority_LC" = "People of Color",
+#                         "nh2morepop_LC" = "Two or more races",
+#                         "nhamerindpop_LC" = "Native American",
+#                         "nhasianpop_LC" = "Asian",
+#                         "nhblackpop_LC" = "Black",
+#                         "nhnativpop_LC" = "Native Pacific Islander",
+#                         "nhotherpop_LC" = "Other race",
+#                         "nhwhitepop_LC" = "White",
+#                         "totalpop_LC" = "Total Population")) %>% 
+#   replace_na(., list(wLeaksPerSqKmLC = 0))
+# 
+# # bring df together
+# raceLeakDensityJoined <- raceLeakDensity %>% 
+#   left_join(., raceLeakDensityLC, by = "Group") %>% 
+#   left_join(., raceLeakDensityUC, by = "Group")
+# 
+# # create a bar plot of total leaks for race and ethnicity with error bars
+# raceLeakDensityJoined %>% 
+#   ggplot(aes(x = reorder(Group,wLeaksPerSqKm), y = wLeaksPerSqKm)) + 
+#   geom_col() + coord_flip() + xlab("") + 
+#   ylab("Population-weighted leak density (leaks/SqKm)") +
+#   theme_minimal() +
+#   geom_errorbar(aes(ymin = wLeaksPerSqKmUC, ymax = wLeaksPerSqKmLC))
+# 
+# # create a bar plot of Class 3 leaks
+# raceLeakDensityJoined %>% 
+#   ggplot(aes(x = reorder(Group,wLeaksPerSqKmC3), y = wLeaksPerSqKmC3)) + 
+#   geom_col() + coord_flip() + xlab("") + 
+#   ylab("Population-weighted leak density (Class 3 leaks/SqKm)") +
+#   theme_minimal() 
+# 
+# # create a bar plot of Class 2 leaks
+# raceLeakDensityJoined %>% 
+#   ggplot(aes(x = reorder(Group,wLeaksPerSqKmC2), y = wLeaksPerSqKmC2)) + 
+#   geom_col() + coord_flip() + xlab("") + 
+#   ylab("Population-weighted leak density (Class 2 leaks/SqKm)") +
+#   theme_minimal() 
+# 
+# # create a bar plot of Class 1 leaks
+# raceLeakDensityJoined %>% 
+#   ggplot(aes(x = reorder(Group,wLeaksPerSqKmC1), y = wLeaksPerSqKmC1)) + 
+#   geom_col() + coord_flip() + xlab("") + 
+#   ylab("Population-weighted leak density (Class 1 leaks/SqKm)") +
+#   theme_minimal() 
+# 
+# 
+# # create a facet wrap bar graph by leak grade and ordered by leaks
+# raceLeakDensityJoined %>% 
+#   select(-(ends_with("LC") | ends_with("UC"))) %>% 
+#   pivot_longer(wLeaksPerSqKm:wLeaksPerSqKmC3, 
+#                names_to = "leakClass", values_to = "leakDensity") %>% 
+#   mutate(leakClass = recode(leakClass, "wLeaksPerSqKm" = "All Leaks",
+#                         "wLeaksPerSqKmC1" = "Class 1 Leaks",
+#                         "wLeaksPerSqKmC2" = "Class 2 Leaks",
+#                         "wLeaksPerSqKmC3" = "Class 3 Leaks"),
+#          Group = reorder_within(Group, leakDensity, leakClass)) %>% 
+#   ggplot(aes(x = Group, y = leakDensity, fill = leakClass)) + 
+#   geom_col(show.legend = FALSE) +
+#   coord_flip() + 
+#   scale_x_reordered() +
+#   theme_minimal() +
+#   facet_wrap(~ leakClass, scales = "free") +
+#   labs(x = NULL, 
+#        y = expression(paste("Population-weighted mean leak density (leaks/", 
+#                             km^2, ")", sep = "")),
+#        title = "Race and Gas Leaks across Massachusetts")
+
+# # Compare leak density distribution by utility
+# # National Grid; includes both NG-Boston and NG-Colonial Gas
+# raceLeakDensityNG <- ma_blkgrps18 %>% 
+#   as.data.frame() %>% 
+#   filter(str_detect(GAS, "^National") | 
+#            GAS == "Colonial Gas") %>% # limit to BGs in NG/Colonial svc area
+#   mutate(leaks_sqkmNG = (`National Grid - Boston Gas_19unrepaired` +
+#                            `National Grid - Colonial Gas_19unrepaired`)/area_sqkm) %>% 
+#   select(ends_with("_E"), (starts_with("National") & ends_with("ed")), 
+#          leaks_sqkmNG) %>% 
+#   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKmNG = weighted.mean(x = leaks_sqkmNG, w = Pop)) %>% 
+#   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
+#                         "minority_E" = "People of Color",
+#                         "nh2morepop_E" = "Two or more races",
+#                         "nhamerindpop_E" = "Native American",
+#                         "nhasianpop_E" = "Asian",
+#                         "nhblackpop_E" = "Black",
+#                         "nhnativpop_E" = "Native Pacific Islander",
+#                         "nhotherpop_E" = "Other race",
+#                         "nhwhitepop_E" = "White",
+#                         "totalpop_E" = "Total Population"))
+# 
+# # Eversource Energy
+# raceLeakDensityEV <- ma_blkgrps18 %>% 
+#   as.data.frame() %>% 
+#   filter(str_detect(GAS, "^Eversource") | 
+#            str_detect(GAS, "Energy$")) %>% # limit to BGs in Eversource svc area
+#   mutate(leaks_sqkmEV = (`Eversource Energy_19unrepaired`)/area_sqkm) %>% 
+#   select(ends_with("_E"), leaks_sqkmEV) %>% 
+#   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKmEV = weighted.mean(x = leaks_sqkmEV, w = Pop)) %>% 
+#   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
+#                         "minority_E" = "People of Color",
+#                         "nh2morepop_E" = "Two or more races",
+#                         "nhamerindpop_E" = "Native American",
+#                         "nhasianpop_E" = "Asian",
+#                         "nhblackpop_E" = "Black",
+#                         "nhnativpop_E" = "Native Pacific Islander",
+#                         "nhotherpop_E" = "Other race",
+#                         "nhwhitepop_E" = "White",
+#                         "totalpop_E" = "Total Population"))
+# 
+# # Columbia Gas
+# raceLeakDensityCG <- ma_blkgrps18 %>% 
+#   as.data.frame() %>% 
+#   filter(str_detect(GAS, "^Columbia") | 
+#            str_detect(GAS, "Columbia Gas$")) %>% # limit to BGs in CG svc area
+#   mutate(leaks_sqkmCG = (`Columbia Gas_19unrepaired`)/area_sqkm) %>% 
+#   select(ends_with("_E"), leaks_sqkmCG) %>% 
+#   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKmCG = weighted.mean(x = leaks_sqkmCG, w = Pop)) %>% 
+#   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
+#                         "minority_E" = "People of Color",
+#                         "nh2morepop_E" = "Two or more races",
+#                         "nhamerindpop_E" = "Native American",
+#                         "nhasianpop_E" = "Asian",
+#                         "nhblackpop_E" = "Black",
+#                         "nhnativpop_E" = "Native Pacific Islander",
+#                         "nhotherpop_E" = "Other race",
+#                         "nhwhitepop_E" = "White",
+#                         "totalpop_E" = "Total Population"))
+# 
+# # Fitchburg Gas aka Unitil
+# raceLeakDensityFG <- ma_blkgrps18 %>% 
+#   as.data.frame() %>% 
+#   filter(str_detect(GAS, "^Unitil") | 
+#            str_detect(GAS, "Unitil$")) %>% # limit to BGs in FG svc area
+#   mutate(leaks_sqkmFG = (`Fitchburg Gas_19unrepaired`)/area_sqkm) %>% 
+#   select(ends_with("_E"), leaks_sqkmFG) %>% 
+#   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKmFG = weighted.mean(x = leaks_sqkmFG, w = Pop)) %>% 
+#   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
+#                         "minority_E" = "People of Color",
+#                         "nh2morepop_E" = "Two or more races",
+#                         "nhamerindpop_E" = "Native American",
+#                         "nhasianpop_E" = "Asian",
+#                         "nhblackpop_E" = "Black",
+#                         "nhnativpop_E" = "Native Pacific Islander",
+#                         "nhotherpop_E" = "Other race",
+#                         "nhwhitepop_E" = "White",
+#                         "totalpop_E" = "Total Population"))
+# 
+# # Liberty Utilities
+# raceLeakDensityLU <- ma_blkgrps18 %>% 
+#   as.data.frame() %>% 
+#   filter(GAS == "Liberty Utilities") %>% # limit to BGs in LU svc area
+#   mutate(leaks_sqkmLU = (`Liberty Utilities_19unrepaired`)/area_sqkm) %>% 
+#   select(ends_with("_E"), leaks_sqkmLU) %>% 
+#   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKmLU = weighted.mean(x = leaks_sqkmLU, w = Pop)) %>% 
+#   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
+#                         "minority_E" = "People of Color",
+#                         "nh2morepop_E" = "Two or more races",
+#                         "nhamerindpop_E" = "Native American",
+#                         "nhasianpop_E" = "Asian",
+#                         "nhblackpop_E" = "Black",
+#                         "nhnativpop_E" = "Native Pacific Islander",
+#                         "nhotherpop_E" = "Other race",
+#                         "nhwhitepop_E" = "White",
+#                         "totalpop_E" = "Total Population"))
+# 
+# # The Berkshire Gas Company
+# raceLeakDensityBG <- ma_blkgrps18 %>% 
+#   as.data.frame() %>% 
+#   filter(GAS == "The Berkshire Gas Company") %>% # limit to BGs in BG svc area
+#   mutate(leaks_sqkmBG = (`Berkshire Gas_19unrepaired`)/area_sqkm) %>% 
+#   select(ends_with("_E"), leaks_sqkmBG) %>% 
+#   pivot_longer(., cols = ends_with("_E"), names_to = "Group", 
+#                values_to = "Pop", values_drop_na = TRUE) %>% 
+#   group_by(Group) %>% 
+#   summarize(wLeaksPerSqKmBG = weighted.mean(x = leaks_sqkmBG, w = Pop)) %>% 
+#   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
+#                         "minority_E" = "People of Color",
+#                         "nh2morepop_E" = "Two or more races",
+#                         "nhamerindpop_E" = "Native American",
+#                         "nhasianpop_E" = "Asian",
+#                         "nhblackpop_E" = "Black",
+#                         "nhnativpop_E" = "Native Pacific Islander",
+#                         "nhotherpop_E" = "Other race",
+#                         "nhwhitepop_E" = "White",
+#                         "totalpop_E" = "Total Population"))
+# 
+# # Join the utility df together
+# raceLeakDensityJoinedU <- list(raceLeakDensityBG,
+#                                raceLeakDensityCG,
+#                                raceLeakDensityEV,
+#                                raceLeakDensityFG,
+#                                raceLeakDensityLU,
+#                                raceLeakDensityNG) %>% 
+#   reduce(left_join, by = "Group")
+# 
+# 
+# # Facet wrap by utility
+# raceLeakDensityJoinedU %>% 
+#   pivot_longer(wLeaksPerSqKmBG:wLeaksPerSqKmNG, 
+#                names_to = "Utility", values_to = "leakDensity") %>% 
+#   drop_na(leakDensity) %>% 
+#   mutate(Utility = recode(Utility, "wLeaksPerSqKmBG" = "Berkshire Gas",
+#                             "wLeaksPerSqKmCG" = "Columbia Gas",
+#                             "wLeaksPerSqKmEV" = "Eversource Energy",
+#                             "wLeaksPerSqKmUN" = "Unitil/Fitchburg Gas",
+#                           "wLeaksPerSqKmLU" = "Liberty Utilities",
+#                           "wLeaksPerSqKmNG" = "National Grid"),
+#          Group = reorder_within(Group, leakDensity, Utility)) %>% 
+#   ggplot(aes(x = Group, y = leakDensity, fill = Utility)) + 
+#   geom_col(show.legend = FALSE, na.rm = TRUE) +
+#   coord_flip() + 
+#   scale_x_reordered() +
+#   theme_minimal() +
+#   facet_wrap(~ Utility, scales = "free") +
+#   labs(x = NULL, 
+#        y = expression(paste("Population-weighted mean leak density (leaks/", 
+#                             km^2, ")", sep = "")),
+#        title = "Race and Gas Leaks by Utility across Massachusetts")
 
 
 # conduct a weighted t-test to determine if differences are statistically significant
