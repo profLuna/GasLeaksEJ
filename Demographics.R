@@ -464,8 +464,11 @@ renters <- get_acs(geography = "block group", year = 2018, survey = "acs5",
                    variables = c(total_occ_units = "B25003_001",
                                  renter_occ_units = "B25003_003"),
                    state = "MA", output = "wide") %>% 
-  mutate(renter_occ_units_UC = renter_occ_unitsE + renter_occ_unitsM,
-         renter_occ_units_LC = if_else(renter_occ_unitsE < renter_occ_unitsM, 0, 
+  mutate(total_occ_units_UC = total_occ_unitsE + total_occ_unitsM,
+         total_occ_units_LC = if_else(total_occ_unitsE < total_occ_unitsM, 0,
+                                      total_occ_unitsE - total_occ_unitsM),
+         renter_occ_units_UC = renter_occ_unitsE + renter_occ_unitsM,
+         renter_occ_units_LC = if_else(renter_occ_unitsE < renter_occ_unitsM, 0,
                                        renter_occ_unitsE - renter_occ_unitsM),
          renter_occ_units_p = if_else(total_occ_unitsE <= 0, 0, 
                                         renter_occ_unitsE/total_occ_unitsE),
@@ -849,7 +852,10 @@ renters <- get_acs(geography = "tract", year = 2018, survey = "acs5",
                    variables = c(total_occ_units = "B25003_001",
                                  renter_occ_units = "B25003_003"),
                    state = "MA", output = "wide") %>% 
-  mutate(renter_occ_units_UC = renter_occ_unitsE + renter_occ_unitsM,
+  mutate(total_occ_units_UC = total_occ_unitsE + total_occ_unitsM,
+         total_occ_units_LC = if_else(total_occ_unitsE < total_occ_unitsM, 0,
+                                      total_occ_unitsE - total_occ_unitsM),
+         renter_occ_units_UC = renter_occ_unitsE + renter_occ_unitsM,
          renter_occ_units_LC = if_else(renter_occ_unitsE < renter_occ_unitsM, 0, 
                                        renter_occ_unitsE - renter_occ_unitsM),
          renter_occ_units_p = if_else(total_occ_unitsE <= 0, 0, 
@@ -1336,7 +1342,10 @@ renters <- get_acs(geography = "county subdivision", year = 2018, survey = "acs5
                    variables = c(total_occ_units = "B25003_001",
                                  renter_occ_units = "B25003_003"),
                    state = "MA", output = "wide") %>% 
-  mutate(renter_occ_units_UC = renter_occ_unitsE + renter_occ_unitsM,
+  mutate(total_occ_units_UC = total_occ_unitsE + total_occ_unitsM,
+         total_occ_units_LC = if_else(total_occ_unitsE < total_occ_unitsM, 0,
+                                      total_occ_unitsE - total_occ_unitsM),
+         renter_occ_units_UC = renter_occ_unitsE + renter_occ_unitsM,
          renter_occ_units_LC = if_else(renter_occ_unitsE < renter_occ_unitsM, 0, 
                                        renter_occ_unitsE - renter_occ_unitsM),
          renter_occ_units_p = if_else(total_occ_unitsE <= 0, 0, 
@@ -1471,7 +1480,4 @@ ma_cosub18 <- ma_cosub18 %>%
 # save output
 load("/Data/Demographics.rds")
 save(ma_blkgrps18, ma_tracts18, ma_cosub18, file = "C:/Users/Marcos/Documents/Research/GasLeaksEJ/Data/Demographics.rds")
-
-
-getwd()
 
