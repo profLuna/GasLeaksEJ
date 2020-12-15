@@ -302,7 +302,8 @@ ppLeakDensityJoined <- ppLeakDensity %>%
 ppLeakDensityJoined %>% 
   ggplot(aes(x = reorder(Group,wLeaksPerSqKm), y = wLeaksPerSqKm)) + 
   geom_col() + coord_flip() + xlab("") + 
-  ylab("Population-weighted leak density (leaks/SqKm)") +
+  ylab(expression(paste("Population-weighted mean leak density (leaks/", 
+                        km^2, ")", " by Census Block Group",sep = ""))) +
   theme_minimal() +
   geom_errorbar(aes(ymin = wLeaksPerSqKmUC, ymax = wLeaksPerSqKmLC)) +
   ggtitle("Priority Populations and Gas Leaks in 2018 across Massachusetts")
@@ -324,7 +325,7 @@ ppLeakDensity %>%
   facet_wrap(~ leakClass, scales = "free") +
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
-                            km^2, ")", sep = "")),
+                            km^2, ")", " by Census Block Group",sep = "")),
        title = "Priority Populations and Unrepaired Gas Leaks in 2018 across Massachusetts")
 
 
@@ -614,7 +615,7 @@ ppLeakDensityJoinedU %>%
   facet_wrap(~ Utility, scales = "free") +
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
-                            km^2, ")", sep = "")),
+                            km^2, ")", " by Census Block Group", sep = "")),
        title = "Piority Populations and Unrepaired Gas Leaks by Utility for 2018 across Massachusetts")
 
 
