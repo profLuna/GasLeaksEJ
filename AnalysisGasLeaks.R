@@ -144,6 +144,21 @@ ma_blkgrps18 %>%
 
 summary(ma_blkgrps18$unrepaired2019total)
 
+tm_shape(ma_blkgrps18) + tm_fill(col = "unrepaired2019total", style = "fisher")
+
+ma_blkgrps18 %>% 
+  ggplot(aes(x = leaks_sqkm)) + geom_histogram()
+
+summary(ma_blkgrps18$leaks_sqkm)
+
+tm_shape(ma_blkgrps18) + tm_fill(col = "leaks_sqkm", style = "quantile")
+tm_shape(ma_blkgrps18) + tm_fill(col = "leaks_sqkm", style = "fisher") + 
+  tm_shape(ng_service_areas) + tm_polygons(border.col = "GAS")
+
+ng_service_areas2 <- ng_service_areas %>% 
+  group_by(GAS) %>% 
+  summarize()
+
 ma_blkgrps18 %>% 
   ggplot(aes(x = unrepaired2019totalC1)) + geom_histogram()
 
@@ -300,6 +315,13 @@ ppLeakDensityJoined <- ppLeakDensity %>%
 
 # create a bar plot of total leaks with error bars
 ppLeakDensityJoined %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>% 
   ggplot(aes(x = reorder(Group,wLeaksPerSqKm), y = wLeaksPerSqKm)) + 
   geom_col() + coord_flip() + xlab("") + 
   ylab(expression(paste("Population-weighted mean leak density (leaks/", 
@@ -308,10 +330,19 @@ ppLeakDensityJoined %>%
   geom_errorbar(aes(ymin = wLeaksPerSqKmUC, ymax = wLeaksPerSqKmLC)) +
   ggtitle("Priority Populations and Gas Leaks in 2018 across Massachusetts")
 
+ggsave("Images/LeaksPP_blkgrp_moe.png")
+
 # create a facet wrap bar graph by leak grade and ordered by leaks
 ppLeakDensity %>% 
   pivot_longer(wLeaksPerSqKm:wLeaksPerSqKmC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>%
   mutate(leakClass = recode(leakClass, "wLeaksPerSqKm" = "All Leaks",
                             "wLeaksPerSqKmC1" = "Class 1 Leaks",
                             "wLeaksPerSqKmC2" = "Class 2 Leaks",
@@ -321,12 +352,14 @@ ppLeakDensity %>%
   geom_col(show.legend = FALSE) +
   coord_flip() + 
   scale_x_reordered() +
-  theme_minimal() +
+  theme_minimal(base_size = 6) +
   facet_wrap(~ leakClass, scales = "free") +
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
                             km^2, ")", " by Census Block Group",sep = "")),
        title = "Priority Populations and Unrepaired Gas Leaks in 2018 across Massachusetts")
+
+ggsave("Images/LeaksPPbyClass_blkgrp.png")
 
 
 # Compare leak density distribution by utility
@@ -599,6 +632,13 @@ ppLeakDensityJoinedU <- list(ppLeakDensityBG,
 ppLeakDensityJoinedU %>% 
   pivot_longer(wLeaksPerSqKmBG:wLeaksPerSqKmNG, 
                names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>%
   drop_na(leakDensity) %>% 
   mutate(Utility = recode(Utility, "wLeaksPerSqKmBG" = "Berkshire Gas",
                           "wLeaksPerSqKmCG" = "Columbia Gas",
@@ -611,12 +651,14 @@ ppLeakDensityJoinedU %>%
   geom_col(show.legend = FALSE, na.rm = TRUE) +
   coord_flip() + 
   scale_x_reordered() +
-  theme_minimal() +
+  theme_minimal(base_size = 6) +
   facet_wrap(~ Utility, scales = "free") +
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
                             km^2, ")", " by Census Block Group", sep = "")),
        title = "Piority Populations and Unrepaired Gas Leaks by Utility for 2018 across Massachusetts")
+
+ggsave("Images/LeaksPPbyUtility_blkgrp.png")
 
 
 
