@@ -41,6 +41,10 @@ ma_blkgrps18 <- ng_service_areas %>%
 unrepaired2019_with_blkgrp <- ma_blkgrps18 %>% 
   select(GEOID) %>%
   st_join(unrepaired2019final, ., largest = TRUE)
+# do same for repaired leaks
+repaired2019_with_blkgrp <- ma_blkgrps18 %>% 
+  select(GEOID) %>%
+  st_join(repaired2019final, ., largest = TRUE)
 
 # break them out by leak class
 unrepaired2019_with_blkgrpC1 <- unrepaired2019_with_blkgrp %>% 
@@ -50,6 +54,15 @@ unrepaired2019_with_blkgrpC2 <- unrepaired2019_with_blkgrp %>%
   filter(Class == "2")
 
 unrepaired2019_with_blkgrpC3 <- unrepaired2019_with_blkgrp %>% 
+  filter(Class == "3")
+# do same for repaired
+repaired2019_with_blkgrpC1 <- repaired2019_with_blkgrp %>% 
+  filter(Class == "1")
+
+repaired2019_with_blkgrpC2 <- repaired2019_with_blkgrp %>% 
+  filter(Class == "2")
+
+repaired2019_with_blkgrpC3 <- repaired2019_with_blkgrp %>% 
   filter(Class == "3")
 
 # group by GEOID to get a simple count of all leaks within each block group
@@ -68,6 +81,30 @@ unrepaired2019_by_blkgrpC2 <- unrepaired2019_with_blkgrpC2 %>%
 unrepaired2019_by_blkgrpC3 <- unrepaired2019_with_blkgrpC3 %>% 
   group_by(GEOID) %>% 
   summarize(unrepaired2019totalC3 = n())
+# do the same for repaired, but also compute avg days to repair
+repaired2019_by_blkgrp <- repaired2019_with_blkgrp %>% 
+  group_by(GEOID) %>% 
+  summarize(repaired2019total = n(), 
+            DaysToRepairAvg = mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMed = median(DaysToRepair, na.rm = TRUE))
+
+repaired2019_by_blkgrpC1 <- repaired2019_with_blkgrpC1 %>% 
+  group_by(GEOID) %>% 
+  summarize(repaired2019totalC1 = n(), 
+            DaysToRepairAvgC1 = mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMedC1 = median(DaysToRepair, na.rm = TRUE))
+
+repaired2019_by_blkgrpC2 <- repaired2019_with_blkgrpC2 %>% 
+  group_by(GEOID) %>% 
+  summarize(repaired2019totalC2 = n(), 
+            DaysToRepairAvgC2 = mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMedC2 = median(DaysToRepair, na.rm = TRUE))
+
+repaired2019_by_blkgrpC3 <- repaired2019_with_blkgrpC3 %>% 
+  group_by(GEOID) %>% 
+  summarize(repaired2019totalC3 = n(), 
+            DaysToRepairAvgC3 = mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMedC3 = median(DaysToRepair, na.rm = TRUE))
 
 # group by two columns to get the count of leaks by unique combinations of Utility and GEOID so that we know which utility is responsible for which leaks in each block group.
 unrepaired2019_by_utility <- unrepaired2019_with_blkgrp %>% 
@@ -89,6 +126,35 @@ unrepaired2019_by_utilityC3 <- unrepaired2019_with_blkgrpC3 %>%
   as.data.frame() %>% 
   group_by(Utility, GEOID) %>% 
   summarise(unrepaired2019totalC3 = n())
+# do the same for repaired
+repaired2019_by_utility <- repaired2019_with_blkgrp %>% 
+  as.data.frame() %>% 
+  group_by(Utility, GEOID) %>% 
+  summarise(repaired2019total = n(), 
+            DaysToRepairAvg = mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMed = median(DaysToRepair, na.rm = TRUE))
+
+repaired2019_by_utilityC1 <- repaired2019_with_blkgrpC1 %>% 
+  as.data.frame() %>% 
+  group_by(Utility, GEOID) %>% 
+  summarise(repaired2019totalC1 = n(), 
+            DaysToRepairAvgC1 = mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMedC1 = median(DaysToRepair, na.rm = TRUE))
+
+repaired2019_by_utilityC2 <- repaired2019_with_blkgrpC2 %>% 
+  as.data.frame() %>% 
+  group_by(Utility, GEOID) %>% 
+  summarise(repaired2019totalC2 = n(), 
+            DaysToRepairAvgC2 = mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMedC2 = median(DaysToRepair, na.rm = TRUE))
+
+repaired2019_by_utilityC3 <- repaired2019_with_blkgrpC3 %>% 
+  as.data.frame() %>% 
+  group_by(Utility, GEOID) %>% 
+  summarise(repaired2019totalC3 = n(), 
+            DaysToRepairAvgC3= mean(DaysToRepair, na.rm = TRUE),
+            DaysToRepairMedC3 = median(DaysToRepair, na.rm = TRUE))
+
 
 # reshape df to get separate columns of leak counts by utility, with one row for every GEOID that has at least one leak from some utility
 unrepaired2019_by_utility2 <- unrepaired2019_by_utility %>% 
@@ -106,6 +172,77 @@ unrepaired2019_by_utility2C2 <- unrepaired2019_by_utilityC2 %>%
 unrepaired2019_by_utility2C3 <- unrepaired2019_by_utilityC3 %>% 
   pivot_wider(., names_from = Utility, values_from = unrepaired2019totalC3,
               names_glue = "{Utility}_19unrepairedC3")
+# repeat for repaired, repeating for avg times
+repaired2019_by_utility2 <- repaired2019_by_utility %>% 
+  select(-starts_with("Days")) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = repaired2019total,
+              names_glue = "{Utility}_19repaired")
+
+repaired2019_by_utility2.b <- repaired2019_by_utility %>% 
+  select(GEOID, Utility, DaysToRepairAvg) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairAvg,
+              names_glue = "{Utility}_19repairedDaysAvg")
+
+repaired2019_by_utility2.c <- repaired2019_by_utility %>% 
+  select(GEOID, Utility, DaysToRepairMed) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairMed,
+              names_glue = "{Utility}_19repairedDaysMed")
+
+repaired2019_by_utility2C1 <- repaired2019_by_utilityC1 %>% 
+  select(-starts_with("Days")) %>% 
+  pivot_wider(., names_from = Utility, values_from = repaired2019totalC1,
+              names_glue = "{Utility}_19repairedC1")
+
+repaired2019_by_utility2C1.b <- repaired2019_by_utilityC1 %>% 
+  select(GEOID, Utility, DaysToRepairAvgC1) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairAvgC1,
+              names_glue = "{Utility}_19repairedDaysAvgC1")
+
+repaired2019_by_utility2C1.c <- repaired2019_by_utilityC1 %>% 
+  select(GEOID, Utility, DaysToRepairMedC1) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairMedC1,
+              names_glue = "{Utility}_19repairedDaysMedC1")
+
+repaired2019_by_utility2C2 <- repaired2019_by_utilityC2 %>% 
+  select(-starts_with("Days")) %>% 
+  pivot_wider(., names_from = Utility, values_from = repaired2019totalC2,
+              names_glue = "{Utility}_19repairedC2")
+
+repaired2019_by_utility2C2.b <- repaired2019_by_utilityC2 %>% 
+  select(GEOID, Utility, DaysToRepairAvgC2) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairAvgC2,
+              names_glue = "{Utility}_19repairedDaysAvgC2")
+
+repaired2019_by_utility2C2.c <- repaired2019_by_utilityC2 %>% 
+  select(GEOID, Utility, DaysToRepairMedC2) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairMedC2,
+              names_glue = "{Utility}_19repairedDaysMedC2")
+
+repaired2019_by_utility2C3 <- repaired2019_by_utilityC3 %>% 
+  select(-starts_with("Days")) %>% 
+  pivot_wider(., names_from = Utility, values_from = repaired2019totalC3,
+              names_glue = "{Utility}_19repairedC3")
+
+repaired2019_by_utility2C3.b <- repaired2019_by_utilityC3 %>% 
+  select(GEOID, Utility, DaysToRepairAvgC3) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairAvgC3,
+              names_glue = "{Utility}_19repairedDaysAvgC3")
+
+repaired2019_by_utility2C3.c <- repaired2019_by_utilityC3 %>% 
+  select(GEOID, Utility, DaysToRepairMedC3) %>% 
+  pivot_wider(., names_from = Utility, 
+              values_from = DaysToRepairMedC3,
+              names_glue = "{Utility}_19repairedDaysMedC3")
+
+
 
 # join total leak counts to the block group demographics
 ma_blkgrps18 <- lapply(list(unrepaired2019_by_blkgrp,
@@ -126,7 +263,6 @@ ma_blkgrps18 <- lapply(list(unrepaired2019_by_blkgrp,
                                 unrepaired2019totalC2/area_sqkm, 0),
          leaks_sqkmC3 = if_else(unrepaired2019totalC3 > 0,
                                 unrepaired2019totalC3/area_sqkm, 0))
-  
 
 # join leak counts by utility to the block group demographics
 ma_blkgrps18 <- list(ma_blkgrps18, unrepaired2019_by_utility2, 
@@ -137,6 +273,52 @@ ma_blkgrps18 <- list(ma_blkgrps18, unrepaired2019_by_utility2,
   mutate(
     across(unrepaired2019total:`National Grid - Colonial Gas_19unrepairedC3`, 
            ~replace_na(., 0)))
+
+# repeat for repaired leaks
+# join total leak counts to the block group demographics
+ma_blkgrps18 <- lapply(list(repaired2019_by_blkgrp,
+                            repaired2019_by_blkgrpC1,
+                            repaired2019_by_blkgrpC2,
+                            repaired2019_by_blkgrpC3), function(x){
+                              as.data.frame(x) %>% 
+                                select(-geometry)}) %>% 
+  reduce(full_join, by = "GEOID") %>% 
+  left_join(ma_blkgrps18, ., by = "GEOID") %>% 
+  mutate(REPleaks_sqkm = if_else(repaired2019total > 0,
+                              repaired2019total/area_sqkm, 0),
+         REPleaks_sqkmC1 = if_else(repaired2019totalC1 > 0,
+                                repaired2019totalC1/area_sqkm, 0),
+         REPleaks_sqkmC2 = if_else(repaired2019totalC2 > 0,
+                                repaired2019totalC2/area_sqkm, 0),
+         REPleaks_sqkmC3 = if_else(repaired2019totalC3 > 0,
+                                repaired2019totalC3/area_sqkm, 0))
+
+# join leak counts by utility to the block group demographics
+ma_blkgrps18 <- list(ma_blkgrps18, repaired2019_by_utility2, 
+                     repaired2019_by_utility2C1,
+                     repaired2019_by_utility2C1.b,
+                     repaired2019_by_utility2C1.c,
+                     repaired2019_by_utility2C2,
+                     repaired2019_by_utility2C2.b,
+                     repaired2019_by_utility2C2.c,
+                     repaired2019_by_utility2C3,
+                     repaired2019_by_utility2C3.b,
+                     repaired2019_by_utility2C3.c) %>% 
+  reduce(left_join, by = "GEOID") %>% 
+  mutate(
+    across(c(starts_with("repaired"), starts_with("REP"), 
+             `Berkshire Gas_19repaired`:`National Grid - Colonial Gas_19repaired`,
+             `Berkshire Gas_19repairedC1`:`National Grid - Colonial Gas_19repairedC1`,
+             `Berkshire Gas_19repairedC2`:`National Grid - Colonial Gas_19repairedC2`,
+             `Berkshire Gas_19repairedC3`:`National Grid - Colonial Gas_19repairedC3`), 
+           ~replace_na(., 0)),
+    AllLeaks2019 = unrepaired2019total + repaired2019total,
+    AllLeaks2019C1 = unrepaired2019totalC1 + repaired2019totalC1, 
+    AllLeaks2019C2 = unrepaired2019totalC2 + repaired2019totalC2,
+    AllLeaks2019C3 = unrepaired2019totalC3 + repaired2019totalC3) %>% 
+  mutate(across(starts_with("AllLeaks2019"), ~ . /area_sqkm, 
+                .names = "{.col}_sqkm"))
+
 
 # Look at distributions of leak counts by block group
 ma_blkgrps18 %>% 
