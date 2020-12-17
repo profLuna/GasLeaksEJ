@@ -320,41 +320,41 @@ ma_blkgrps18 <- list(ma_blkgrps18, repaired2019_by_utility2,
                 .names = "{.col}_sqkm"))
 
 
-# Look at distributions of leak counts by block group
-ma_blkgrps18 %>% 
-  ggplot(aes(x = unrepaired2019total)) + geom_histogram()
-
-summary(ma_blkgrps18$unrepaired2019total)
-
-tm_shape(ma_blkgrps18) + tm_fill(col = "unrepaired2019total", style = "fisher")
-
-ma_blkgrps18 %>% 
-  ggplot(aes(x = leaks_sqkm)) + geom_histogram()
-
-summary(ma_blkgrps18$leaks_sqkm)
-
-tm_shape(ma_blkgrps18) + tm_fill(col = "leaks_sqkm", style = "quantile")
-tm_shape(ma_blkgrps18) + tm_fill(col = "leaks_sqkm", style = "fisher") + 
-  tm_shape(ng_service_areas) + tm_polygons(border.col = "GAS")
-
-ng_service_areas2 <- ng_service_areas %>% 
-  group_by(GAS) %>% 
-  summarize()
-
-ma_blkgrps18 %>% 
-  ggplot(aes(x = unrepaired2019totalC1)) + geom_histogram()
-
-summary(ma_blkgrps18$unrepaired2019totalC1)
-
-ma_blkgrps18 %>% 
-  ggplot(aes(x = unrepaired2019totalC2)) + geom_histogram()
-
-summary(ma_blkgrps18$unrepaired2019totalC2)
-
-ma_blkgrps18 %>% 
-  ggplot(aes(x = unrepaired2019totalC3)) + geom_histogram()
-
-summary(ma_blkgrps18$unrepaired2019totalC3)
+# # Look at distributions of leak counts by block group
+# ma_blkgrps18 %>% 
+#   ggplot(aes(x = unrepaired2019total)) + geom_histogram()
+# 
+# summary(ma_blkgrps18$unrepaired2019total)
+# 
+# tm_shape(ma_blkgrps18) + tm_fill(col = "unrepaired2019total", style = "fisher")
+# 
+# ma_blkgrps18 %>% 
+#   ggplot(aes(x = leaks_sqkm)) + geom_histogram()
+# 
+# summary(ma_blkgrps18$leaks_sqkm)
+# 
+# tm_shape(ma_blkgrps18) + tm_fill(col = "leaks_sqkm", style = "quantile")
+# tm_shape(ma_blkgrps18) + tm_fill(col = "leaks_sqkm", style = "fisher") + 
+#   tm_shape(ng_service_areas) + tm_polygons(border.col = "GAS")
+# 
+# ng_service_areas2 <- ng_service_areas %>% 
+#   group_by(GAS) %>% 
+#   summarize()
+# 
+# ma_blkgrps18 %>% 
+#   ggplot(aes(x = unrepaired2019totalC1)) + geom_histogram()
+# 
+# summary(ma_blkgrps18$unrepaired2019totalC1)
+# 
+# ma_blkgrps18 %>% 
+#   ggplot(aes(x = unrepaired2019totalC2)) + geom_histogram()
+# 
+# summary(ma_blkgrps18$unrepaired2019totalC2)
+# 
+# ma_blkgrps18 %>% 
+#   ggplot(aes(x = unrepaired2019totalC3)) + geom_histogram()
+# 
+# summary(ma_blkgrps18$unrepaired2019totalC3)
 
 
 # comparison of population-weighted leak frequency and density by demographic group for priority populations, restricting to areas served by gas utilities for which we have leak data
@@ -372,14 +372,40 @@ ppLeakDensity <-  ma_blkgrps18 %>%
   mutate(MA_ENGLISH = replace_na(MA_ENGLISH,0)) %>%
   select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
          eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
-         ends_with("unitsE"), starts_with("leaks_")) %>% 
+         ends_with("unitsE"), starts_with("leaks_"), 
+         starts_with("AllLeaks"), starts_with("REPleaks_"), 
+         starts_with("DaystoRepairAvg")) %>% 
   pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
   summarize(wLeaksPerSqKm = weighted.mean(x = leaks_sqkm, w = Pop),
             wLeaksPerSqKmC1 = weighted.mean(x = leaks_sqkmC1, w = Pop),
             wLeaksPerSqKmC2 = weighted.mean(x = leaks_sqkmC2, w = Pop),
-            wLeaksPerSqKmC3 = weighted.mean(x = leaks_sqkmC3, w = Pop)) %>% 
+            wLeaksPerSqKmC3 = weighted.mean(x = leaks_sqkmC3, w = Pop),
+            wLeaksPerSqKmALL = weighted.mean(x = AllLeaks2019_sqkm, 
+                                             w = Pop),
+            wLeaksPerSqKmALLC1 = weighted.mean(x = AllLeaks2019C1_sqkm, 
+                                             w = Pop),
+            wLeaksPerSqKmALLC2 = weighted.mean(x = AllLeaks2019C2_sqkm, 
+                                            w = Pop),
+            wLeaksPerSqKmALLC3 = weighted.mean(x = AllLeaks2019C3_sqkm, 
+                                            w = Pop),
+            wLeaksPerSqKmREP = weighted.mean(x = REPleaks_sqkm, 
+                                             w = Pop),
+            wLeaksPerSqKmREPC1 = weighted.mean(x = REPleaks_sqkmC1, 
+                                               w = Pop),
+            wLeaksPerSqKmREPC2 = weighted.mean(x = REPleaks_sqkmC2, 
+                                               w = Pop),
+            wLeaksPerSqKmREPC3 = weighted.mean(x = REPleaks_sqkmC3, 
+                                               w = Pop),
+            wDaysToRepairAvg = weighted.mean(x = DaysToRepairAvg, 
+                                               w = Pop, na.rm = T),
+            wDaysToRepairAvgC1 = weighted.mean(x = DaysToRepairAvgC1, 
+                                               w = Pop, na.rm = T),
+            wDaysToRepairAvgC2 = weighted.mean(x = DaysToRepairAvgC2, 
+                                               w = Pop, na.rm = T),
+            wDaysToRepairAvgC3 = weighted.mean(x = DaysToRepairAvgC3, 
+                                               w = Pop, na.rm = T)) %>% 
   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
                         "minority_E" = "People of Color",
                         "nh2morepop_E" = "Two or more races",
