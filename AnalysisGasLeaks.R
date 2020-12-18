@@ -536,7 +536,7 @@ ppLeakDensityJoined %>%
                         km^2, ")", " by Census Block Group",sep = ""))) +
   theme_minimal() +
   geom_errorbar(aes(ymin = wLeaksPerSqKmUC, ymax = wLeaksPerSqKmLC)) +
-  ggtitle("Priority Populations and Gas Leaks in 2018 across Massachusetts")
+  ggtitle("Priority Populations and Unrepaired Gas Leaks in 2019\nacross Massachusetts")
 
 ggsave("Images/LeaksPP_blkgrp_moe.png")
 
@@ -565,7 +565,7 @@ ppLeakDensity %>%
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
                             km^2, ")", " by Census Block Group",sep = "")),
-       title = "Priority Populations and Unrepaired Gas Leaks in 2018 across Massachusetts")
+       title = "Priority Populations and Unrepaired Gas Leaks in 2019 across Massachusetts")
 
 ggsave("Images/LeaksPPbyClass_blkgrp.png")
 
@@ -864,7 +864,7 @@ ppLeakDensityJoinedU %>%
   labs(x = NULL, 
        y = expression(paste("Population-weighted mean leak density (leaks/", 
                             km^2, ")", " by Census Block Group", sep = "")),
-       title = "Piority Populations and Unrepaired Gas Leaks by Utility for 2018 across Massachusetts")
+       title = "Piority Populations and Unrepaired Gas Leaks by Utility for 2019 across Massachusetts")
 
 ggsave("Images/LeaksPPbyUtility_blkgrp.png")
 
