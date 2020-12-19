@@ -319,7 +319,52 @@ ma_blkgrps18 <- list(ma_blkgrps18, repaired2019_by_utility2,
   mutate(across(starts_with("AllLeaks2019"), ~ . /area_sqkm, 
                 .names = "{.col}_sqkm")) %>% 
   mutate(PctRepaired19 = if_else((repaired2019total == 0 | AllLeaks2019 == 0), 
-                                 0, (repaired2019total/AllLeaks2019)*100))
+                                 0, (repaired2019total/AllLeaks2019)*100),
+         PctRepaired19C1 = if_else((repaired2019totalC1 == 0 | 
+                                      AllLeaks2019C1 == 0), 0,
+                                   (repaired2019totalC1/AllLeaks2019C1)*100),
+         PctRepaired19C2 = if_else((repaired2019totalC2 == 0 | 
+                                      AllLeaks2019C2 == 0), 0,
+                                   (repaired2019totalC2/AllLeaks2019C2)*100),
+         PctRepaired19C3 = if_else((repaired2019totalC3 == 0 | 
+                                      AllLeaks2019C3 == 0), 0,
+                                   (repaired2019totalC3/AllLeaks2019C3)*100),
+         leaks_hu = if_else((unrepaired2019total == 0 | 
+                               total_occ_unitsE == 0), 0,
+                            (unrepaired2019total/total_occ_unitsE)*100),
+         leaks_huC1 = if_else((unrepaired2019totalC1 == 0 | 
+                               total_occ_unitsE == 0), 0,
+                            (unrepaired2019totalC1/total_occ_unitsE)*100),
+         leaks_huC2 = if_else((unrepaired2019totalC2 == 0 | 
+                                 total_occ_unitsE == 0), 0,
+                              (unrepaired2019totalC2/total_occ_unitsE)*100),
+         leaks_huC3 = if_else((unrepaired2019totalC3 == 0 | 
+                                 total_occ_unitsE == 0), 0,
+                              (unrepaired2019totalC3/total_occ_unitsE)*100),
+         REPleaks_hu = if_else((repaired2019total == 0 | 
+                               total_occ_unitsE == 0), 0,
+                            (repaired2019total/total_occ_unitsE)*100),
+         REPleaks_huC1 = if_else((repaired2019totalC1 == 0 | 
+                                 total_occ_unitsE == 0), 0,
+                              (repaired2019totalC1/total_occ_unitsE)*100),
+         REPleaks_huC2 = if_else((repaired2019totalC2 == 0 | 
+                                 total_occ_unitsE == 0), 0,
+                              (repaired2019totalC2/total_occ_unitsE)*100),
+         REPleaks_huC3 = if_else((repaired2019totalC3 == 0 | 
+                                 total_occ_unitsE == 0), 0,
+                              (repaired2019totalC3/total_occ_unitsE)*100),
+         ALLleaks_hu = if_else((AllLeaks2019 == 0 | 
+                                  total_occ_unitsE == 0), 0,
+                               (AllLeaks2019/total_occ_unitsE)*100),
+         ALLleaks_huC1 = if_else((AllLeaks2019C1 == 0 | 
+                                    total_occ_unitsE == 0), 0,
+                                 (AllLeaks2019C1/total_occ_unitsE)*100),
+         ALLleaks_huC2 = if_else((AllLeaks2019C2 == 0 | 
+                                    total_occ_unitsE == 0), 0,
+                                 (AllLeaks2019C2/total_occ_unitsE)*100),
+         ALLleaks_huC3 = if_else((AllLeaks2019C3 == 0 | 
+                                    total_occ_unitsE == 0), 0,
+                                 (AllLeaks2019C3/total_occ_unitsE)*100))
 
 
 # # Look at distributions of leak counts by block group
@@ -376,7 +421,9 @@ ppLeakDensity <-  ma_blkgrps18 %>%
          eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
          ends_with("unitsE"), starts_with("leaks_"), 
          starts_with("AllLeaks"), starts_with("REPleaks_"), 
-         starts_with("DaystoRepairAvg"), PctRepaired19) %>% 
+         starts_with("DaystoRepairAvg"), starts_with("PctRepaired19"),
+         starts_with("leaks_hu"), starts_with("REPleaks_hu"),
+         starts_with("ALLleaks_hu")) %>% 
   pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
@@ -409,7 +456,37 @@ ppLeakDensity <-  ma_blkgrps18 %>%
             wDaysToRepairAvgC3 = weighted.mean(x = DaysToRepairAvgC3, 
                                                w = Pop, na.rm = T),
             wPctRepaired19 = weighted.mean(x = PctRepaired19, w = Pop, 
-                                           na.rm = T)) %>% 
+                                           na.rm = T),
+            wPctRepaired19C1 = weighted.mean(x = PctRepaired19C1, w = Pop, 
+                                           na.rm = T),
+            wPctRepaired19C2 = weighted.mean(x = PctRepaired19C2, w = Pop, 
+                                           na.rm = T),
+            wPctRepaired19C3 = weighted.mean(x = PctRepaired19C3, w = Pop, 
+                                           na.rm = T),
+            wLeaksPerHU = weighted.mean(x = leaks_hu, w = Pop, 
+                                        na.rm = T),
+            wLeaksPerHUC1 = weighted.mean(x = leaks_huC1, w = Pop, 
+                                        na.rm = T),
+            wLeaksPerHUC2 = weighted.mean(x = leaks_huC2, w = Pop, 
+                                          na.rm = T),
+            wLeaksPerHUC3 = weighted.mean(x = leaks_huC3, w = Pop, 
+                                          na.rm = T),
+            wREPLeaksPerHU = weighted.mean(x = REPleaks_hu, w = Pop, 
+                                        na.rm = T),
+            wREPLeaksPerHUC1 = weighted.mean(x = REPleaks_huC1, w = Pop, 
+                                          na.rm = T),
+            wREPLeaksPerHUC2 = weighted.mean(x = REPleaks_huC2, w = Pop, 
+                                          na.rm = T),
+            wREPLeaksPerHUC3 = weighted.mean(x = REPleaks_huC3, w = Pop, 
+                                          na.rm = T),
+            wALLLeaksPerHU = weighted.mean(x = ALLleaks_hu, w = Pop, 
+                                           na.rm = T),
+            wALLLeaksPerHUC1 = weighted.mean(x = ALLleaks_huC1, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHUC2 = weighted.mean(x = ALLleaks_huC2, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHUC3 = weighted.mean(x = ALLleaks_huC3, w = Pop, 
+                                             na.rm = T)) %>% 
   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
                         "minority_E" = "People of Color",
                         "nh2morepop_E" = "Two or more races",
@@ -442,11 +519,13 @@ ppLeakDensityUC <-  ma_blkgrps18 %>%
   mutate(MA_ENGLISH_UC = if_else(MA_ENGLISH_UC == "E", totalpopE_UC,0)) %>%
   mutate(MA_ENGLISH_UC = replace_na(MA_ENGLISH_UC,0)) %>%
   select(ends_with("_UC") & (starts_with("nh") | starts_with("MA_")), 
-         hisppop_UC, minority_UC, totalpop_UC, eng_hh_UC, under5E_UC, over64E_UC,
-         eng_limitE_UC, num2povE_UC, lthsE_UC, total_occ_units_UC, 
+         hisppop_UC, minority_UC, totalpop_UC, eng_hh_UC, under5E_UC, 
+         over64E_UC, eng_limitE_UC, num2povE_UC, lthsE_UC, total_occ_units_UC, 
          renter_occ_units_UC, starts_with("leaks_"), 
          starts_with("AllLeaks"), starts_with("REPleaks_"), 
-         starts_with("DaystoRepairAvg"), PctRepaired19) %>% 
+         starts_with("DaystoRepairAvg"), starts_with("PctRepaired19"),
+         starts_with("leaks_hu"), starts_with("REPleaks_hu"),
+         starts_with("ALLleaks_hu")) %>% 
   pivot_longer(., cols = MA_INCOME21_UC:renter_occ_units_UC, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
@@ -479,7 +558,37 @@ ppLeakDensityUC <-  ma_blkgrps18 %>%
             wDaysToRepairAvgC3 = weighted.mean(x = DaysToRepairAvgC3, 
                                                w = Pop, na.rm = T),
             wPctRepaired19 = weighted.mean(x = PctRepaired19, w = Pop, 
-                                           na.rm = T)) %>% 
+                                           na.rm = T),
+            wPctRepaired19C1 = weighted.mean(x = PctRepaired19C1, w = Pop, 
+                                             na.rm = T),
+            wPctRepaired19C2 = weighted.mean(x = PctRepaired19C2, w = Pop, 
+                                             na.rm = T),
+            wPctRepaired19C3 = weighted.mean(x = PctRepaired19C3, w = Pop, 
+                                             na.rm = T),
+            wLeaksPerHU = weighted.mean(x = leaks_hu, w = Pop, 
+                                        na.rm = T),
+            wLeaksPerHUC1 = weighted.mean(x = leaks_huC1, w = Pop, 
+                                          na.rm = T),
+            wLeaksPerHUC2 = weighted.mean(x = leaks_huC2, w = Pop, 
+                                          na.rm = T),
+            wLeaksPerHUC3 = weighted.mean(x = leaks_huC3, w = Pop, 
+                                          na.rm = T),
+            wREPLeaksPerHU = weighted.mean(x = REPleaks_hu, w = Pop, 
+                                           na.rm = T),
+            wREPLeaksPerHUC1 = weighted.mean(x = REPleaks_huC1, w = Pop, 
+                                             na.rm = T),
+            wREPLeaksPerHUC2 = weighted.mean(x = REPleaks_huC2, w = Pop, 
+                                             na.rm = T),
+            wREPLeaksPerHUC3 = weighted.mean(x = REPleaks_huC3, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHU = weighted.mean(x = ALLleaks_hu, w = Pop, 
+                                           na.rm = T),
+            wALLLeaksPerHUC1 = weighted.mean(x = ALLleaks_huC1, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHUC2 = weighted.mean(x = ALLleaks_huC2, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHUC3 = weighted.mean(x = ALLleaks_huC3, w = Pop, 
+                                             na.rm = T)) %>% 
   # rename(., wLeaksPerSqKmUC = wLeaksPerSqKm) %>%
   rename_with(., .fn = ~paste0(., "UC"), .cols = starts_with("w")) %>% 
   mutate(Group = recode(Group, "hisppop_UC" = "Hispanic", 
@@ -523,7 +632,9 @@ ppLeakDensityLC <-  ma_blkgrps18 %>%
          eng_limitE_LC, num2povE_LC, lthsE_LC, total_occ_units_LC, 
          renter_occ_units_LC, starts_with("leaks_"), 
          starts_with("AllLeaks"), starts_with("REPleaks_"), 
-         starts_with("DaystoRepairAvg"), PctRepaired19) %>% 
+         starts_with("DaystoRepairAvg"), starts_with("PctRepaired19"),
+         starts_with("leaks_hu"), starts_with("REPleaks_hu"),
+         starts_with("ALLleaks_hu")) %>% 
   pivot_longer(., cols = MA_INCOME21_LC:renter_occ_units_LC, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
@@ -556,7 +667,37 @@ ppLeakDensityLC <-  ma_blkgrps18 %>%
             wDaysToRepairAvgC3 = weighted.mean(x = DaysToRepairAvgC3, 
                                                w = Pop, na.rm = T),
             wPctRepaired19 = weighted.mean(x = PctRepaired19, w = Pop, 
-                                           na.rm = T)) %>% 
+                                           na.rm = T),
+            wPctRepaired19C1 = weighted.mean(x = PctRepaired19C1, w = Pop, 
+                                             na.rm = T),
+            wPctRepaired19C2 = weighted.mean(x = PctRepaired19C2, w = Pop, 
+                                             na.rm = T),
+            wPctRepaired19C3 = weighted.mean(x = PctRepaired19C3, w = Pop, 
+                                             na.rm = T),
+            wLeaksPerHU = weighted.mean(x = leaks_hu, w = Pop, 
+                                        na.rm = T),
+            wLeaksPerHUC1 = weighted.mean(x = leaks_huC1, w = Pop, 
+                                          na.rm = T),
+            wLeaksPerHUC2 = weighted.mean(x = leaks_huC2, w = Pop, 
+                                          na.rm = T),
+            wLeaksPerHUC3 = weighted.mean(x = leaks_huC3, w = Pop, 
+                                          na.rm = T),
+            wREPLeaksPerHU = weighted.mean(x = REPleaks_hu, w = Pop, 
+                                           na.rm = T),
+            wREPLeaksPerHUC1 = weighted.mean(x = REPleaks_huC1, w = Pop, 
+                                             na.rm = T),
+            wREPLeaksPerHUC2 = weighted.mean(x = REPleaks_huC2, w = Pop, 
+                                             na.rm = T),
+            wREPLeaksPerHUC3 = weighted.mean(x = REPleaks_huC3, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHU = weighted.mean(x = ALLleaks_hu, w = Pop, 
+                                           na.rm = T),
+            wALLLeaksPerHUC1 = weighted.mean(x = ALLleaks_huC1, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHUC2 = weighted.mean(x = ALLleaks_huC2, w = Pop, 
+                                             na.rm = T),
+            wALLLeaksPerHUC3 = weighted.mean(x = ALLleaks_huC3, w = Pop, 
+                                             na.rm = T)) %>% 
   # rename(., wLeaksPerSqKmLC = wLeaksPerSqKm) %>%
   rename_with(., .fn = ~paste0(., "LC"), .cols = starts_with("w")) %>%
   mutate(Group = recode(Group, "hisppop_LC" = "Hispanic", 
