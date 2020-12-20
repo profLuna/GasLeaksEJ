@@ -730,7 +730,7 @@ ppLeakDensityJoined <- ppLeakDensity %>%
   left_join(., ppLeakDensityLC, by = "Group") %>% 
   left_join(., ppLeakDensityUC, by = "Group")
 
-# create a bar plot of total unrepaired leaks with error bars
+# create a bar plot of total unrepaired leak density with error bars
 ppLeakDensityJoined %>% 
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
@@ -748,6 +748,24 @@ ppLeakDensityJoined %>%
   ggtitle("Priority Populations and Unrepaired Gas Leaks in 2019\nacross Massachusetts")
 
 ggsave("Images/LeaksPP_blkgrp_moe.png")
+
+# create a bar plot of total unrepaired leaks per occupied housing unit with error bars
+ppLeakDensityJoined %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>% 
+  ggplot(aes(x = reorder(Group,wLeaksPerHU), y = wLeaksPerHU)) + 
+  geom_col() + coord_flip() + xlab("") + 
+  ylab("Population-weighted mean leaks per occupied housing unit\nby Census Block Group") +
+  theme_minimal() +
+  geom_errorbar(aes(ymin = wLeaksPerHUUC, ymax = wLeaksPerHULC)) +
+  ggtitle("Priority Populations and Unrepaired Gas Leaks\nPer Housing Unit in 2019 across Massachusetts")
+
+ggsave("Images/LeaksPP_HU_blkgrp_moe.png")
 
 # create a bar plot of total leaks (unrepaired + repaired) with error bars
 ppLeakDensityJoined %>% 
@@ -768,6 +786,24 @@ ppLeakDensityJoined %>%
 
 ggsave("Images/LeaksPPall_blkgrp_moe.png")
 
+# create a bar plot of total leaks (unrepaired + repaired) per occupied housing unit with error bars
+ppLeakDensityJoined %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>% 
+  ggplot(aes(x = reorder(Group,wALLLeaksPerHU), y = wALLLeaksPerHU)) + 
+  geom_col() + coord_flip() + xlab("") + 
+  ylab("Population-weighted mean leaks per occupied housing unit\nby Census Block Group") +
+  theme_minimal() +
+  geom_errorbar(aes(ymin = wALLLeaksPerHUUC, ymax = wALLLeaksPerHULC)) +
+  ggtitle("Priority Populations and All Repaired and Unrepaired Gas\nLeaks Per Housing Unit in 2019 across Massachusetts")
+
+ggsave("Images/LeaksPPall_HU_blkgrp_moe.png")
+
 # create a bar plot of repaired leaks with error bars
 ppLeakDensityJoined %>% 
   filter(!Group %in% c("Native American", "Other race", 
@@ -786,6 +822,24 @@ ppLeakDensityJoined %>%
   ggtitle("Priority Populations and Repaired Gas Leaks\nin 2019 across Massachusetts")
 
 ggsave("Images/LeaksPPrepaired_blkgrp_moe.png")
+
+# create a bar plot of total repaired leaks per occupied housing unit with error bars
+ppLeakDensityJoined %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>% 
+  ggplot(aes(x = reorder(Group,wREPLeaksPerHU), y = wREPLeaksPerHU)) + 
+  geom_col() + coord_flip() + xlab("") + 
+  ylab("Population-weighted mean leaks per occupied housing unit\nby Census Block Group") +
+  theme_minimal() +
+  geom_errorbar(aes(ymin = wREPLeaksPerHUUC, ymax = wREPLeaksPerHULC)) +
+  ggtitle("Priority Populations and Repaired Gas Leaks\nPer Housing Unit in 2019 across Massachusetts")
+
+ggsave("Images/LeaksPPrepaired_HU_blkgrp_moe.png")
 
 
 # create a bar plot of avg repair times with error bars
@@ -854,6 +908,34 @@ ppLeakDensity %>%
 
 ggsave("Images/LeaksPPbyClass_blkgrp.png")
 
+# create a facet wrap bar graph by leak grade and ordered by unrepaired leaks per occupied housing unit
+ppLeakDensity %>% 
+  pivot_longer(wLeaksPerHU:wLeaksPerHUC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksPerHU" = "All Leaks",
+                            "wLeaksPerHUC1" = "Class 1 Leaks",
+                            "wLeaksPerHUC2" = "Class 2 Leaks",
+                            "wLeaksPerHUC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass)) %>% 
+  ggplot(aes(x = Group, y = leakDensity, fill = leakClass)) + 
+  geom_col(show.legend = FALSE) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  facet_wrap(~ leakClass, scales = "free") +
+  labs(x = NULL, 
+       y = "Population-weighted mean leaks per occupied housing unit by Census Block Group",
+       title = "Priority Populations and Unrepaired Gas Leaks Per Housing Unit in 2019 across Massachusetts")
+
+ggsave("Images/LeaksPPbyClass_HU_blkgrp.png")
+
 
 # create a facet wrap bar graph by leak grade and ordered by all repaired and unrepaired leaks
 ppLeakDensity %>% 
@@ -884,6 +966,34 @@ ppLeakDensity %>%
 
 ggsave("Images/LeaksPPbyClassAll_blkgrp.png")
 
+# create a facet wrap bar graph by leak grade and ordered by all repaired and unrepaired leaks per occupied housing unit
+ppLeakDensity %>% 
+  pivot_longer(wALLLeaksPerHU:wALLLeaksPerHUC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>%
+  mutate(leakClass = recode(leakClass, "wALLLeaksPerHU" = "All Leaks",
+                            "wALLLeaksPerHUC1" = "Class 1 Leaks",
+                            "wALLLeaksPerHUC2" = "Class 2 Leaks",
+                            "wALLLeaksPerHUC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass)) %>% 
+  ggplot(aes(x = Group, y = leakDensity, fill = leakClass)) + 
+  geom_col(show.legend = FALSE) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  facet_wrap(~ leakClass, scales = "free") +
+  labs(x = NULL, 
+       y = "Population-weighted mean leaks per occupied housing unit by Census Block Group",
+       title = "Priority Populations and All Repaired and Unrepaired Gas Leaks Per Occupied Housing Unit in 2019 across Massachusetts")
+
+ggsave("Images/LeaksPPbyClassAll_HU_blkgrp.png")
+
 
 # create a facet wrap bar graph by leak grade and ordered by all repaired leaks
 ppLeakDensity %>% 
@@ -913,6 +1023,34 @@ ppLeakDensity %>%
        title = "Priority Populations and All Repaired Gas Leaks in 2019 across Massachusetts")
 
 ggsave("Images/LeaksPPbyClassREP_blkgrp.png")
+
+# create a facet wrap bar graph by leak grade and ordered by all repaired leaks per occupied housing unit
+ppLeakDensity %>% 
+  pivot_longer(wREPLeaksPerHU:wREPLeaksPerHUC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY17" = "MA Minority EJ2017",
+                        "MA_MINORITY21" = "MA Minority EJ2021",
+                        "MA_INCOME17" = "MA Low Income EJ2017",
+                        "MA_INCOME21" = "MA Low Income EJ2021")) %>%
+  mutate(leakClass = recode(leakClass, "wREPLeaksPerHU" = "All Leaks",
+                            "wREPLeaksPerHUC1" = "Class 1 Leaks",
+                            "wREPLeaksPerHUC2" = "Class 2 Leaks",
+                            "wREPLeaksPerHUC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass)) %>% 
+  ggplot(aes(x = Group, y = leakDensity, fill = leakClass)) + 
+  geom_col(show.legend = FALSE) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  facet_wrap(~ leakClass, scales = "free") +
+  labs(x = NULL, 
+       y = "Population-weighted mean leaks per occupied housing unit by Census Block Group",
+       title = "Priority Populations and All Repaired Gas Leaks Per Occupied Housing Unit in 2019 across Massachusetts")
+
+ggsave("Images/LeaksPPbyClassREP_HU_blkgrp.png")
 
 
 # create a facet wrap bar graph by leak grade and ordered by avg leak repair time
@@ -946,7 +1084,7 @@ ggsave("Images/LeaksPPbyClassTime_blkgrp.png")
 
 # create a facet wrap bar graph by leak grade and ordered by avg pct of leaks fixed
 ppLeakDensity %>% 
-  pivot_longer(wDaysToRepairAvg:wDaysToRepairAvgC3, 
+  pivot_longer(wPctRepaired19:wPctRepaired19C3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
@@ -955,10 +1093,10 @@ ppLeakDensity %>%
                         "MA_MINORITY21" = "MA Minority EJ2021",
                         "MA_INCOME17" = "MA Low Income EJ2017",
                         "MA_INCOME21" = "MA Low Income EJ2021")) %>%
-  mutate(leakClass = recode(leakClass, "wDaysToRepairAvg" = "All Leaks",
-                            "wDaysToRepairAvgC1" = "Class 1 Leaks",
-                            "wDaysToRepairAvgC2" = "Class 2 Leaks",
-                            "wDaysToRepairAvgC3" = "Class 3 Leaks"),
+  mutate(leakClass = recode(leakClass, "wPctRepaired19" = "All Leaks",
+                            "wPctRepaired19C1" = "Class 1 Leaks",
+                            "wPctRepaired19C2" = "Class 2 Leaks",
+                            "wPctRepaired19C3" = "Class 3 Leaks"),
          Group = reorder_within(Group, leakDensity, leakClass)) %>% 
   ggplot(aes(x = Group, y = leakDensity, fill = leakClass)) + 
   geom_col(show.legend = FALSE) +
@@ -967,8 +1105,8 @@ ppLeakDensity %>%
   theme_minimal(base_size = 6) +
   facet_wrap(~ leakClass, scales = "free") +
   labs(x = NULL, 
-       y = "Population-weighted mean leak repair time (days) by Census Block Group",
-       title = "Priority Populations and Average Leak Repair Time in 2019 across Massachusetts")
+       y = "Population-weighted mean percentage of leaks repaired in 2019 by Census Block Group",
+       title = "Priority Populations and Percent Repaired Gas Leaks in 2019 across Massachusetts")
 
 ggsave("Images/LeaksPPbyClassPctFix_blkgrp.png")
 
