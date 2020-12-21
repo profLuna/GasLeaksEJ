@@ -265,10 +265,11 @@ ma_blkgrps18 <- lapply(list(unrepaired2019_by_blkgrp,
                                 unrepaired2019totalC3/area_sqkm, 0))
 
 # join leak counts by utility to the block group demographics
-ma_blkgrps18 <- list(ma_blkgrps18, unrepaired2019_by_utility2, 
-                          unrepaired2019_by_utility2C1,
-                          unrepaired2019_by_utility2C2,
-                          unrepaired2019_by_utility2C3) %>% 
+ma_blkgrps18 <- list(ma_blkgrps18, 
+                     unrepaired2019_by_utility2,
+                     unrepaired2019_by_utility2C1,
+                     unrepaired2019_by_utility2C2,
+                     unrepaired2019_by_utility2C3) %>% 
   reduce(left_join, by = "GEOID") %>% 
   mutate(
     across(unrepaired2019total:`National Grid - Colonial Gas_19unrepairedC3`, 
@@ -294,7 +295,10 @@ ma_blkgrps18 <- lapply(list(repaired2019_by_blkgrp,
                                 repaired2019totalC3/area_sqkm, 0))
 
 # join leak counts by utility to the block group demographics
-ma_blkgrps18 <- list(ma_blkgrps18, repaired2019_by_utility2, 
+ma_blkgrps18 <- list(ma_blkgrps18, 
+                     repaired2019_by_utility2, 
+                     repaired2019_by_utility2.b,
+                     repaired2019_by_utility2.c,
                      repaired2019_by_utility2C1,
                      repaired2019_by_utility2C1.b,
                      repaired2019_by_utility2C1.c,
@@ -1120,7 +1124,28 @@ ppLeakDensityNG <- ma_blkgrps18 %>%
   filter(str_detect(GAS, "^National") | 
            GAS == "Colonial Gas") %>% # limit to BGs in NG/Colonial svc area
   mutate(leaks_sqkmNG = (`National Grid - Boston Gas_19unrepaired` +
-                           `National Grid - Colonial Gas_19unrepaired`)/area_sqkm) %>% 
+                           `National Grid - Colonial Gas_19unrepaired`)/area_sqkm,
+         REPleaks_sqkmNG = (`National Grid - Boston Gas_19repaired` +
+                            `National Grid - Colonial Gas_19repaired`)/area_sqkm,
+         AllLeaks2019_sqkmNG = (`National Grid - Boston Gas_19unrepaired` +
+                                `National Grid - Colonial Gas_19unrepaired` + 
+                                `National Grid - Boston Gas_19repaired` +
+                                `National Grid - Colonial Gas_19repaired`)/area_sqkm,
+         leaks_huNG = (`National Grid - Boston Gas_19unrepaired` +
+                           `National Grid - Colonial Gas_19unrepaired`)/total_occ_unitsE,
+         REPleaks_huNG = (`National Grid - Boston Gas_19repaired` +
+                            `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE,
+         AllLeaks2019_huNG = (`National Grid - Boston Gas_19unrepaired` +
+                                `National Grid - Colonial Gas_19unrepaired` + 
+                                `National Grid - Boston Gas_19repaired` +
+                                `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE,
+         PctRepaired19NG = (`National Grid - Boston Gas_19repaired` +
+                              `National Grid - Colonial Gas_19repaired`)/ (`National Grid - Boston Gas_19unrepaired` +
+                              `National Grid - Colonial Gas_19unrepaired` + 
+                              `National Grid - Boston Gas_19repaired` +
+                              `National Grid - Colonial Gas_19repaired`)*100) %>% 
+  rowwise() %>% 
+  mutate(DaysToRepairAvgNG = sum(`National Grid - Boston Gas_19repairedDaysAvg`,                                 `National Grid - Colonial Gas_19repairedDaysAvg`, na.rm = TRUE)/2) %>% 
   mutate(MA_INCOME17 = if_else(MA_INCOME17 == "I", totalpop_E, 0)) %>% 
   mutate(MA_INCOME17 = replace_na(MA_INCOME17,0)) %>% 
   mutate(MA_INCOME21 = if_else(MA_INCOME21 == "I", totalpop_E, 0)) %>% 
@@ -1133,11 +1158,33 @@ ppLeakDensityNG <- ma_blkgrps18 %>%
   mutate(MA_ENGLISH = replace_na(MA_ENGLISH,0)) %>%
   select(ends_with("_E"), ends_with("17"), ends_with("21"), MA_ENGLISH, 
          eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
-         ends_with("unitsE"), leaks_sqkmNG) %>% 
+         ends_with("unitsE"), (starts_with("leaks_") & ends_with("NG")), 
+         (starts_with("AllLeaks") & ends_with("NG")), 
+         (starts_with("REPleaks_") & ends_with("NG")), 
+         (starts_with("DaystoRepairAvg") & ends_with("NG")), 
+         (starts_with("PctRepaired19") & ends_with("NG")),
+         (starts_with("leaks_hu") & ends_with("NG")), 
+         (starts_with("REPleaks_hu") & ends_with("NG")),
+         (starts_with("ALLleaks_hu") & ends_with("NG"))) %>% 
   pivot_longer(., cols = totalpop_E:renter_occ_unitsE, names_to = "Group", 
                values_to = "Pop", values_drop_na = TRUE) %>% 
   group_by(Group) %>% 
-  summarize(wLeaksPerSqKmNG = weighted.mean(x = leaks_sqkmNG, w = Pop)) %>% 
+  summarize(wLeaksPerSqKmNG = weighted.mean(x = leaks_sqkmNG, w = Pop, 
+                                            na.rm = TRUE),
+            wLeaksPerSqKmREPNG = weighted.mean(x = REPleaks_sqkmNG, 
+                                             w = Pop, na.rm = TRUE),
+            wLeaksPerSqKmALLNG = weighted.mean(x = AllLeaks2019_sqkmNG, 
+                                             w = Pop, na.rm = TRUE),
+            wLeaksPerHUNG = weighted.mean(x = leaks_huNG, w = Pop, 
+                                        na.rm = T),
+            wREPLeaksPerHUNG = weighted.mean(x = REPleaks_huNG, 
+                                                     w = Pop, na.rm = T),
+            wALLLeaksPerHUNG = weighted.mean(x = AllLeaks2019_huNG, 
+                                                     w = Pop, na.rm = T),
+            wPctRepaired19NG = weighted.mean(x = PctRepaired19NG, 
+                                                     w = Pop, na.rm = T),
+            wDaysToRepairAvgNG = weighted.mean(x = DaysToRepairAvgNG, 
+                                             w = Pop, na.rm = T)) %>% 
   mutate(Group = recode(Group, "hisppop_E" = "Hispanic", 
                         "minority_E" = "People of Color",
                         "nh2morepop_E" = "Two or more races",
