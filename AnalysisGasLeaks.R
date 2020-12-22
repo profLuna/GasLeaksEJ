@@ -1131,14 +1131,16 @@ ppLeakDensityNG <- ma_blkgrps18 %>%
                                 `National Grid - Colonial Gas_19unrepaired` + 
                                 `National Grid - Boston Gas_19repaired` +
                                 `National Grid - Colonial Gas_19repaired`)/area_sqkm,
-         leaks_huNG = (`National Grid - Boston Gas_19unrepaired` +
-                           `National Grid - Colonial Gas_19unrepaired`)/total_occ_unitsE,
-         REPleaks_huNG = (`National Grid - Boston Gas_19repaired` +
-                            `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE,
-         AllLeaks2019_huNG = (`National Grid - Boston Gas_19unrepaired` +
-                                `National Grid - Colonial Gas_19unrepaired` + 
+         leaks_huNG = if_else(total_occ_unitsE == 0, 0, 
+                              (`National Grid - Boston Gas_19unrepaired` +
+                           `National Grid - Colonial Gas_19unrepaired`)/total_occ_unitsE),
+         REPleaks_huNG = if_else(total_occ_unitsE == 0, 0,
+                                 (`National Grid - Boston Gas_19repaired` +
+                            `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE),
+         AllLeaks2019_huNG = if_else(total_occ_unitsE == 0, 0,
+                                     (`National Grid - Boston Gas_19unrepaired` + `National Grid - Colonial Gas_19unrepaired` + 
                                 `National Grid - Boston Gas_19repaired` +
-                                `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE,
+                                `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE),
          PctRepaired19NG = (`National Grid - Boston Gas_19repaired` +
                               `National Grid - Colonial Gas_19repaired`)/ (`National Grid - Boston Gas_19unrepaired` +
                               `National Grid - Colonial Gas_19unrepaired` + 
