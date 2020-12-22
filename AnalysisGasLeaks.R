@@ -1817,11 +1817,18 @@ ggsave("Images/LeaksPPbyUtilityTime_blkgrp.png")
 
 
 # conduct a weighted t-test to determine if differences are statistically significant
-library(weights)
-wtd.t.test(x = ma_blkgrps18$leaks_sqkm, y = ma_blkgrps18$leaks_sqkm, 
+# library(weights)
+weights::wtd.t.test(x = ma_blkgrps18$leaks_sqkm, y = ma_blkgrps18$leaks_sqkm, 
            weight = ma_blkgrps18$nhwhitepop_E, 
            weighty = ma_blkgrps18$nhblackpop_E, 
            bootse = TRUE, bootp = TRUE)
+
+weights::wtd.t.test(x = ma_blkgrps18$PctRepaired19, 
+                    y = ma_blkgrps18$PctRepaired19, 
+           weight = ma_blkgrps18$nhwhitepop_E, 
+           weighty = ma_blkgrps18$eng_limitE, 
+           bootse = TRUE, bootp = TRUE)
+
 
 
 
