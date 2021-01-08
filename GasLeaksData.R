@@ -179,6 +179,8 @@ unrepaired2019final <- mget(ls(pattern = "unrepaired$")) %>%
   do.call(rbind, .) %>% 
   rename(Address = Name) %>% 
   mutate(RptDate = mdy(RptDate),
+         EndDate = as.Date("2019-12-31"),
+         LeakAgeDays = abs(interval(EndDate,RptDate)/days(1)),
          Class = recode(Class, "Grade 2" = "2",
                         "Grade 3" = "3",
                         "2A" = "2"))
