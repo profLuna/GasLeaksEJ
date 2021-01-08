@@ -962,6 +962,8 @@ ppLeakDensityJoined %>%
                         "MA_INCOME21" = "MA Low Income EJ2021")) %>% 
   ggplot(aes(x = reorder(Group,wLeakAgeDaysAvg), y = wLeakAgeDaysAvg)) + 
   geom_col() + coord_flip() + xlab("") + 
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",",
+                                                 scientific = FALSE)) +
   ylab("Population-weighted mean age (days) of unrepaired leaks\nby Census Block Group") +
   theme_minimal() +
   geom_errorbar(aes(ymin = wLeakAgeDaysAvgUC, ymax = wLeakAgeDaysAvgLC)) +
@@ -1201,6 +1203,8 @@ ppLeakDensity %>%
   geom_col(show.legend = FALSE) +
   coord_flip() + 
   scale_x_reordered() +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",",
+                                                 scientific = FALSE)) +
   theme_minimal(base_size = 6) +
   facet_wrap(~ leakClass, scales = "free") +
   labs(x = NULL, 
@@ -2053,6 +2057,8 @@ ppLeakDensityJoinedU %>%
   geom_col(show.legend = FALSE, na.rm = TRUE) +
   coord_flip() + 
   scale_x_reordered() +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",",
+                                                 scientific = FALSE)) +
   theme_minimal(base_size = 6) +
   facet_wrap(~ Utility, scales = "free") +
   labs(x = NULL, 
@@ -2086,6 +2092,8 @@ ppLeakDensityJoinedU %>%
   geom_col(show.legend = FALSE, na.rm = TRUE) +
   coord_flip() + 
   scale_x_reordered() +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",",
+                                                 scientific = FALSE)) +
   theme_minimal(base_size = 6) +
   facet_wrap(~ Utility, scales = "free") +
   labs(x = NULL, 
