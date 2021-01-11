@@ -1900,7 +1900,45 @@ weights::wtd.t.test(x = ma_cosub18$PctRepaired19,
                     bootse = TRUE, bootp = TRUE)
 
 
+# Bar plots relative to population average
+ppLeakDensity %>% select(Group, wLeaksPerSqKm) %>% 
+  filter(Group %in% c("Disabled Adults", "Limited English HH", "Hispanic",
+                      "Housing Burdened", "No HS Diploma", "People of Color",
+                      "Asian", "Black", "Low Income", "Over 64", "Under 5",
+                      "Total Population", "White")) %>% 
+  pivot_wider(names_from = Group, 
+                              values_from = wLeaksPerSqKm) %>% 
+  mutate(across(.cols = everything(), ~ (. /`Total Population`-1)*100)) %>% 
+  pivot_longer(cols = everything(), names_to = "Group", 
+               values_to = "wLeaksPerSqKm") %>% 
+  ggplot(aes(x = reorder(Group,wLeaksPerSqKm), 
+             y = wLeaksPerSqKm)) +
+  geom_segment(aes(x = reorder(Group,wLeaksPerSqKm), 
+                   xend = reorder(Group,wLeaksPerSqKm),
+                   y = 0, yend = wLeaksPerSqKm), 
+               color = "skyblue") +
+  geom_point(color = "blue", size = 4, alpha = 0.8) +
+  coord_flip() + labs(x = "", y = "", title = "Population-weighted average unrepaired leak density\n(relative to state average)") + theme_light() +
+  theme(panel.grid.major.y = element_blank(),
+        panel.border = element_blank(),
+        axis.ticks.y = element_blank()) +
+  geom_text(aes(x = Group, y = wLeaksPerSqKm + 0.2 * sign(wLeaksPerSqKm), 
+                label = paste0(round(wLeaksPerSqKm,2),"%")), 
+            hjust = 1, vjust = -.6, size = 3,
+            color=rgb(100,100,100, maxColorValue=255)) +
+  scale_y_continuous(labels = function(x) paste0(x, "%")) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  geom_text(aes(x = "Under 5", y = 30, label = "Above state\naverage"),
+            color = "gray48") +
+  geom_text(aes(x = "Under 5", y = -15, label = "Below state\naverage"),
+            color = "gray48") +
+  expand_limits(y = c(-20,60))
+
+
+
 # scatterplot matrices
+ma_cosub18 %>% 
+  ggplot(aes(x = nhwhitepop_E_p, y = leaks_sqkm)) + geom_point()
 
 
 # correlation matrix between leak frequency and demographic group
