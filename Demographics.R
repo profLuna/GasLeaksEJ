@@ -6,15 +6,21 @@ library(tmap)
 library(sf)
 library(tigris)
 options(tigris_use_cache = TRUE, tigris_class = "sf")
-(wdir <- getwd())
-setwd(wdir)
+# (wdir <- getwd())
+# setwd(wdir)
+
+# set ACS parameters
+year = 2019
+survey = "acs5"
+moe = 95
 
 # Load list of variables to identify tables of interest
-v18 <- load_variables(2018, "acs5", cache = TRUE)
+v <- load_variables(year, survey, cache = TRUE)
 
 # Download ACS 5-year estimates of demographic data and convert to projected local CRS EPSG:2805: NAD83(HARN) / Massachusetts See https://spatialreference.org/ref/epsg/2805/
 # Block groups
-ma_blkgrps18 <- get_acs(geography = "block group", 
+ma_blkgrps <- get_acs(geography = "block group", 
+                        year = year, moe_level = moe, survey = survey,
                         variables = c(totalpop = "B03002_001", 
                                       medhhinc = "B19013_001"),
                         state = "MA", output = "wide", geometry = TRUE) %>% 
@@ -29,7 +35,8 @@ ma_blkgrps18 <- get_acs(geography = "block group",
 
 
 # County subdivisions (i.e., cities and towns)
-ma_cosub18 <- get_acs(geography = "county subdivision", 
+ma_cosub <- get_acs(geography = "county subdivision", 
+                      year = year, moe_level = moe, survey = survey,
                       variables = c(totalpop = "B03002_001", 
                                     medhhinc = "B19013_001"),
                       state = "MA", output = "wide", geometry = TRUE) %>% 
@@ -43,7 +50,8 @@ ma_cosub18 <- get_acs(geography = "county subdivision",
   st_transform(., crs = 2805)
 
 # Isolate MA statewide median household income for EJ threshold for income criterion in 2021 EJ policy
-MA_MED_HHINC <- get_acs(geography = "state", year = 2018, survey = "acs5",
+MA_MED_HHINC <- get_acs(geography = "state", 
+                        year = year, moe_level = moe, survey = survey,
                         variables = c(totalpop = "B03002_001",
                                       medhhinc = "B19013_001"),
                         state = "MA", output = "wide") %>% 
@@ -51,7 +59,7 @@ MA_MED_HHINC <- get_acs(geography = "state", year = 2018, survey = "acs5",
   pull()
 
 # add variables to identify EJ criteria thresholds for to allow for definition of minority threshold for 2021 EJ policy
-ma_cosub18 <- ma_cosub18 %>% 
+ma_cosub <- ma_cosub %>% 
   mutate(MACOSUB_INC_BELOW150 = if_else(medhhincE <= 1.5*MA_MED_HHINC,"Y","N"),
          MACOSUB_INC_BELOW150_UC = if_else(medhhincE_UC <= 1.5*MA_MED_HHINC,"Y","N"),
          MACOSUB_INC_BELOW150_LC = if_else(medhhincE_LC <= 1.5*MA_MED_HHINC,"Y","N"))
@@ -61,14 +69,16 @@ ma_cosub18 <- ma_cosub18 %>%
 ## HOUSEHOLDS BY INCOME
 # this is for 2017 MA EJ Policy
 # download table of counts of household income categories, sum up households in categories below 65% of MA statewide median
-B19001 <- get_acs(geography = "block group", table = "B19001", state = "MA")
+B19001 <- get_acs(geography = "block group", 
+                  year = year, moe_level = moe, survey = survey,
+                  table = "B19001", state = "MA")
 # Isolate estimate of total households
 medhhinc_total <- B19001 %>%
   filter(variable == "B19001_001") %>%
   transmute(GEOID = GEOID,
             householdsE = estimate,
             householdsM = moe)
-# Isolate household counts less than 65% of MA statewide median of $77,378, which as of ACS 5-year 2018 is $50,295.70. Closest range is 45 - 49,9 and below.
+# Isolate household counts less than 65% of MA statewide median of $81,215, which as of ACS 5-year 2019 is $52,789.75. Closest range is 45 - 49,9 and below.
 # create vector of patterns for medhhinc levels below 50k
 med_strings <- rep(c(2:10)) %>%
   formatC(width = 3, format = "d", flag = "0") # add leading 0s
@@ -100,10 +110,10 @@ medhhinclt50_pct <- medhhinclt50_pct %>%
          MA_INCOME17_UC = if_else(pct_medhhinclt50E_UC >= 25, "I", NULL),
          MA_INCOME17_LC = if_else(pct_medhhinclt50E_LC >= 25, "I", NULL))
 # clean up
-rm(B19001,med_strings,medhhinc_total,medhhinclt50)
+# rm(B19001,med_strings,medhhinc_total,medhhinclt50)
 
 # add variables to identify EJ criteria thresholds for income for 2021 EJ policy
-ma_blkgrps18 <- ma_blkgrps18 %>%
+ma_blkgrps <- ma_blkgrps %>%
   mutate(medhhincE_UC = medhhincE + medhhincM,
          medhhincE_LC = medhhincE - medhhincM,
          MA_INCOME21 = if_else(medhhincE <= .65*MA_MED_HHINC, "I", NULL),
@@ -111,17 +121,19 @@ ma_blkgrps18 <- ma_blkgrps18 %>%
          MA_INCOME21_LC = if_else(medhhincE_LC <= .65*MA_MED_HHINC, "I", NULL))
 
 # join town data with MA town income threshold to block groups in order to allow for definition of minority threshold based on town income for 2021 MA EJ POLICY
-ma_blkgrps18 <- ma_cosub18 %>% 
+ma_blkgrps <- ma_cosub %>% 
   transmute(TOWN = NAME, MACOSUB_INC_BELOW150 = MACOSUB_INC_BELOW150, 
             MACOSUB_INC_BELOW150_UC = MACOSUB_INC_BELOW150_UC,
             MACOSUB_INC_BELOW150_LC = MACOSUB_INC_BELOW150_LC) %>% 
-  st_join(ma_blkgrps18, ., largest = TRUE)
+  st_join(ma_blkgrps, ., largest = TRUE)
 
 
 ### RATIO OF INCOME TO POVERTY LEVEL
 # Download ratio of income to poverty level in the past 12 months to calculate the number or percent of a block group’s population in households where the household income is less than or equal to twice the federal “poverty level.” More precisely, percent low-income is calculated as a percentage of those for whom the poverty ratio was known, as reported by the Census Bureau, which may be less than the full population in some block groups. More information on the federally-defined poverty threshold is available at http://www.census.gov/hhes/www/poverty/methods/definitions.html. Note also that poverty status is not determined for people living in institutional group quarters (i.e. prisons, college dormitories, military barracks, nursing homes), so these populations are not included in the poverty estimates (https://www.census.gov/topics/income-poverty/poverty/guidance/poverty-measures.html).
 # First, download table of ratio of income to poverty level
-C17002 <- get_acs(geography = "block group", table = "C17002", state = "MA")
+C17002 <- get_acs(geography = "block group", table = "C17002", 
+                  year = year, moe_level = moe, survey = survey,
+                  state = "MA")
 # Isolate universe pop for whom poverty status is known
 povknown <- C17002 %>% 
   filter(variable == "C17002_001") %>% 
@@ -153,13 +165,15 @@ poverty_pct <- povknown %>%
       pct2povE < pct2povM, 0, pct2povE - pct2povM)) %>% 
   select(-starts_with("r2p"))
 # clean up
-rm(C17002,num2pov,povknown)
+# rm(C17002,num2pov,povknown)
 
 
 ### RACE AND ETHNICITY
 # Download B03002 HISPANIC OR LATINO ORIGIN BY RACE in two sets. 
 # Start with total pop and all races in wide format and compute upper and lower confidence values. 
-B03002_totrace <- get_acs(geography = "block group", variables = c(
+B03002_totrace <- get_acs(geography = "block group", 
+                          year = year, moe_level = moe, survey = survey,
+                          variables = c(
     totalpop = "B03002_001",
     nhwhitepop = "B03002_003",
     nhblackpop = "B03002_004",
@@ -178,7 +192,9 @@ B03002_totrace <- get_acs(geography = "block group", variables = c(
               values_from = c(E, M, UC, LC))
 
 # Next acquire estimates for Hispanic and nonWhite groups in long format to create aggregated minority variable
-B03002_minority <- get_acs(geography = "block group", variables = c(
+B03002_minority <- get_acs(geography = "block group", 
+                           year = year, moe_level = moe, survey = survey,
+                           variables = c(
     nhblackpop = "B03002_004",
     nhamerindpop = "B03002_005",
     nhasianpop = "B03002_006",
@@ -255,11 +271,11 @@ race_pct <- map_dfc(unique_names, ~estimatesDF %>%
   cbind(race_pct, .)
 
 # clean up
-rm(list = ls(pattern = paste(c("B03002","estimatesDF","unique"), 
-                             collapse = "|")))
+# rm(list = ls(pattern = paste(c("B03002","estimatesDF","unique"), 
+                             # collapse = "|")))
 
 # add variables to identify EJ minority criteria thresholds for 2017 and 2021 EJ policies. join town-level income variables for minority designation for 2021 policy. 
-race_pct <- ma_blkgrps18 %>% 
+race_pct <- ma_blkgrps %>% 
   as.data.frame() %>% 
   select(GEOID, MACOSUB_INC_BELOW150, MACOSUB_INC_BELOW150_LC, 
          MACOSUB_INC_BELOW150_UC) %>% 
@@ -277,6 +293,7 @@ race_pct <- ma_blkgrps18 %>%
 ### ENGLISH LANGUAGE ISOLATION
 # Download C16002. Household Language by Household Limited English Speaking Status. Note that this table is a collapsed version of table B16002. EPA and MA use the latter, but there is no significant difference since we are not interested in disaggregating categories.
 eng_limited <- get_acs(geography = "block group", 
+                       year = year, moe_level = moe, survey = survey,
                        variables = c("C16002_001",
                                      "C16002_004", 
                                      "C16002_007",
@@ -319,13 +336,15 @@ eng_limited_pct <- eng_limited_pct %>%
          MA_ENGLISH_UC = if_else(eng_limit_pctE_UC >= 25, "E", NULL),
          MA_ENGLISH_LC = if_else(eng_limit_pctE_LC >= 25, "E", NULL))
 # clean up
-rm(eng_limited,eng_limited_est)
+# rm(eng_limited,eng_limited_est)
 
 
 ### EDUCATIONAL ATTAINMENT FOR THOSE AGE 25+
 # Less than high school education: The number or percent of people age 25 or older in a block group whose education is short of a high school diploma.
 # Download Table B15002 SEX BY EDUCATIONAL ATTAINMENT FOR THE POPULATION 25 YEARS AND OVER
-B15002 <- get_acs(geography = "block group", table = "B15002", state = "MA")
+B15002 <- get_acs(geography = "block group", table = "B15002", 
+                  year = year, moe_level = moe, survey = survey,
+                  state = "MA")
 
 # Isolate universe of population 25+
 age25up <- B15002 %>% 
@@ -384,14 +403,16 @@ lths_pct <- age25up %>%
       pct_collegeE < pct_collegeM, 0, pct_collegeE - pct_collegeM)) %>% 
   select(-starts_with("r_"))
 # clean up
-rm(age25up,B15002,lths_num,lths_strings,col_num,col_strings)
+# rm(age25up,B15002,lths_num,lths_strings,col_num,col_strings)
 
 
 ### AGE UNDER 5 AND OVER 64
 # Individuals under age 5: The number or percent of people in a block group under the age of 5.
 # Individuals over age 64: The number or percent of people in a block group over the age of 64.
 # Download Table B01001 TOTAL POPULATION COUNTS AND AGES
-B01001 <- get_acs(geography = "block group", table = "B01001", state = "MA")
+B01001 <- get_acs(geography = "block group", table = "B01001",
+                  year = year, moe_level = moe, survey = survey,
+                  state = "MA")
 
 # Isolate universe of population for all sex and ages
 allAges <- B01001 %>% 
@@ -447,12 +468,13 @@ age5_64_pct <- allAges %>%
       pct_over64E < pct_over64M, 0, pct_over64E - pct_over64M)) %>% 
   select(-starts_with("r_"))
 # clean up
-rm(allAges,B01001,over64,under5,ovr64_strings)
+# rm(allAges,B01001,over64,under5,ovr64_strings)
 
 
 ### MEDIAN AGE OF HOUSING 
 # Based on median year structure built. 
-housing_age <- get_acs(geography = "block group", survey = "acs5",
+housing_age <- get_acs(geography = "block group", 
+                       year = year, moe_level = moe, survey = survey,
                      variables = c(housing_yr_built = "B25035_001"), 
                      state = "MA", output = "wide") %>% 
   mutate(housing_age_est = if_else(housing_yr_builtE > 1700, 2020 - housing_yr_builtE, NULL),
@@ -463,7 +485,8 @@ housing_age <- get_acs(geography = "block group", survey = "acs5",
 
 ### TENURE
 # Based on number and percent of renters in occupied housing units
-renters <- get_acs(geography = "block group", year = 2018, survey = "acs5",
+renters <- get_acs(geography = "block group", 
+                   year = year, moe_level = moe, survey = survey,
                    variables = c(total_occ_units = "B25003_001",
                                  renter_occ_units = "B25003_003"),
                    state = "MA", output = "wide") %>% 
@@ -491,7 +514,7 @@ renters <- get_acs(geography = "block group", year = 2018, survey = "acs5",
 ######### JOIN DATA FRAMES TO POLYGONS #############
 
 # join demographic df to block groups
-ma_blkgrps18 <- ma_blkgrps18 %>% 
+ma_blkgrps <- ma_blkgrps %>% 
   # select(-starts_with("total")) %>% 
   left_join(., race_pct, by = "GEOID") %>% 
   left_join(., medhhinclt50_pct, by = "GEOID") %>%
@@ -504,16 +527,17 @@ ma_blkgrps18 <- ma_blkgrps18 %>%
 
 
 # save output
-save(ma_blkgrps18, file = "/Data/Demographics.rds")
+save(ma_blkgrps, file = "/Data/Demographics.rds")
 # clear environment
-rm(list = ls())
+# rm(list = ls())
 
 
 
 ### DEMOGRAPHICS AT TRACT LEVEL
 
 # Tracts
-ma_tracts18 <- get_acs(geography = "tract", survey = "acs5", year = 2018,
+ma_tracts <- get_acs(geography = "tract", 
+                       year = year, moe_level = moe, survey = survey,
                        variables = c(totalpop = "B03002_001", 
                                      medhhinc = "B19013_001"),
                        state = "MA", output = "wide", geometry = TRUE) %>% 
@@ -530,7 +554,9 @@ ma_tracts18 <- get_acs(geography = "tract", survey = "acs5", year = 2018,
 ### RATIO OF INCOME TO POVERTY LEVEL
 # Download ratio of income to poverty level in the past 12 months to calculate the number or percent of a tract’s population in households where the household income is less than or equal to twice the federal “poverty level.” More precisely, percent low-income is calculated as a percentage of those for whom the poverty ratio was known, as reported by the Census Bureau, which may be less than the full population in some tracts. More information on the federally-defined poverty threshold is available at http://www.census.gov/hhes/www/poverty/methods/definitions.html. Note also that poverty status is not determined for people living in institutional group quarters (i.e. prisons, college dormitories, military barracks, nursing homes), so these populations are not included in the poverty estimates (https://www.census.gov/topics/income-poverty/poverty/guidance/poverty-measures.html).
 # First, download table of ratio of income to poverty level
-C17002 <- get_acs(geography = "tract", table = "C17002", state = "MA")
+C17002 <- get_acs(geography = "tract", table = "C17002", 
+                  year = year, moe_level = moe, survey = survey,
+                  state = "MA")
 # Isolate universe pop for whom poverty status is known
 povknown <- C17002 %>% 
   filter(variable == "C17002_001") %>% 
@@ -562,13 +588,15 @@ poverty_pct <- povknown %>%
       pct2povE < pct2povM, 0, pct2povE - pct2povM)) %>% 
   select(-starts_with("r2p"))
 # clean up
-rm(C17002,num2pov,povknown)
+# rm(C17002,num2pov,povknown)
 
 
 ### RACE AND ETHNICITY
 # Download B03002 HISPANIC OR LATINO ORIGIN BY RACE in two sets. 
 # Start with total pop and all races in wide format and compute upper and lower confidence values. 
-B03002_totrace <- get_acs(geography = "tract", variables = c(
+B03002_totrace <- get_acs(geography = "tract", 
+                          year = year, moe_level = moe, survey = survey,
+                          variables = c(
   totalpop = "B03002_001",
   nhwhitepop = "B03002_003",
   nhblackpop = "B03002_004",
@@ -587,7 +615,9 @@ B03002_totrace <- get_acs(geography = "tract", variables = c(
               values_from = c(E, M, UC, LC))
 
 # Next acquire estimates for Hispanic and nonWhite groups in long format to create aggregated minority variable
-B03002_minority <- get_acs(geography = "tract", variables = c(
+B03002_minority <- get_acs(geography = "tract", 
+                           year = year, moe_level = moe, survey = survey,
+                           variables = c(
   nhblackpop = "B03002_004",
   nhamerindpop = "B03002_005",
   nhasianpop = "B03002_006",
@@ -665,13 +695,14 @@ race_pct <- map_dfc(unique_names, ~estimatesDF %>%
   select(-NAME)
 
 # clean up
-rm(list = ls(pattern = paste(c("B03002","estimatesDF","unique"), 
-                             collapse = "|")))
+# rm(list = ls(pattern = paste(c("B03002","estimatesDF","unique"), 
+#                              collapse = "|")))
 
 
 ### ENGLISH LANGUAGE ISOLATION
 # Download C16002. Household Language by Household Limited English Speaking Status. Note that this table is a collapsed version of table B16002. EPA and MA use the latter, but there is no significant difference since we are not interested in disaggregating categories.
 eng_limited <- get_acs(geography = "tract", 
+                       year = year, moe_level = moe, survey = survey,
                        variables = c("C16002_001",
                                      "C16002_004", 
                                      "C16002_007",
@@ -710,13 +741,15 @@ eng_limited_pct <- eng_limited %>%
   select(-eng_li_pE,-eng_li_pM)
 
 # clean up
-rm(eng_limited,eng_limited_est)
+# rm(eng_limited,eng_limited_est)
 
 
 ### EDUCATIONAL ATTAINMENT FOR THOSE AGE 25+
 # Less than high school education: The number or percent of people age 25 or older in a tract whose education is short of a high school diploma.
 # Download Table B15002 SEX BY EDUCATIONAL ATTAINMENT FOR THE POPULATION 25 YEARS AND OVER
-B15002 <- get_acs(geography = "tract", table = "B15002", state = "MA")
+B15002 <- get_acs(geography = "tract", table = "B15002", 
+                  year = year, moe_level = moe, survey = survey, 
+                  state = "MA")
 
 # Isolate universe of population 25+
 age25up <- B15002 %>% 
@@ -775,14 +808,16 @@ lths_pct <- age25up %>%
       pct_collegeE < pct_collegeM, 0, pct_collegeE - pct_collegeM)) %>% 
   select(-starts_with("r_"))
 # clean up
-rm(age25up,B15002,lths_num,lths_strings,col_num,col_strings)
+# rm(age25up,B15002,lths_num,lths_strings,col_num,col_strings)
 
 
 ### AGE UNDER 5 AND OVER 64
 # Individuals under age 5: The number or percent of people in a tract under the age of 5.
 # Individuals over age 64: The number or percent of people in a tract over the age of 64.
 # Download Table B01001 TOTAL POPULATION COUNTS AND AGES
-B01001 <- get_acs(geography = "tract", table = "B01001", state = "MA")
+B01001 <- get_acs(geography = "tract", table = "B01001", 
+                  year = year, moe_level = moe, survey = survey, 
+                  state = "MA")
 
 # Isolate universe of population for all sex and ages
 allAges <- B01001 %>% 
@@ -838,12 +873,13 @@ age5_64_pct <- allAges %>%
       pct_over64E < pct_over64M, 0, pct_over64E - pct_over64M)) %>% 
   select(-starts_with("r_"))
 # clean up
-rm(allAges,B01001,over64,under5,ovr64_strings)
+# rm(allAges,B01001,over64,under5,ovr64_strings)
 
 
 ### MEDIAN AGE OF HOUSING 
 # Based on median year structure built. 
-housing_age <- get_acs(geography = "tract", survey = "acs5",
+housing_age <- get_acs(geography = "tract", 
+                       year = year, moe_level = moe, survey = survey,
                        variables = c(housing_yr_built = "B25035_001"), 
                        state = "MA", output = "wide") %>% 
   mutate(housing_age_est = if_else(housing_yr_builtE > 1700, 2020 - housing_yr_builtE, NULL),
@@ -854,7 +890,8 @@ housing_age <- get_acs(geography = "tract", survey = "acs5",
 
 ### TENURE
 # Based on number and percent of renters in occupied housing units
-renters <- get_acs(geography = "tract", year = 2018, survey = "acs5",
+renters <- get_acs(geography = "tract", 
+                   year = year, moe_level = moe, survey = survey,
                    variables = c(total_occ_units = "B25003_001",
                                  renter_occ_units = "B25003_003"),
                    state = "MA", output = "wide") %>% 
@@ -884,8 +921,8 @@ renters <- get_acs(geography = "tract", year = 2018, survey = "acs5",
 # NOTE THAT THIS DATA IS ONLY AVAILABLE AT TRACT LEVEL, NOT BLKGRP
 # Based on tenure by housing cost as a percentage of income in the last 12 months for those paying 30% or more of income
 # First compute derived sum and moe for house cost burdened as a group
-house_burdened <- get_acs(geography = "tract", year = 2018, 
-                          survey = "acs5", 
+house_burdened <- get_acs(geography = "tract", 
+                          year = year, moe_level = moe, survey = survey,
                           variables = c("B25106_006", 
                                         "B25106_010",
                                         "B25106_014",
@@ -906,8 +943,8 @@ house_burdened <- get_acs(geography = "tract", year = 2018,
            house_burdened_E - house_burdened_M))
 
 # Next, acquire universe estimate to calculate percentages
-house_burdened <- get_acs(geography = "tract", year = 2018, 
-                          survey = "acs5", 
+house_burdened <- get_acs(geography = "tract", 
+                          year = year, moe_level = moe, survey = survey,
                           variables = c(occ_housing = "B25106_001"), 
                           state = "MA", output = "wide") %>% 
   left_join(house_burdened, ., by = "GEOID") %>% 
@@ -930,7 +967,9 @@ house_burdened <- get_acs(geography = "tract", year = 2018,
 # NOTE THAT THIS DATA IS ONLY AVAILABLE AT TRACT LEVEL, NOT BLKGRP
 # Number and percent of individuals 18+ with a disability
 # Download Table B18101 SEX BY AGE BY DISABILITY STATUS
-B18101 <- get_acs(geography = "tract", table = "B18101", state = "MA")
+B18101 <- get_acs(geography = "tract", table = "B18101", 
+                  year = year, moe_level = moe, survey = survey, 
+                  state = "MA")
 
 # Isolate disabled and non-disabled population 18+
 # create vector of patterns for male and female variables 18+
@@ -976,13 +1015,13 @@ disabilityOver18_pct <- over18 %>%
       pct_disabilityOver18E - pct_disabilityOver18M))%>% 
   select(-starts_with("r_"))
 # clean up
-rm(B18101,disabledOver18,disabledOvr18_strings,over18,ovr18_strings)
+# rm(B18101,disabledOver18,disabledOvr18_strings,over18,ovr18_strings)
 
 
 ######### JOIN DATA FRAMES TO POLYGONS #############
 
 # join demographic df to block groups
-ma_tracts18 <- ma_tracts18 %>% 
+ma_tracts <- ma_tracts %>% 
   left_join(., race_pct, by = "GEOID") %>% 
   left_join(., age5_64_pct, by = "GEOID") %>% 
   left_join(., eng_limited_pct, by = "GEOID") %>% 
@@ -994,10 +1033,10 @@ ma_tracts18 <- ma_tracts18 %>%
   left_join(., disabilityOver18_pct, by = "GEOID")
 
 # save output
-load("/Data/Demographics.rds")
-save(ma_blkgrps18, ma_tracts18, file = "/Data/Demographics.rds")
+# load("/Data/Demographics.rds")
+save(ma_blkgrps, ma_tracts, file = "/Data/Demographics.rds")
 # clear environment
-rm(list = ls())
+# rm(list = ls())
 
 
 
@@ -1006,7 +1045,8 @@ rm(list = ls())
 ### DEMOGRAPHICS AT COUNTY SUBDIVISION LEVEL
 
 # County subdivisions (i.e., cities and towns)
-ma_cosub18 <- get_acs(geography = "county subdivision", 
+ma_cosub <- get_acs(geography = "county subdivision", 
+                      year = year, moe_level = moe, survey = survey,
                       variables = c(totalpop = "B03002_001", 
                                     medhhinc = "B19013_001"),
                       state = "MA", output = "wide", geometry = TRUE) %>% 
@@ -1023,7 +1063,9 @@ ma_cosub18 <- get_acs(geography = "county subdivision",
 ### RATIO OF INCOME TO POVERTY LEVEL
 # Download ratio of income to poverty level in the past 12 months to calculate the number or percent of a county subdivision’s population in households where the household income is less than or equal to twice the federal “poverty level.” More precisely, percent low-income is calculated as a percentage of those for whom the poverty ratio was known, as reported by the Census Bureau, which may be less than the full population in some tracts. More information on the federally-defined poverty threshold is available at http://www.census.gov/hhes/www/poverty/methods/definitions.html. Note also that poverty status is not determined for people living in institutional group quarters (i.e. prisons, college dormitories, military barracks, nursing homes), so these populations are not included in the poverty estimates (https://www.census.gov/topics/income-poverty/poverty/guidance/poverty-measures.html).
 # First, download table of ratio of income to poverty level
-C17002 <- get_acs(geography = "county subdivision", table = "C17002", state = "MA")
+C17002 <- get_acs(geography = "county subdivision", table = "C17002", 
+                  year = year, moe_level = moe, survey = survey, 
+                  state = "MA")
 # Isolate universe pop for whom poverty status is known
 povknown <- C17002 %>% 
   filter(variable == "C17002_001") %>% 
@@ -1055,13 +1097,15 @@ poverty_pct <- povknown %>%
       pct2povE < pct2povM, 0, pct2povE - pct2povM)) %>% 
   select(-starts_with("r2p"))
 # clean up
-rm(C17002,num2pov,povknown)
+# rm(C17002,num2pov,povknown)
 
 
 ### RACE AND ETHNICITY
 # Download B03002 HISPANIC OR LATINO ORIGIN BY RACE in two sets. 
 # Start with total pop and all races in wide format and compute upper and lower confidence values. 
-B03002_totrace <- get_acs(geography = "county subdivision", variables = c(
+B03002_totrace <- get_acs(geography = "county subdivision", 
+                          year = year, moe_level = moe, survey = survey, 
+                          variables = c(
   totalpop = "B03002_001",
   nhwhitepop = "B03002_003",
   nhblackpop = "B03002_004",
@@ -1080,7 +1124,9 @@ B03002_totrace <- get_acs(geography = "county subdivision", variables = c(
               values_from = c(E, M, UC, LC))
 
 # Next acquire estimates for Hispanic and nonWhite groups in long format to create aggregated minority variable
-B03002_minority <- get_acs(geography = "county subdivision", variables = c(
+B03002_minority <- get_acs(geography = "county subdivision", 
+                           year = year, moe_level = moe, survey = survey, 
+                           variables = c(
   nhblackpop = "B03002_004",
   nhamerindpop = "B03002_005",
   nhasianpop = "B03002_006",
@@ -1158,13 +1204,14 @@ race_pct <- map_dfc(unique_names, ~estimatesDF %>%
   select(-NAME)
 
 # clean up
-rm(list = ls(pattern = paste(c("B03002","estimatesDF","unique"), 
-                             collapse = "|")))
+# rm(list = ls(pattern = paste(c("B03002","estimatesDF","unique"), 
+#                              collapse = "|")))
 
 
 ### ENGLISH LANGUAGE ISOLATION
 # Download C16002. Household Language by Household Limited English Speaking Status. Note that this table is a collapsed version of table B16002. EPA and MA use the latter, but there is no significant difference since we are not interested in disaggregating categories.
 eng_limited <- get_acs(geography = "county subdivision", 
+                       year = year, moe_level = moe, survey = survey,
                        variables = c("C16002_001",
                                      "C16002_004", 
                                      "C16002_007",
@@ -1203,13 +1250,15 @@ eng_limited_pct <- eng_limited %>%
   select(-eng_li_pE,-eng_li_pM)
 
 # clean up
-rm(eng_limited,eng_limited_est)
+# rm(eng_limited,eng_limited_est)
 
 
 ### EDUCATIONAL ATTAINMENT FOR THOSE AGE 25+
 # Less than high school education: The number or percent of people age 25 or older in a county subdivision whose education is short of a high school diploma.
 # Download Table B15002 SEX BY EDUCATIONAL ATTAINMENT FOR THE POPULATION 25 YEARS AND OVER
-B15002 <- get_acs(geography = "county subdivision", table = "B15002", state = "MA")
+B15002 <- get_acs(geography = "county subdivision", table = "B15002", 
+                  year = year, moe_level = moe, survey = survey, 
+                  state = "MA")
 
 # Isolate universe of population 25+
 age25up <- B15002 %>% 
@@ -1268,14 +1317,16 @@ lths_pct <- age25up %>%
       pct_collegeE < pct_collegeM, 0, pct_collegeE - pct_collegeM)) %>% 
   select(-starts_with("r_"))
 # clean up
-rm(age25up,B15002,lths_num,lths_strings,col_num,col_strings)
+# rm(age25up,B15002,lths_num,lths_strings,col_num,col_strings)
 
 
 ### AGE UNDER 5 AND OVER 64
 # Individuals under age 5: The number or percent of people in a county subdivision under the age of 5.
 # Individuals over age 64: The number or percent of people in a county subdivision over the age of 64.
 # Download Table B01001 TOTAL POPULATION COUNTS AND AGES
-B01001 <- get_acs(geography = "county subdivision", table = "B01001", state = "MA")
+B01001 <- get_acs(geography = "county subdivision", table = "B01001", 
+                  year = year, moe_level = moe, survey = survey,
+                  state = "MA")
 
 # Isolate universe of population for all sex and ages
 allAges <- B01001 %>% 
@@ -1331,12 +1382,13 @@ age5_64_pct <- allAges %>%
       pct_over64E < pct_over64M, 0, pct_over64E - pct_over64M)) %>% 
   select(-starts_with("r_"))
 # clean up
-rm(allAges,B01001,over64,under5,ovr64_strings)
+# rm(allAges,B01001,over64,under5,ovr64_strings)
 
 
 ### MEDIAN AGE OF HOUSING 
 # Based on median year structure built. 
-housing_age <- get_acs(geography = "county subdivision", survey = "acs5",
+housing_age <- get_acs(geography = "county subdivision", 
+                       year = year, moe_level = moe, survey = survey,
                        variables = c(housing_yr_built = "B25035_001"), 
                        state = "MA", output = "wide") %>% 
   mutate(housing_age_est = if_else(housing_yr_builtE > 1700, 2020 - housing_yr_builtE, NULL),
@@ -1347,7 +1399,8 @@ housing_age <- get_acs(geography = "county subdivision", survey = "acs5",
 
 ### TENURE
 # Based on number and percent of renters in occupied housing units
-renters <- get_acs(geography = "county subdivision", year = 2018, survey = "acs5",
+renters <- get_acs(geography = "county subdivision", 
+                   year = year, moe_level = moe, survey = survey,
                    variables = c(total_occ_units = "B25003_001",
                                  renter_occ_units = "B25003_003"),
                    state = "MA", output = "wide") %>% 
@@ -1377,8 +1430,8 @@ renters <- get_acs(geography = "county subdivision", year = 2018, survey = "acs5
 # NOTE THAT THIS DATA IS ONLY AVAILABLE AT TRACT LEVEL, NOT BLKGRP
 # Based on tenure by housing cost as a percentage of income in the last 12 months for those paying 30% or more of income
 # First compute derived sum and moe for house cost burdened as a group
-house_burdened <- get_acs(geography = "county subdivision", year = 2018, 
-                          survey = "acs5", 
+house_burdened <- get_acs(geography = "county subdivision", 
+                          year = year, moe_level = moe, survey = survey,
                           variables = c("B25106_006", 
                                         "B25106_010",
                                         "B25106_014",
@@ -1399,8 +1452,8 @@ house_burdened <- get_acs(geography = "county subdivision", year = 2018,
            house_burdened_E - house_burdened_M))
 
 # Next, acquire universe estimate to calculate percentages
-house_burdened <- get_acs(geography = "county subdivision", year = 2018, 
-                          survey = "acs5", 
+house_burdened <- get_acs(geography = "county subdivision", 
+                          year = year, moe_level = moe, survey = survey,
                           variables = c(occ_housing = "B25106_001"), 
                           state = "MA", output = "wide") %>% 
   left_join(house_burdened, ., by = "GEOID") %>% 
@@ -1423,7 +1476,9 @@ house_burdened <- get_acs(geography = "county subdivision", year = 2018,
 # NOTE THAT THIS DATA IS ONLY AVAILABLE AT TRACT LEVEL, NOT BLKGRP
 # Number and percent of individuals 18+ with a disability
 # Download Table B18101 SEX BY AGE BY DISABILITY STATUS
-B18101 <- get_acs(geography = "county subdivision", table = "B18101", state = "MA")
+B18101 <- get_acs(geography = "county subdivision", table = "B18101", 
+                  year = year, moe_level = moe, survey = survey,
+                  state = "MA")
 
 # Isolate disabled and non-disabled population 18+
 # create vector of patterns for male and female variables 18+
@@ -1469,13 +1524,13 @@ disabilityOver18_pct <- over18 %>%
       pct_disabilityOver18E - pct_disabilityOver18M))%>% 
   select(-starts_with("r_"))
 # clean up
-rm(B18101,disabledOver18,disabledOvr18_strings,over18,ovr18_strings)
+# rm(B18101,disabledOver18,disabledOvr18_strings,over18,ovr18_strings)
 
 
 ######### JOIN DATA FRAMES TO POLYGONS #############
 
 # join demographic df to block groups
-ma_cosub18 <- ma_cosub18 %>% 
+ma_cosub <- ma_cosub %>% 
   left_join(., race_pct, by = "GEOID") %>% 
   left_join(., age5_64_pct, by = "GEOID") %>% 
   left_join(., eng_limited_pct, by = "GEOID") %>% 
@@ -1487,6 +1542,6 @@ ma_cosub18 <- ma_cosub18 %>%
   left_join(., disabilityOver18_pct, by = "GEOID")
 
 # save output
-load("/Data/Demographics.rds")
-save(ma_blkgrps18, ma_tracts18, ma_cosub18, file = "C:/Users/Marcos/Documents/Research/GasLeaksEJ/Data/Demographics.rds")
+# load("/Data/Demographics.rds")
+save(ma_blkgrps, ma_tracts, ma_cosub, file = "C:/Users/Marcos/Documents/Research/GasLeaksEJ/Data/Demographics.rds")
 
