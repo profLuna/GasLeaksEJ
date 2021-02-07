@@ -12,7 +12,7 @@ options(tigris_use_cache = TRUE, tigris_class = "sf")
 # set ACS parameters
 year = 2019
 survey = "acs5"
-moe = 95
+moe = 90
 
 # Load list of variables to identify tables of interest
 v <- load_variables(year, survey, cache = TRUE)
