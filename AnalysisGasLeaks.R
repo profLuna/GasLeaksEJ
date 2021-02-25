@@ -10773,7 +10773,7 @@ Unrepaired_kde_grid3k <- kde(unrepaired2019final, band_width = 3000, grid = grid
 m_UnrepairedKDE3k <- Unrepaired_kde_grid3k %>% 
   crop_shape(., ma_blkgrps, polygon = TRUE) %>% 
   st_make_valid() %>% 
-  tm_shape(.) + tm_fill(col = "kde_value", style = "fisher")
+  tm_shape(.) + tm_fill(col = "kde_value", style = "fisher", alpha = 0.5)
 m_UnrepairedKDE3k
 # save the map for comparison
 tmap_save(m_UnrepairedKDE3k, filename = "Images/m_UnrepairedKDE3k.png", dpi = 600)
@@ -10813,13 +10813,31 @@ tmap_arrange(m_gridUnrepaired, m_UnrepairedKDE3k)
 # Calculate distance based neighbors
 nb <- dnearneigh(coordinates(gridCnt1_sp),0,15000)
 
+# find max distance to nearest neighbor
+# create vector nearest neighbor distances
+nn <- ma_blkgrps %>% 
+  filter(!st_is_empty(.)) %>% 
+  select(leaks_sqkm) %>% 
+  st_centroid(., of_largest_polygon = TRUE) %>% 
+  spatstat::as.ppp(.) %>% 
+  spatstat::nndist(.)
+# identify maximum distance
+max(nn)
+
+nb <- ma_blkgrps %>% 
+  filter(!st_is_empty(.)) %>% 
+  select(leaks_sqkm) %>% 
+  as_Spatial(.) %>% 
+  coordinates(.) %>% 
+  dnearneigh(., 0, 6000) 
+
 # compute neighbor weights
 listw <- nb2listw(nb, style = "B")
 
 # compute Getis-Ord Gi statistic
-local_g <- localG(gridCnt1_sp$unrepaired, listw)
-local_g <- cbind(gridCnt1_sp, as.matrix(local_g))
-names(local_g)[5] <- "gstat"
+local_g <- localG(ma_blkgrps$leaks_hu, listw)
+local_g <- cbind(ma_blkgrps, as.matrix(local_g))
+names(local_g)[403] <- "gstat"
 
 # map out hotspots
 tm_shape(local_g, unit = "mi",) + 
