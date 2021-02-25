@@ -10773,7 +10773,7 @@ Unrepaired_kde_grid3k <- kde(unrepaired2019final, band_width = 3000, grid = grid
 m_UnrepairedKDE3k <- Unrepaired_kde_grid3k %>% 
   crop_shape(., ma_blkgrps, polygon = TRUE) %>% 
   st_make_valid() %>% 
-  tm_shape(.) + tm_fill(col = "kde_value", style = "fisher", alpha = 0.5)
+  tm_shape(.) + tm_fill(col = "kde_value", style = "fisher")
 m_UnrepairedKDE3k
 # save the map for comparison
 tmap_save(m_UnrepairedKDE3k, filename = "Images/m_UnrepairedKDE3k.png", dpi = 600)
