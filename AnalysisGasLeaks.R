@@ -10814,7 +10814,7 @@ tmap_arrange(m_gridUnrepaired, m_UnrepairedKDE3k)
 nb <- dnearneigh(coordinates(gridCnt1_sp),0,15000)
 
 # find max distance to nearest neighbor
-# create vector nearest neighbor distances
+# create vector of nearest neighbor distances
 nn <- ma_blkgrps %>% 
   filter(!st_is_empty(.)) %>% 
   select(leaks_sqkm) %>% 
