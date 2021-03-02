@@ -6978,6 +6978,4137 @@ pwdt_OHU_LeakAgeDaysAvgC3 <- dfpW_OHU %>%
 
 
 
+### Test for significant differences for each utility using Wilcoxon test and Dunn's pairwise comparison tests
+# Create df for NG to analyze
+ppLeakDensityNG <- ma_tracts %>% 
+  as.data.frame() %>% 
+  filter(str_detect(GAS, "^National") | 
+           GAS == "Colonial Gas") %>% # limit to BGs in NG/Colonial svc area
+  mutate(leaks_sqkmNG = (`National Grid - Boston Gas_19unrepaired` +
+                           `National Grid - Colonial Gas_19unrepaired`)/area_sqkm,
+         leaks_sqkmNGC1 = (`National Grid - Boston Gas_19unrepairedC1` +
+                             `National Grid - Colonial Gas_19unrepairedC1`)/area_sqkm,
+         leaks_sqkmNGC2 = (`National Grid - Boston Gas_19unrepairedC2` +
+                             `National Grid - Colonial Gas_19unrepairedC2`)/area_sqkm,
+         leaks_sqkmNGC3 = (`National Grid - Boston Gas_19unrepairedC3` +
+                             `National Grid - Colonial Gas_19unrepairedC3`)/area_sqkm,
+         REPleaks_sqkmNG = (`National Grid - Boston Gas_19repaired` +
+                              `National Grid - Colonial Gas_19repaired`)/area_sqkm,
+         REPleaks_sqkmNGC1 = (`National Grid - Boston Gas_19repairedC1` +
+                                `National Grid - Colonial Gas_19repairedC1`)/area_sqkm,
+         REPleaks_sqkmNGC2 = (`National Grid - Boston Gas_19repairedC2` +
+                                `National Grid - Colonial Gas_19repairedC2`)/area_sqkm,
+         REPleaks_sqkmNGC3 = (`National Grid - Boston Gas_19repairedC3` +
+                                `National Grid - Colonial Gas_19repairedC3`)/area_sqkm,
+         AllLeaks2019_sqkmNG = (`National Grid - Boston Gas_19unrepaired` +
+                                  `National Grid - Colonial Gas_19unrepaired` + 
+                                  `National Grid - Boston Gas_19repaired` +
+                                  `National Grid - Colonial Gas_19repaired`)/area_sqkm,
+         AllLeaks2019_sqkmNGC1 = (`National Grid - Boston Gas_19unrepairedC1` +
+                                    `National Grid - Colonial Gas_19unrepairedC1` + 
+                                    `National Grid - Boston Gas_19repairedC1` +
+                                    `National Grid - Colonial Gas_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmNGC2 = (`National Grid - Boston Gas_19unrepairedC2` +
+                                    `National Grid - Colonial Gas_19unrepairedC2` + 
+                                    `National Grid - Boston Gas_19repairedC2` +
+                                    `National Grid - Colonial Gas_19repairedC2`)/area_sqkm,
+         AllLeaks2019_sqkmNGC3 = (`National Grid - Boston Gas_19unrepairedC3` +
+                                    `National Grid - Colonial Gas_19unrepairedC3` + 
+                                    `National Grid - Boston Gas_19repairedC3` +
+                                    `National Grid - Colonial Gas_19repairedC3`)/area_sqkm,
+         leaks_huNG = if_else(total_occ_unitsE == 0, 0, 
+                              (`National Grid - Boston Gas_19unrepaired` +
+                                 `National Grid - Colonial Gas_19unrepaired`)/total_occ_unitsE),
+         leaks_huNGC1 = if_else(total_occ_unitsE == 0, 0, 
+                                (`National Grid - Boston Gas_19unrepairedC1` +
+                                   `National Grid - Colonial Gas_19unrepairedC1`)/total_occ_unitsE),
+         leaks_huNGC2 = if_else(total_occ_unitsE == 0, 0, 
+                                (`National Grid - Boston Gas_19unrepairedC2` +
+                                   `National Grid - Colonial Gas_19unrepairedC2`)/total_occ_unitsE),
+         leaks_huNGC3 = if_else(total_occ_unitsE == 0, 0, 
+                                (`National Grid - Boston Gas_19unrepairedC3` +
+                                   `National Grid - Colonial Gas_19unrepairedC3`)/total_occ_unitsE),
+         REPleaks_huNG = if_else(total_occ_unitsE == 0, 0,
+                                 (`National Grid - Boston Gas_19repaired` +
+                                    `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE),
+         REPleaks_huNGC1 = if_else(total_occ_unitsE == 0, 0,
+                                   (`National Grid - Boston Gas_19repairedC1` +
+                                      `National Grid - Colonial Gas_19repairedC1`)/total_occ_unitsE),
+         REPleaks_huNGC2 = if_else(total_occ_unitsE == 0, 0,
+                                   (`National Grid - Boston Gas_19repairedC2` +
+                                      `National Grid - Colonial Gas_19repairedC2`)/total_occ_unitsE),
+         REPleaks_huNGC3 = if_else(total_occ_unitsE == 0, 0,
+                                   (`National Grid - Boston Gas_19repairedC3` +
+                                      `National Grid - Colonial Gas_19repairedC3`)/total_occ_unitsE),
+         AllLeaks2019_huNG = if_else(total_occ_unitsE == 0, 0,
+                                     (`National Grid - Boston Gas_19unrepaired` + `National Grid - Colonial Gas_19unrepaired` + 
+                                        `National Grid - Boston Gas_19repaired` +
+                                        `National Grid - Colonial Gas_19repaired`)/total_occ_unitsE),
+         AllLeaks2019_huNGC1 = if_else(total_occ_unitsE == 0, 0,
+                                       (`National Grid - Boston Gas_19unrepairedC1` + `National Grid - Colonial Gas_19unrepairedC1` + 
+                                          `National Grid - Boston Gas_19repairedC1` +
+                                          `National Grid - Colonial Gas_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huNGC2 = if_else(total_occ_unitsE == 0, 0,
+                                       (`National Grid - Boston Gas_19unrepairedC2` + `National Grid - Colonial Gas_19unrepairedC2` + 
+                                          `National Grid - Boston Gas_19repairedC2` +
+                                          `National Grid - Colonial Gas_19repairedC2`)/total_occ_unitsE),
+         AllLeaks2019_huNGC3 = if_else(total_occ_unitsE == 0, 0,
+                                       (`National Grid - Boston Gas_19unrepairedC3` + `National Grid - Colonial Gas_19unrepairedC3` + 
+                                          `National Grid - Boston Gas_19repairedC3` +
+                                          `National Grid - Colonial Gas_19repairedC3`)/total_occ_unitsE),
+         PctRepaired19NG = (`National Grid - Boston Gas_19repaired` +
+                              `National Grid - Colonial Gas_19repaired`)/ (`National Grid - Boston Gas_19unrepaired` +
+                                                                             `National Grid - Colonial Gas_19unrepaired` + 
+                                                                             `National Grid - Boston Gas_19repaired` +
+                                                                             `National Grid - Colonial Gas_19repaired`)*100) %>% 
+  rowwise() %>% 
+  mutate(DaysToRepairAvgNG = sum(`National Grid - Boston Gas_19repairedDaysAvg`,                                 `National Grid - Colonial Gas_19repairedDaysAvg`, na.rm = TRUE)/2,
+         DaysToRepairAvgNGC1 = sum(`National Grid - Boston Gas_19repairedDaysAvgC1`,                                 `National Grid - Colonial Gas_19repairedDaysAvgC1`, na.rm = TRUE)/2,
+         DaysToRepairAvgNGC2 = sum(`National Grid - Boston Gas_19repairedDaysAvgC2`,                                 `National Grid - Colonial Gas_19repairedDaysAvgC2`, na.rm = TRUE)/2,
+         DaysToRepairAvgNGC3 = sum(`National Grid - Boston Gas_19repairedDaysAvgC3`,                                 `National Grid - Colonial Gas_19repairedDaysAvgC3`, na.rm = TRUE)/2,
+         LeakAgeDaysAvgNG = sum(`National Grid - Boston Gas_19unrepairedDaysAvg`,                                 `National Grid - Colonial Gas_19unrepairedDaysAvg`, na.rm = TRUE)/2,
+         LeakAgeDaysAvgNGC1 = sum(`National Grid - Boston Gas_19unrepairedDaysAvgC1`,                                 `National Grid - Colonial Gas_19unrepairedDaysAvgC1`, na.rm = TRUE)/2,
+         LeakAgeDaysAvgNGC2 = sum(`National Grid - Boston Gas_19unrepairedDaysAvgC2`,                                 `National Grid - Colonial Gas_19unrepairedDaysAvgC2`, na.rm = TRUE)/2,
+         LeakAgeDaysAvgNGC3 = sum(`National Grid - Boston Gas_19unrepairedDaysAvgC3`,                                 `National Grid - Colonial Gas_19unrepairedDaysAvgC3`, na.rm = TRUE)/2) %>% 
+  select(totalpopE, nhwhitepop_E, nhblackpop_E, hisppop_E, nhasianpop_E, 
+         minority_E, eng_limitE, num2povE, lthsE, under5E, over64E,disabledOver18E,
+         renter_occ_unitsE, house_burdened_E, total_occ_unitsE, eng_hhE,
+         (starts_with("leaks_") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))), 
+         (starts_with("AllLeaks") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))), 
+         (starts_with("LeakAgeDaysAvg") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))),
+         (starts_with("REPleaks_") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))), 
+         (starts_with("DaystoRepairAvg") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))), 
+         (starts_with("PctRepaired19") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))),
+         (starts_with("leaks_hu") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))), 
+         (starts_with("REPleaks_hu") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))),
+         (starts_with("ALLleaks_hu") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3")))) 
+
+
+# pivot df to long format so that so new df = #groups x #rows
+dfp <- ppLeakDensityNG %>% 
+  select(-eng_limitE, -c(renter_occ_unitsE:eng_hhE)) %>% 
+  pivot_longer(., cols = totalpopE:disabledOver18E, 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for households
+dfpHH <- ppLeakDensityNG %>% 
+  select(eng_limitE, eng_hhE, c(leaks_sqkmNG:DaysToRepairAvgNGC3)) %>% 
+  pivot_longer(., cols = c(eng_limitE, eng_hhE), 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for OHU
+dfpOHU <- ppLeakDensityNG %>% 
+  select(renter_occ_unitsE, house_burdened_E, total_occ_unitsE,
+         c(leaks_sqkmNG:DaysToRepairAvgNGC3)) %>% 
+  pivot_longer(., cols = c(renter_occ_unitsE, house_burdened_E, total_occ_unitsE),
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# make sure it looks right
+table(dfp$group)
+table(dfpHH$group)
+table(dfpOHU$group)
+
+# try weighting by replicating observations by weights following suggestion at https://r.789695.n4.nabble.com/OT-a-weighted-rank-based-non-paired-test-statistic-td883773.html
+dfpW <- dfp[rep(1:nrow(dfp), dfp$pop),]
+
+dfpW_HH <- dfpHH[rep(1:nrow(dfpHH), dfpHH$pop),]
+
+dfpW_OHU <- dfpOHU[rep(1:nrow(dfpOHU), dfpOHU$pop),]
+
+# look at summary stats. should be equivalent to weighted means. 
+dfpW %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmNG, type = "common") %>% 
+  arrange(desc(median))
+
+dfpW_OHU %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmNG, type = "common") %>% 
+  arrange(desc(median))
+
+# Pairwise comparisons using Dunn's test with `rstatix` package. Compared to the Wilcoxon’s test, the Dunn’s test takes into account the rankings used by the Kruskal-Wallis test. It also does ties adjustments. See https://www.datanovia.com/en/lessons/kruskal-wallis-test-in-r/#multiple-pairwise-comparisons
+# unreparied leaks per sqkm
+pwdt_leaks_sqkmNG <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmNG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmNG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmNG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmNG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmNG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmNG %>% 
+    rbind(pwdt_HH_leaks_sqkmNG, pwdt_OHU_leaks_sqkmNG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_sqkmNG.csv"))
+
+# C1 unrepaired leaks per sqkm
+pwdt_leaks_sqkmNGC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmNGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmNGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmNGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmNGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmNGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmNGC1 %>% 
+    rbind(pwdt_HH_leaks_sqkmNGC1, pwdt_OHU_leaks_sqkmNGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_sqkmNGC1.csv"))
+
+# C2 unrepaired leaks per sqkm
+pwdt_leaks_sqkmNGC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmNGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmNGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmNGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmNGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmNGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmNGC2 %>% 
+    rbind(pwdt_HH_leaks_sqkmNGC2, pwdt_OHU_leaks_sqkmNGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_sqkmNGC2.csv"))
+
+# C3 unrepaired leaks per sqkm
+pwdt_leaks_sqkmNGC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmNGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmNGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmNGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmNGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmNGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmNGC3 %>% 
+    rbind(pwdt_HH_leaks_sqkmNGC3, pwdt_OHU_leaks_sqkmNGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_sqkmNGC3.csv"))
+
+# repaired leaks per sqkm
+pwdt_REPleaks_sqkmNG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmNG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmNG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmNG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmNG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmNG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmNG %>% 
+    rbind(pwdt_HH_REPleaks_sqkmNG, pwdt_OHU_REPleaks_sqkmNG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_sqkmNG.csv"))
+
+# C1 repaired leaks per sqkm
+pwdt_REPleaks_sqkmNGC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmNGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmNGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmNGC1 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmNGC1, pwdt_OHU_REPleaks_sqkmNGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_sqkmNGC1.csv"))
+
+# C2 repaired leaks per sqkm
+pwdt_REPleaks_sqkmNGC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmNGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmNGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmNGC2 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmNGC2, pwdt_OHU_REPleaks_sqkmNGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_sqkmNGC2.csv"))
+
+# C3 repaired leaks per sqkm
+pwdt_REPleaks_sqkmNGC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmNGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmNGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmNGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmNGC3 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmNGC3, pwdt_OHU_REPleaks_sqkmNGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_sqkmNGC3.csv"))
+
+# unrepaired leaks per OHU
+pwdt_leaks_huNG <- dfpW %>% 
+  rstatix::dunn_test(leaks_huNG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huNG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huNG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huNG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huNG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huNG %>% 
+    rbind(pwdt_HH_leaks_huNG, pwdt_OHU_leaks_huNG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>%  
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_huNG.csv"))
+
+# C1 unrepaired leaks per OHU
+pwdt_leaks_huNGC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huNGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huNGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huNGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huNGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huNGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huNGC1 %>% 
+    rbind(pwdt_HH_leaks_huNGC1, pwdt_OHU_leaks_huNGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_huNGC1.csv"))
+
+# C2 unrepaired leaks per OHU
+pwdt_leaks_huNGC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huNGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huNGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huNGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huNGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huNGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huNGC2 %>% 
+    rbind(pwdt_HH_leaks_huNGC2, pwdt_OHU_leaks_huNGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_huNGC2.csv"))
+
+# C3 unrepaired leaks per OHU
+pwdt_leaks_huNGC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huNGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huNGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huNGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huNGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huNGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huNGC3 %>% 
+    rbind(pwdt_HH_leaks_huNGC3, pwdt_OHU_leaks_huNGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_leaks_huNGC3.csv"))
+
+# repaired leaks per OHU
+pwdt_REPleaks_huNG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huNG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huNG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huNG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huNG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huNG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huNG %>% 
+    rbind(pwdt_HH_REPleaks_huNG, pwdt_OHU_REPleaks_huNG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_huNG.csv"))
+
+# C1 repaired leaks per OHU
+pwdt_REPleaks_huNGC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huNGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huNGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huNGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huNGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huNGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huNGC1 %>% 
+    rbind(pwdt_HH_REPleaks_huNGC1, pwdt_OHU_REPleaks_huNGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_huNGC1.csv"))
+
+# C2 repaired leaks per OHU
+pwdt_REPleaks_huNGC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huNGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huNGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huNGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huNGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huNGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huNGC2 %>% 
+    rbind(pwdt_HH_REPleaks_huNGC2, pwdt_OHU_REPleaks_huNGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_huNGC2.csv"))
+
+# C3 repaired leaks per OHU
+pwdt_REPleaks_huNGC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huNGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huNGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huNGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huNGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huNGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huNGC3 %>% 
+    rbind(pwdt_HH_REPleaks_huNGC3, pwdt_OHU_REPleaks_huNGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_REPleaks_huNGC3.csv"))
+
+# days to repair avg
+pwdt_DaysToRepairAvgNG <- dfpW %>% 
+  drop_na(DaysToRepairAvgNG) %>% 
+  rstatix::dunn_test(DaysToRepairAvgNG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgNG <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgNG) %>%
+  rstatix::dunn_test(DaysToRepairAvgNG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgNG <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgNG) %>%
+  rstatix::dunn_test(DaysToRepairAvgNG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgNG %>% 
+    rbind(pwdt_HH_DaysToRepairAvgNG, pwdt_OHU_DaysToRepairAvgNG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_DaysToRepairAvgNG.csv"))
+
+# C1 days to repair avg
+pwdt_DaysToRepairAvgNGC1 <- dfpW %>% 
+  drop_na(DaysToRepairAvgNGC1) %>% 
+  rstatix::dunn_test(DaysToRepairAvgNGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgNGC1 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgNGC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgNGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgNGC1 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgNGC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgNGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgNGC1 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgNGC1, pwdt_OHU_DaysToRepairAvgNGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_DaysToRepairAvgNGC1.csv"))
+
+# C2 days to repair avg
+pwdt_DaysToRepairAvgNGC2 <- dfpW %>% 
+  drop_na(DaysToRepairAvgNGC2) %>% 
+  rstatix::dunn_test(DaysToRepairAvgNGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgNGC2 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgNGC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgNGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgNGC2 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgNGC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgNGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgNGC2 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgNGC2, pwdt_OHU_DaysToRepairAvgNGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_DaysToRepairAvgNGC2.csv"))
+
+# C3 days to repair avg
+pwdt_DaysToRepairAvgNGC3 <- dfpW %>% 
+  drop_na(DaysToRepairAvgNGC3) %>% 
+  rstatix::dunn_test(DaysToRepairAvgNGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgNGC3 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgNGC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgNGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgNGC3 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgNGC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgNGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgNGC3 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgNGC3, pwdt_OHU_DaysToRepairAvgNGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_DaysToRepairAvgNGC3.csv"))
+
+# leak age days avg
+pwdt_LeakAgeDaysAvgNG <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgNG) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgNG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgNG <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgNG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgNG <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgNG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgNG %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgNG, pwdt_OHU_LeakAgeDaysAvgNG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_LeakAgeDaysAvgNG.csv"))
+
+# C1 leak age days avg
+pwdt_LeakAgeDaysAvgNGC1 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgNGC1) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgNGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgNGC1 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgNGC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgNGC1 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgNGC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgNGC1 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgNGC1, pwdt_OHU_LeakAgeDaysAvgNGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_LeakAgeDaysAvgNGC1.csv"))
+
+# C2 leak age days avg
+pwdt_LeakAgeDaysAvgNGC2 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgNGC2) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgNGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgNGC2 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgNGC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgNGC2 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgNGC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgNGC2 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgNGC2, pwdt_OHU_LeakAgeDaysAvgNGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_LeakAgeDaysAvgNGC2.csv"))
+
+# C3 leak age days avg
+pwdt_LeakAgeDaysAvgNGC3 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgNGC3) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgNGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgNGC3 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgNGC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgNGC3 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgNGC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgNGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgNGC3 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgNGC3, pwdt_OHU_LeakAgeDaysAvgNGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/NG/pwdt_LeakAgeDaysAvgNGC3.csv"))
+
+
+
+### Eversource
+ppLeakDensityEV <- ma_tracts %>% 
+  as.data.frame() %>% 
+  filter(str_detect(GAS, "^Eversource") | 
+           GAS == "Energy$") %>% # limit to BGs in EV svc area
+  mutate(leaks_sqkmEV = (`Eversource Energy_19unrepaired`)/area_sqkm,
+         # leaks_sqkmEVC1 = (`Eversource Energy_19unrepairedC1`)/area_sqkm,
+         leaks_sqkmEVC1 = 0,
+         leaks_sqkmEVC2 = (`Eversource Energy_19unrepairedC2`)/area_sqkm,
+         leaks_sqkmEVC3 = (`Eversource Energy_19unrepairedC3`)/area_sqkm,
+         REPleaks_sqkmEV = (`Eversource Energy_19repaired`)/area_sqkm,
+         REPleaks_sqkmEVC1 = (`Eversource Energy_19repairedC1`)/area_sqkm,
+         REPleaks_sqkmEVC2 = (`Eversource Energy_19repairedC2`)/area_sqkm,
+         REPleaks_sqkmEVC3 = (`Eversource Energy_19repairedC3`)/area_sqkm,
+         AllLeaks2019_sqkmEV = (`Eversource Energy_19unrepaired` +
+                                  `Eversource Energy_19repaired`)/area_sqkm,
+         # AllLeaks2019_sqkmEVC1 = (`Eversource Energy_19unrepairedC1` + 
+         #                            `Eversource Energy_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmEVC1 = (`Eversource Energy_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmEVC2 = (`Eversource Energy_19unrepairedC2` + 
+                                    `Eversource Energy_19repairedC2`)/area_sqkm,
+         AllLeaks2019_sqkmEVC3 = (`Eversource Energy_19unrepairedC3` + 
+                                    `Eversource Energy_19repairedC3`)/area_sqkm,
+         leaks_huEV = if_else(total_occ_unitsE == 0, 0, 
+                              (`Eversource Energy_19unrepaired`)/total_occ_unitsE),
+         # leaks_huEVC1 = if_else(total_occ_unitsE == 0, 0, 
+         #                        (`Eversource Energy_19unrepairedC1`)/total_occ_unitsE),
+         leaks_huEVC1 = 0,
+         leaks_huEVC2 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Eversource Energy_19unrepairedC2`)/total_occ_unitsE),
+         leaks_huEVC3 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Eversource Energy_19unrepairedC3`)/total_occ_unitsE),
+         REPleaks_huEV = if_else(total_occ_unitsE == 0, 0,
+                                 (`Eversource Energy_19repaired`)/total_occ_unitsE),
+         REPleaks_huEVC1 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Eversource Energy_19repairedC1`)/total_occ_unitsE),
+         REPleaks_huEVC2 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Eversource Energy_19repairedC2`)/total_occ_unitsE),
+         REPleaks_huEVC3 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Eversource Energy_19repairedC3`)/total_occ_unitsE),
+         AllLeaks2019_huEV = if_else(total_occ_unitsE == 0, 0,
+                                     (`Eversource Energy_19unrepaired` + 
+                                        `Eversource Energy_19repaired`)/total_occ_unitsE),
+         # AllLeaks2019_huEVC1 = if_else(total_occ_unitsE == 0, 0,
+         #                               (`Eversource Energy_19unrepairedC1` +
+         #                                  `Eversource Energy_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huEVC1 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Eversource Energy_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huEVC2 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Eversource Energy_19unrepairedC2` +
+                                          `Eversource Energy_19repairedC2`)/total_occ_unitsE),
+         AllLeaks2019_huEVC3 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Eversource Energy_19unrepairedC3` +
+                                          `Eversource Energy_19repairedC3`)/total_occ_unitsE),
+         PctRepaired19EV = (`Eversource Energy_19repaired`)/ (`Eversource Energy_19unrepaired` + `Eversource Energy_19repaired`)*100,
+         DaysToRepairAvgEV = `Eversource Energy_19repairedDaysAvg`,
+         DaysToRepairAvgEVC1 = `Eversource Energy_19repairedDaysAvgC1`,
+         DaysToRepairAvgEVC2 = `Eversource Energy_19repairedDaysAvgC2`,
+         DaysToRepairAvgEVC3 = `Eversource Energy_19repairedDaysAvgC3`,
+         LeakAgeDaysAvgEV = `Eversource Energy_19unrepairedDaysAvg`,
+         # LeakAgeDaysAvgEVC1 = `Eversource Energy_19unrepairedDaysAvgC1`,
+         LeakAgeDaysAvgEVC1 = NA,
+         LeakAgeDaysAvgEVC2 = `Eversource Energy_19unrepairedDaysAvgC2`,
+         LeakAgeDaysAvgEVC3 = `Eversource Energy_19unrepairedDaysAvgC3`) %>% 
+  select(totalpopE, nhwhitepop_E, nhblackpop_E, hisppop_E, nhasianpop_E, 
+         minority_E, eng_limitE, num2povE, lthsE, under5E, over64E,
+         disabledOver18E,renter_occ_unitsE, house_burdened_E, total_occ_unitsE, eng_hhE, (starts_with("leaks_") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))), 
+         (starts_with("AllLeaks") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))), 
+         (starts_with("LeakAgeDaysAvg") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))),
+         (starts_with("REPleaks_") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))), 
+         (starts_with("DaystoRepairAvg") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))), 
+         (starts_with("PctRepaired19") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))),
+         (starts_with("leaks_hu") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))), 
+         (starts_with("REPleaks_hu") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))),
+         (starts_with("ALLleaks_hu") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3")))) 
+
+# pivot df to long format so that so new df = #groups x #rows
+dfp <- ppLeakDensityEV %>% 
+  select(-eng_limitE, -c(renter_occ_unitsE:eng_hhE)) %>% 
+  pivot_longer(., cols = totalpopE:disabledOver18E, 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for households
+dfpHH <- ppLeakDensityEV %>% 
+  select(eng_limitE, eng_hhE, c(leaks_sqkmEV:DaysToRepairAvgEVC3)) %>% 
+  pivot_longer(., cols = c(eng_limitE, eng_hhE), 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for OHU
+dfpOHU <- ppLeakDensityEV %>% 
+  select(renter_occ_unitsE, house_burdened_E, total_occ_unitsE,
+         c(leaks_sqkmEV:DaysToRepairAvgEVC3)) %>% 
+  pivot_longer(., cols = c(renter_occ_unitsE, house_burdened_E, total_occ_unitsE),
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# make sure it looks right
+table(dfp$group)
+table(dfpHH$group)
+table(dfpOHU$group)
+
+# try weighting by replicating observations by weights following suggestion at https://r.789695.n4.nabble.com/OT-a-weighted-rank-based-non-paired-test-statistic-td883773.html
+dfpW <- dfp[rep(1:nrow(dfp), dfp$pop),]
+
+dfpW_HH <- dfpHH[rep(1:nrow(dfpHH), dfpHH$pop),]
+
+dfpW_OHU <- dfpOHU[rep(1:nrow(dfpOHU), dfpOHU$pop),]
+
+# look at summary stats. should be equivalent to weighted means. 
+dfpW %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmEV, type = "common") %>% 
+  arrange(desc(median))
+
+dfpW_OHU %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmEV, type = "common") %>% 
+  arrange(desc(median))
+
+# Pairwise comparisons using Dunn's test with `rstatix` package. Compared to the Wilcoxon’s test, the Dunn’s test takes into account the rankings used by the Kruskal-Wallis test. It also does ties adjustments. See https://www.datanovia.com/en/lessons/kruskal-wallis-test-in-r/#multiple-pairwise-comparisons
+# unreparied leaks per sqkm
+pwdt_leaks_sqkmEV <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmEV ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmEV <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmEV ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmEV <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmEV ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmEV %>% 
+    rbind(pwdt_HH_leaks_sqkmEV, pwdt_OHU_leaks_sqkmEV) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_leaks_sqkmEV.csv"))
+
+# # C1 unrepaired leaks per sqkm
+# pwdt_leaks_sqkmEVC1 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_sqkmEVC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_sqkmEVC1 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_sqkmEVC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_sqkmEVC1 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_sqkmEVC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_sqkmEVC1 %>% 
+#     rbind(pwdt_HH_leaks_sqkmEVC1, pwdt_OHU_leaks_sqkmEVC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/EV/pwdt_leaks_sqkmEVC1.csv"))
+
+# C2 unrepaired leaks per sqkm
+pwdt_leaks_sqkmEVC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmEVC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmEVC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmEVC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmEVC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmEVC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmEVC2 %>% 
+    rbind(pwdt_HH_leaks_sqkmEVC2, pwdt_OHU_leaks_sqkmEVC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_leaks_sqkmEVC2.csv"))
+
+# C3 unrepaired leaks per sqkm
+pwdt_leaks_sqkmEVC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmEVC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmEVC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmEVC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmEVC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmEVC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmEVC3 %>% 
+    rbind(pwdt_HH_leaks_sqkmEVC3, pwdt_OHU_leaks_sqkmEVC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_leaks_sqkmEVC3.csv"))
+
+# repaired leaks per sqkm
+pwdt_REPleaks_sqkmEV <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmEV ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmEV <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmEV ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmEV <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmEV ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmEV %>% 
+    rbind(pwdt_HH_REPleaks_sqkmEV, pwdt_OHU_REPleaks_sqkmEV) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_sqkmEV.csv"))
+
+# C1 repaired leaks per sqkm
+pwdt_REPleaks_sqkmEVC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmEVC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmEVC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmEVC1 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmEVC1, pwdt_OHU_REPleaks_sqkmEVC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_sqkmEVC1.csv"))
+
+# C2 repaired leaks per sqkm
+pwdt_REPleaks_sqkmEVC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmEVC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmEVC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmEVC2 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmEVC2, pwdt_OHU_REPleaks_sqkmEVC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_sqkmEVC2.csv"))
+
+# C3 repaired leaks per sqkm
+pwdt_REPleaks_sqkmEVC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmEVC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmEVC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmEVC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmEVC3 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmEVC3, pwdt_OHU_REPleaks_sqkmEVC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_sqkmEVC3.csv"))
+
+# unrepaired leaks per OHU
+pwdt_leaks_huEV <- dfpW %>% 
+  rstatix::dunn_test(leaks_huEV ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huEV <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huEV ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huEV <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huEV ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huEV %>% 
+    rbind(pwdt_HH_leaks_huEV, pwdt_OHU_leaks_huEV) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>%  
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_leaks_huEV.csv"))
+
+# # C1 unrepaired leaks per OHU
+# pwdt_leaks_huEVC1 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_huEVC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_huEVC1 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_huEVC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_huEVC1 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_huEVC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_huEVC1 %>% 
+#     rbind(pwdt_HH_leaks_huEVC1, pwdt_OHU_leaks_huEVC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/EV/pwdt_leaks_huEVC1.csv"))
+
+# C2 unrepaired leaks per OHU
+pwdt_leaks_huEVC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huEVC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huEVC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huEVC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huEVC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huEVC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huEVC2 %>% 
+    rbind(pwdt_HH_leaks_huEVC2, pwdt_OHU_leaks_huEVC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_leaks_huEVC2.csv"))
+
+# C3 unrepaired leaks per OHU
+pwdt_leaks_huEVC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huEVC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huEVC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huEVC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huEVC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huEVC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huEVC3 %>% 
+    rbind(pwdt_HH_leaks_huEVC3, pwdt_OHU_leaks_huEVC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_leaks_huEVC3.csv"))
+
+# repaired leaks per OHU
+pwdt_REPleaks_huEV <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huEV ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huEV <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huEV ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huEV <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huEV ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huEV %>% 
+    rbind(pwdt_HH_REPleaks_huEV, pwdt_OHU_REPleaks_huEV) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_huEV.csv"))
+
+# C1 repaired leaks per OHU
+pwdt_REPleaks_huEVC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huEVC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huEVC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huEVC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huEVC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huEVC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huEVC1 %>% 
+    rbind(pwdt_HH_REPleaks_huEVC1, pwdt_OHU_REPleaks_huEVC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_huEVC1.csv"))
+
+# C2 repaired leaks per OHU
+pwdt_REPleaks_huEVC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huEVC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huEVC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huEVC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huEVC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huEVC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huEVC2 %>% 
+    rbind(pwdt_HH_REPleaks_huEVC2, pwdt_OHU_REPleaks_huEVC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_huEVC2.csv"))
+
+# C3 repaired leaks per OHU
+pwdt_REPleaks_huEVC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huEVC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huEVC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huEVC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huEVC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huEVC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huEVC3 %>% 
+    rbind(pwdt_HH_REPleaks_huEVC3, pwdt_OHU_REPleaks_huEVC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_REPleaks_huEVC3.csv"))
+
+# days to repair avg
+pwdt_DaysToRepairAvgEV <- dfpW %>% 
+  drop_na(DaysToRepairAvgEV) %>% 
+  rstatix::dunn_test(DaysToRepairAvgEV ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgEV <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgEV) %>%
+  rstatix::dunn_test(DaysToRepairAvgEV ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgEV <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgEV) %>%
+  rstatix::dunn_test(DaysToRepairAvgEV ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgEV %>% 
+    rbind(pwdt_HH_DaysToRepairAvgEV, pwdt_OHU_DaysToRepairAvgEV) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_DaysToRepairAvgEV.csv"))
+
+# C1 days to repair avg
+pwdt_DaysToRepairAvgEVC1 <- dfpW %>% 
+  drop_na(DaysToRepairAvgEVC1) %>% 
+  rstatix::dunn_test(DaysToRepairAvgEVC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgEVC1 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgEVC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgEVC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgEVC1 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgEVC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgEVC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgEVC1 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgEVC1, pwdt_OHU_DaysToRepairAvgEVC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_DaysToRepairAvgEVC1.csv"))
+
+# C2 days to repair avg
+pwdt_DaysToRepairAvgEVC2 <- dfpW %>% 
+  drop_na(DaysToRepairAvgEVC2) %>% 
+  rstatix::dunn_test(DaysToRepairAvgEVC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgEVC2 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgEVC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgEVC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgEVC2 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgEVC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgEVC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgEVC2 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgEVC2, pwdt_OHU_DaysToRepairAvgEVC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_DaysToRepairAvgEVC2.csv"))
+
+# C3 days to repair avg
+pwdt_DaysToRepairAvgEVC3 <- dfpW %>% 
+  drop_na(DaysToRepairAvgEVC3) %>% 
+  rstatix::dunn_test(DaysToRepairAvgEVC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgEVC3 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgEVC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgEVC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgEVC3 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgEVC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgEVC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgEVC3 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgEVC3, pwdt_OHU_DaysToRepairAvgEVC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_DaysToRepairAvgEVC3.csv"))
+
+# leak age days avg
+pwdt_LeakAgeDaysAvgEV <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgEV) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgEV ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgEV <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgEV) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgEV ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgEV <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgEV) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgEV ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgEV %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgEV, pwdt_OHU_LeakAgeDaysAvgEV) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_LeakAgeDaysAvgEV.csv"))
+
+# # C1 leak age days avg
+# pwdt_LeakAgeDaysAvgEVC1 <- dfpW %>% 
+#   drop_na(LeakAgeDaysAvgEVC1) %>% 
+#   rstatix::dunn_test(LeakAgeDaysAvgEVC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_LeakAgeDaysAvgEVC1 <- dfpW_HH %>% 
+#   drop_na(LeakAgeDaysAvgEVC1) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgEVC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_LeakAgeDaysAvgEVC1 <- dfpW_OHU %>% 
+#   drop_na(LeakAgeDaysAvgEVC1) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgEVC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_LeakAgeDaysAvgEVC1 %>% 
+#     rbind(pwdt_HH_LeakAgeDaysAvgEVC1, pwdt_OHU_LeakAgeDaysAvgEVC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/EV/pwdt_LeakAgeDaysAvgEVC1.csv"))
+
+# C2 leak age days avg
+pwdt_LeakAgeDaysAvgEVC2 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgEVC2) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgEVC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgEVC2 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgEVC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgEVC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgEVC2 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgEVC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgEVC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgEVC2 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgEVC2, pwdt_OHU_LeakAgeDaysAvgEVC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_LeakAgeDaysAvgEVC2.csv"))
+
+# C3 leak age days avg
+pwdt_LeakAgeDaysAvgEVC3 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgEVC3) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgEVC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgEVC3 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgEVC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgEVC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgEVC3 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgEVC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgEVC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgEVC3 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgEVC3, pwdt_OHU_LeakAgeDaysAvgEVC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/EV/pwdt_LeakAgeDaysAvgEVC3.csv"))
+
+
+
+
+
+
+### Columbia Gas
+ppLeakDensityCG <- ma_tracts %>% 
+  as.data.frame() %>% 
+  filter(str_detect(GAS, "^Columbia") | 
+           GAS == "Columbia Gas$") %>% # limit to BGs in CG svc area
+  mutate(leaks_sqkmCG = (`Columbia Gas_19unrepaired`)/area_sqkm,
+         leaks_sqkmCGC1 = (`Columbia Gas_19unrepairedC1`)/area_sqkm,
+         # leaks_sqkmCGC1 = 0,
+         leaks_sqkmCGC2 = (`Columbia Gas_19unrepairedC2`)/area_sqkm,
+         leaks_sqkmCGC3 = (`Columbia Gas_19unrepairedC3`)/area_sqkm,
+         REPleaks_sqkmCG = (`Columbia Gas_19repaired`)/area_sqkm,
+         REPleaks_sqkmCGC1 = (`Columbia Gas_19repairedC1`)/area_sqkm,
+         REPleaks_sqkmCGC2 = (`Columbia Gas_19repairedC2`)/area_sqkm,
+         REPleaks_sqkmCGC3 = (`Columbia Gas_19repairedC3`)/area_sqkm,
+         AllLeaks2019_sqkmCG = (`Columbia Gas_19unrepaired` +
+                                  `Columbia Gas_19repaired`)/area_sqkm,
+         AllLeaks2019_sqkmCGC1 = (`Columbia Gas_19unrepairedC1` +
+                                    `Columbia Gas_19repairedC1`)/area_sqkm,
+         # AllLeaks2019_sqkmCGC1 = (`Columbia Gas_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmCGC2 = (`Columbia Gas_19unrepairedC2` + 
+                                    `Columbia Gas_19repairedC2`)/area_sqkm,
+         AllLeaks2019_sqkmCGC3 = (`Columbia Gas_19unrepairedC3` + 
+                                    `Columbia Gas_19repairedC3`)/area_sqkm,
+         leaks_huCG = if_else(total_occ_unitsE == 0, 0, 
+                              (`Columbia Gas_19unrepaired`)/total_occ_unitsE),
+         leaks_huCGC1 = if_else(total_occ_unitsE == 0, 0,
+                                (`Columbia Gas_19unrepairedC1`)/total_occ_unitsE),
+         # leaks_huCGC1 = 0,
+         leaks_huCGC2 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Columbia Gas_19unrepairedC2`)/total_occ_unitsE),
+         leaks_huCGC3 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Columbia Gas_19unrepairedC3`)/total_occ_unitsE),
+         REPleaks_huCG = if_else(total_occ_unitsE == 0, 0,
+                                 (`Columbia Gas_19repaired`)/total_occ_unitsE),
+         REPleaks_huCGC1 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Columbia Gas_19repairedC1`)/total_occ_unitsE),
+         REPleaks_huCGC2 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Columbia Gas_19repairedC2`)/total_occ_unitsE),
+         REPleaks_huCGC3 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Columbia Gas_19repairedC3`)/total_occ_unitsE),
+         AllLeaks2019_huCG = if_else(total_occ_unitsE == 0, 0,
+                                     (`Columbia Gas_19unrepaired` + 
+                                        `Columbia Gas_19repaired`)/total_occ_unitsE),
+         AllLeaks2019_huCGC1 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Columbia Gas_19unrepairedC1` +
+                                          `Columbia Gas_19repairedC1`)/total_occ_unitsE),
+         # AllLeaks2019_huCGC1 = if_else(total_occ_unitsE == 0, 0,
+         #                               (`Columbia Gas_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huCGC2 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Columbia Gas_19unrepairedC2` +
+                                          `Columbia Gas_19repairedC2`)/total_occ_unitsE),
+         AllLeaks2019_huCGC3 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Columbia Gas_19unrepairedC3` +
+                                          `Columbia Gas_19repairedC3`)/total_occ_unitsE),
+         PctRepaired19CG = (`Columbia Gas_19repaired`)/ (`Columbia Gas_19unrepaired` + `Columbia Gas_19repaired`)*100,
+         DaysToRepairAvgCG = `Columbia Gas_19repairedDaysAvg`,
+         DaysToRepairAvgCGC1 = `Columbia Gas_19repairedDaysAvgC1`,
+         DaysToRepairAvgCGC2 = `Columbia Gas_19repairedDaysAvgC2`,
+         DaysToRepairAvgCGC3 = `Columbia Gas_19repairedDaysAvgC3`,
+         LeakAgeDaysAvgCG = `Columbia Gas_19unrepairedDaysAvg`,
+         LeakAgeDaysAvgCGC1 = `Columbia Gas_19unrepairedDaysAvgC1`,
+         # LeakAgeDaysAvgCGC1 = NA,
+         LeakAgeDaysAvgCGC2 = `Columbia Gas_19unrepairedDaysAvgC2`,
+         LeakAgeDaysAvgCGC3 = `Columbia Gas_19unrepairedDaysAvgC3`) %>% 
+  select(totalpopE, nhwhitepop_E, nhblackpop_E, hisppop_E, nhasianpop_E, 
+         minority_E, eng_limitE, num2povE, lthsE, under5E, over64E,
+         disabledOver18E,
+         renter_occ_unitsE, house_burdened_E, total_occ_unitsE, eng_hhE, (starts_with("leaks_") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))), 
+         (starts_with("AllLeaks") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))), 
+         (starts_with("LeakAgeDaysAvg") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))),
+         (starts_with("REPleaks_") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))), 
+         (starts_with("DaystoRepairAvg") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))), 
+         (starts_with("PctRepaired19") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))),
+         (starts_with("leaks_hu") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))), 
+         (starts_with("REPleaks_hu") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))),
+         (starts_with("ALLleaks_hu") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))))
+
+# pivot df to long format so that so new df = #groups x #rows
+dfp <- ppLeakDensityCG %>% 
+  select(-eng_limitE, -c(renter_occ_unitsE:eng_hhE)) %>% 
+  pivot_longer(., cols = totalpopE:disabledOver18E, 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for households
+dfpHH <- ppLeakDensityCG %>% 
+  select(eng_limitE, eng_hhE, c(leaks_sqkmCG:DaysToRepairAvgCGC3)) %>% 
+  pivot_longer(., cols = c(eng_limitE, eng_hhE), 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for OHU
+dfpOHU <- ppLeakDensityCG %>% 
+  select(renter_occ_unitsE, house_burdened_E, total_occ_unitsE,
+         c(leaks_sqkmCG:DaysToRepairAvgCGC3)) %>% 
+  pivot_longer(., cols = c(renter_occ_unitsE, house_burdened_E, total_occ_unitsE),
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# make sure it looks right
+table(dfp$group)
+table(dfpHH$group)
+table(dfpOHU$group)
+
+# try weighting by replicating observations by weights following suggestion at https://r.789695.n4.nabble.com/OT-a-weighted-rank-based-non-paired-test-statistic-td883773.html
+dfpW <- dfp[rep(1:nrow(dfp), dfp$pop),]
+
+dfpW_HH <- dfpHH[rep(1:nrow(dfpHH), dfpHH$pop),]
+
+dfpW_OHU <- dfpOHU[rep(1:nrow(dfpOHU), dfpOHU$pop),]
+
+# look at summary stats. should be equivalent to weighted means. 
+dfpW %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmCG, type = "common") %>% 
+  arrange(desc(median))
+
+dfpW_OHU %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmCG, type = "common") %>% 
+  arrange(desc(median))
+
+# Pairwise comparisons using Dunn's test with `rstatix` package. Compared to the Wilcoxon’s test, the Dunn’s test takes into account the rankings used by the Kruskal-Wallis test. It also does ties adjustments. See https://www.datanovia.com/en/lessons/kruskal-wallis-test-in-r/#multiple-pairwise-comparisons
+# unreparied leaks per sqkm
+pwdt_leaks_sqkmCG <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmCG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmCG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmCG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmCG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmCG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmCG %>% 
+    rbind(pwdt_HH_leaks_sqkmCG, pwdt_OHU_leaks_sqkmCG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_sqkmCG.csv"))
+
+# C1 unrepaired leaks per sqkm
+pwdt_leaks_sqkmCGC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmCGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmCGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmCGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmCGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmCGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmCGC1 %>% 
+    rbind(pwdt_HH_leaks_sqkmCGC1, pwdt_OHU_leaks_sqkmCGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_sqkmCGC1.csv"))
+
+# C2 unrepaired leaks per sqkm
+pwdt_leaks_sqkmCGC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmCGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmCGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmCGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmCGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmCGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmCGC2 %>% 
+    rbind(pwdt_HH_leaks_sqkmCGC2, pwdt_OHU_leaks_sqkmCGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_sqkmCGC2.csv"))
+
+# C3 unrepaired leaks per sqkm
+pwdt_leaks_sqkmCGC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmCGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmCGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmCGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmCGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmCGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmCGC3 %>% 
+    rbind(pwdt_HH_leaks_sqkmCGC3, pwdt_OHU_leaks_sqkmCGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_sqkmCGC3.csv"))
+
+# repaired leaks per sqkm
+pwdt_REPleaks_sqkmCG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmCG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmCG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmCG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmCG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmCG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmCG %>% 
+    rbind(pwdt_HH_REPleaks_sqkmCG, pwdt_OHU_REPleaks_sqkmCG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_sqkmCG.csv"))
+
+# C1 repaired leaks per sqkm
+pwdt_REPleaks_sqkmCGC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmCGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmCGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmCGC1 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmCGC1, pwdt_OHU_REPleaks_sqkmCGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_sqkmCGC1.csv"))
+
+# C2 repaired leaks per sqkm
+pwdt_REPleaks_sqkmCGC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmCGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmCGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmCGC2 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmCGC2, pwdt_OHU_REPleaks_sqkmCGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_sqkmCGC2.csv"))
+
+# C3 repaired leaks per sqkm
+pwdt_REPleaks_sqkmCGC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmCGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmCGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmCGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmCGC3 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmCGC3, pwdt_OHU_REPleaks_sqkmCGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_sqkmCGC3.csv"))
+
+# unrepaired leaks per OHU
+pwdt_leaks_huCG <- dfpW %>% 
+  rstatix::dunn_test(leaks_huCG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huCG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huCG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huCG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huCG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huCG %>% 
+    rbind(pwdt_HH_leaks_huCG, pwdt_OHU_leaks_huCG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>%  
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_huCG.csv"))
+
+# C1 unrepaired leaks per OHU
+pwdt_leaks_huCGC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huCGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huCGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huCGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huCGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huCGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huCGC1 %>% 
+    rbind(pwdt_HH_leaks_huCGC1, pwdt_OHU_leaks_huCGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_huCGC1.csv"))
+
+# C2 unrepaired leaks per OHU
+pwdt_leaks_huCGC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huCGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huCGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huCGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huCGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huCGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huCGC2 %>% 
+    rbind(pwdt_HH_leaks_huCGC2, pwdt_OHU_leaks_huCGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_huCGC2.csv"))
+
+# C3 unrepaired leaks per OHU
+pwdt_leaks_huCGC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huCGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huCGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huCGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huCGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huCGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huCGC3 %>% 
+    rbind(pwdt_HH_leaks_huCGC3, pwdt_OHU_leaks_huCGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_leaks_huCGC3.csv"))
+
+# repaired leaks per OHU
+pwdt_REPleaks_huCG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huCG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huCG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huCG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huCG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huCG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huCG %>% 
+    rbind(pwdt_HH_REPleaks_huCG, pwdt_OHU_REPleaks_huCG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_huCG.csv"))
+
+# C1 repaired leaks per OHU
+pwdt_REPleaks_huCGC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huCGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huCGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huCGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huCGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huCGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huCGC1 %>% 
+    rbind(pwdt_HH_REPleaks_huCGC1, pwdt_OHU_REPleaks_huCGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_huCGC1.csv"))
+
+# C2 repaired leaks per OHU
+pwdt_REPleaks_huCGC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huCGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huCGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huCGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huCGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huCGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huCGC2 %>% 
+    rbind(pwdt_HH_REPleaks_huCGC2, pwdt_OHU_REPleaks_huCGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_huCGC2.csv"))
+
+# C3 repaired leaks per OHU
+pwdt_REPleaks_huCGC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huCGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huCGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huCGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huCGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huCGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huCGC3 %>% 
+    rbind(pwdt_HH_REPleaks_huCGC3, pwdt_OHU_REPleaks_huCGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_REPleaks_huCGC3.csv"))
+
+# days to repair avg
+pwdt_DaysToRepairAvgCG <- dfpW %>% 
+  drop_na(DaysToRepairAvgCG) %>% 
+  rstatix::dunn_test(DaysToRepairAvgCG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgCG <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgCG) %>%
+  rstatix::dunn_test(DaysToRepairAvgCG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgCG <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgCG) %>%
+  rstatix::dunn_test(DaysToRepairAvgCG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgCG %>% 
+    rbind(pwdt_HH_DaysToRepairAvgCG, pwdt_OHU_DaysToRepairAvgCG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_DaysToRepairAvgCG.csv"))
+
+# C1 days to repair avg
+pwdt_DaysToRepairAvgCGC1 <- dfpW %>% 
+  drop_na(DaysToRepairAvgCGC1) %>% 
+  rstatix::dunn_test(DaysToRepairAvgCGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgCGC1 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgCGC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgCGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgCGC1 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgCGC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgCGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgCGC1 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgCGC1, pwdt_OHU_DaysToRepairAvgCGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_DaysToRepairAvgCGC1.csv"))
+
+# C2 days to repair avg
+pwdt_DaysToRepairAvgCGC2 <- dfpW %>% 
+  drop_na(DaysToRepairAvgCGC2) %>% 
+  rstatix::dunn_test(DaysToRepairAvgCGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgCGC2 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgCGC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgCGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgCGC2 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgCGC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgCGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgCGC2 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgCGC2, pwdt_OHU_DaysToRepairAvgCGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_DaysToRepairAvgCGC2.csv"))
+
+# C3 days to repair avg
+pwdt_DaysToRepairAvgCGC3 <- dfpW %>% 
+  drop_na(DaysToRepairAvgCGC3) %>% 
+  rstatix::dunn_test(DaysToRepairAvgCGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgCGC3 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgCGC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgCGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgCGC3 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgCGC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgCGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgCGC3 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgCGC3, pwdt_OHU_DaysToRepairAvgCGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_DaysToRepairAvgCGC3.csv"))
+
+# leak age days avg
+pwdt_LeakAgeDaysAvgCG <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgCG) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgCG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgCG <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgCG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgCG <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgCG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgCG %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgCG, pwdt_OHU_LeakAgeDaysAvgCG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_LeakAgeDaysAvgCG.csv"))
+
+# C1 leak age days avg
+pwdt_LeakAgeDaysAvgCGC1 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgCGC1) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgCGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgCGC1 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgCGC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgCGC1 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgCGC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgCGC1 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgCGC1, pwdt_OHU_LeakAgeDaysAvgCGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_LeakAgeDaysAvgCGC1.csv"))
+
+# C2 leak age days avg
+pwdt_LeakAgeDaysAvgCGC2 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgCGC2) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgCGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgCGC2 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgCGC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgCGC2 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgCGC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgCGC2 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgCGC2, pwdt_OHU_LeakAgeDaysAvgCGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_LeakAgeDaysAvgCGC2.csv"))
+
+# C3 leak age days avg
+pwdt_LeakAgeDaysAvgCGC3 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgCGC3) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgCGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgCGC3 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgCGC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgCGC3 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgCGC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgCGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgCGC3 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgCGC3, pwdt_OHU_LeakAgeDaysAvgCGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/CG/pwdt_LeakAgeDaysAvgCGC3.csv"))
+
+
+
+
+### Fitchburg Gas aka Unitil. NO CLASS FOR LEAKS!.
+ppLeakDensityFG <- ma_tracts %>% 
+  as.data.frame() %>% 
+  filter(str_detect(GAS, "^Unitil") | 
+           GAS == "Unitil$") %>% # limit to BGs in FG svc area
+  mutate(leaks_sqkmFG = (`Fitchburg Gas_19unrepaired`)/area_sqkm,
+         REPleaks_sqkmFG = (`Fitchburg Gas_19repaired`)/area_sqkm,
+         AllLeaks2019_sqkmFG = (`Fitchburg Gas_19unrepaired` +
+                                  `Fitchburg Gas_19repaired`)/area_sqkm,
+         leaks_huFG = if_else(total_occ_unitsE == 0, 0, 
+                              (`Fitchburg Gas_19unrepaired`)/total_occ_unitsE),
+         REPleaks_huFG = if_else(total_occ_unitsE == 0, 0,
+                                 (`Fitchburg Gas_19repaired`)/total_occ_unitsE),
+         AllLeaks2019_huFG = if_else(total_occ_unitsE == 0, 0,
+                                     (`Fitchburg Gas_19unrepaired` + 
+                                        `Fitchburg Gas_19repaired`)/total_occ_unitsE),
+         PctRepaired19FG = (`Fitchburg Gas_19repaired`)/ (`Fitchburg Gas_19unrepaired` + `Fitchburg Gas_19repaired`)*100,
+         DaysToRepairAvgFG = `Fitchburg Gas_19repairedDaysAvg`,
+         LeakAgeDaysAvgFG = `Fitchburg Gas_19unrepairedDaysAvg`) %>% 
+  select(totalpopE, nhwhitepop_E, nhblackpop_E, hisppop_E, nhasianpop_E, 
+         minority_E, eng_limitE, num2povE, lthsE, under5E, over64E,
+         disabledOver18E,
+         renter_occ_unitsE, house_burdened_E, total_occ_unitsE, eng_hhE, (starts_with("leaks_") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))), 
+         (starts_with("AllLeaks") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))), 
+         (starts_with("LeakAgeDaysAvg") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))),
+         (starts_with("REPleaks_") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))), 
+         (starts_with("DaystoRepairAvg") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))), 
+         (starts_with("PctRepaired19") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))),
+         (starts_with("leaks_hu") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))), 
+         (starts_with("REPleaks_hu") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))),
+         (starts_with("ALLleaks_hu") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))))
+
+
+# pivot df to long format so that so new df = #groups x #rows
+dfp <- ppLeakDensityFG %>% 
+  select(-eng_limitE, -c(renter_occ_unitsE:eng_hhE)) %>% 
+  pivot_longer(., cols = totalpopE:disabledOver18E, 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for households
+dfpHH <- ppLeakDensityFG %>% 
+  select(eng_limitE, eng_hhE, c(leaks_sqkmFG:DaysToRepairAvgFG)) %>% 
+  pivot_longer(., cols = c(eng_limitE, eng_hhE), 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for OHU
+dfpOHU <- ppLeakDensityFG %>% 
+  select(renter_occ_unitsE, house_burdened_E, total_occ_unitsE,
+         c(leaks_sqkmFG:DaysToRepairAvgFG)) %>% 
+  pivot_longer(., cols = c(renter_occ_unitsE, house_burdened_E, total_occ_unitsE),
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# make sure it looks right
+table(dfp$group)
+table(dfpHH$group)
+table(dfpOHU$group)
+
+# try weighting by replicating observations by weights following suggestion at https://r.789695.n4.nabble.com/OT-a-weighted-rank-based-non-paired-test-statistic-td883773.html
+dfpW <- dfp[rep(1:nrow(dfp), dfp$pop),]
+
+dfpW_HH <- dfpHH[rep(1:nrow(dfpHH), dfpHH$pop),]
+
+dfpW_OHU <- dfpOHU[rep(1:nrow(dfpOHU), dfpOHU$pop),]
+
+# look at summary stats. should be equivalent to weighted means. 
+dfpW %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmFG, type = "common") %>% 
+  arrange(desc(median))
+
+dfpW_OHU %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmFG, type = "common") %>% 
+  arrange(desc(median))
+
+# Pairwise comparisons using Dunn's test with `rstatix` package. Compared to the Wilcoxon’s test, the Dunn’s test takes into account the rankings used by the Kruskal-Wallis test. It also does ties adjustments. See https://www.datanovia.com/en/lessons/kruskal-wallis-test-in-r/#multiple-pairwise-comparisons
+# unreparied leaks per sqkm
+pwdt_leaks_sqkmFG <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmFG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmFG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmFG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmFG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmFG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmFG %>% 
+    rbind(pwdt_HH_leaks_sqkmFG, pwdt_OHU_leaks_sqkmFG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/FG/pwdt_leaks_sqkmFG.csv"))
+
+# # C1 unrepaired leaks per sqkm
+# pwdt_leaks_sqkmFGC1 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_sqkmFGC1 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_sqkmFGC1 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_sqkmFGC1 %>% 
+#     rbind(pwdt_HH_leaks_sqkmFGC1, pwdt_OHU_leaks_sqkmFGC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_leaks_sqkmFGC1.csv"))
+# 
+# # C2 unrepaired leaks per sqkm
+# pwdt_leaks_sqkmFGC2 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC2 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_sqkmFGC2 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_sqkmFGC2 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_sqkmFGC2 %>% 
+#     rbind(pwdt_HH_leaks_sqkmFGC2, pwdt_OHU_leaks_sqkmFGC2) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_leaks_sqkmFGC2.csv"))
+# 
+# # C3 unrepaired leaks per sqkm
+# pwdt_leaks_sqkmFGC3 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC3 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_sqkmFGC3 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_sqkmFGC3 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_sqkmFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_sqkmFGC3 %>% 
+#     rbind(pwdt_HH_leaks_sqkmFGC3, pwdt_OHU_leaks_sqkmFGC3) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_leaks_sqkmFGC3.csv"))
+
+# repaired leaks per sqkm
+pwdt_REPleaks_sqkmFG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmFG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmFG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmFG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmFG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmFG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmFG %>% 
+    rbind(pwdt_HH_REPleaks_sqkmFG, pwdt_OHU_REPleaks_sqkmFG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/FG/pwdt_REPleaks_sqkmFG.csv"))
+
+# # C1 repaired leaks per sqkm
+# pwdt_REPleaks_sqkmFGC1 <- dfpW %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_REPleaks_sqkmFGC1 <- dfpW_HH %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_REPleaks_sqkmFGC1 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_REPleaks_sqkmFGC1 %>% 
+#     rbind(pwdt_HH_REPleaks_sqkmFGC1, pwdt_OHU_REPleaks_sqkmFGC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_REPleaks_sqkmFGC1.csv"))
+# 
+# # C2 repaired leaks per sqkm
+# pwdt_REPleaks_sqkmFGC2 <- dfpW %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC2 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_REPleaks_sqkmFGC2 <- dfpW_HH %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_REPleaks_sqkmFGC2 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_REPleaks_sqkmFGC2 %>% 
+#     rbind(pwdt_HH_REPleaks_sqkmFGC2, pwdt_OHU_REPleaks_sqkmFGC2) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_REPleaks_sqkmFGC2.csv"))
+# 
+# # C3 repaired leaks per sqkm
+# pwdt_REPleaks_sqkmFGC3 <- dfpW %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC3 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_REPleaks_sqkmFGC3 <- dfpW_HH %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_REPleaks_sqkmFGC3 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(REPleaks_sqkmFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_REPleaks_sqkmFGC3 %>% 
+#     rbind(pwdt_HH_REPleaks_sqkmFGC3, pwdt_OHU_REPleaks_sqkmFGC3) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_REPleaks_sqkmFGC3.csv"))
+
+# unrepaired leaks per OHU
+pwdt_leaks_huFG <- dfpW %>% 
+  rstatix::dunn_test(leaks_huFG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huFG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huFG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huFG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huFG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huFG %>% 
+    rbind(pwdt_HH_leaks_huFG, pwdt_OHU_leaks_huFG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>%  
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/FG/pwdt_leaks_huFG.csv"))
+
+# # C1 unrepaired leaks per OHU
+# pwdt_leaks_huFGC1 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_huFGC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_huFGC1 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_huFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_huFGC1 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_huFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_huFGC1 %>% 
+#     rbind(pwdt_HH_leaks_huFGC1, pwdt_OHU_leaks_huFGC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_leaks_huFGC1.csv"))
+# 
+# # C2 unrepaired leaks per OHU
+# pwdt_leaks_huFGC2 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_huFGC2 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_huFGC2 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_huFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_huFGC2 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_huFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_huFGC2 %>% 
+#     rbind(pwdt_HH_leaks_huFGC2, pwdt_OHU_leaks_huFGC2) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_leaks_huFGC2.csv"))
+# 
+# # C3 unrepaired leaks per OHU
+# pwdt_leaks_huFGC3 <- dfpW %>% 
+#   rstatix::dunn_test(leaks_huFGC3 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_leaks_huFGC3 <- dfpW_HH %>% 
+#   rstatix::dunn_test(leaks_huFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_leaks_huFGC3 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(leaks_huFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_leaks_huFGC3 %>% 
+#     rbind(pwdt_HH_leaks_huFGC3, pwdt_OHU_leaks_huFGC3) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_leaks_huFGC3.csv"))
+
+# repaired leaks per OHU
+pwdt_REPleaks_huFG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huFG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huFG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huFG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huFG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huFG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huFG %>% 
+    rbind(pwdt_HH_REPleaks_huFG, pwdt_OHU_REPleaks_huFG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/FG/pwdt_REPleaks_huFG.csv"))
+
+# # C1 repaired leaks per OHU
+# pwdt_REPleaks_huFGC1 <- dfpW %>% 
+#   rstatix::dunn_test(REPleaks_huFGC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_REPleaks_huFGC1 <- dfpW_HH %>% 
+#   rstatix::dunn_test(REPleaks_huFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_REPleaks_huFGC1 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(REPleaks_huFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_REPleaks_huFGC1 %>% 
+#     rbind(pwdt_HH_REPleaks_huFGC1, pwdt_OHU_REPleaks_huFGC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_REPleaks_huFGC1.csv"))
+# 
+# # C2 repaired leaks per OHU
+# pwdt_REPleaks_huFGC2 <- dfpW %>% 
+#   rstatix::dunn_test(REPleaks_huFGC2 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_REPleaks_huFGC2 <- dfpW_HH %>% 
+#   rstatix::dunn_test(REPleaks_huFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_REPleaks_huFGC2 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(REPleaks_huFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_REPleaks_huFGC2 %>% 
+#     rbind(pwdt_HH_REPleaks_huFGC2, pwdt_OHU_REPleaks_huFGC2) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_REPleaks_huFGC2.csv"))
+# 
+# # C3 repaired leaks per OHU
+# pwdt_REPleaks_huFGC3 <- dfpW %>% 
+#   rstatix::dunn_test(REPleaks_huFGC3 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_REPleaks_huFGC3 <- dfpW_HH %>% 
+#   rstatix::dunn_test(REPleaks_huFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_REPleaks_huFGC3 <- dfpW_OHU %>% 
+#   rstatix::dunn_test(REPleaks_huFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_REPleaks_huFGC3 %>% 
+#     rbind(pwdt_HH_REPleaks_huFGC3, pwdt_OHU_REPleaks_huFGC3) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_REPleaks_huFGC3.csv"))
+
+# days to repair avg
+pwdt_DaysToRepairAvgFG <- dfpW %>% 
+  drop_na(DaysToRepairAvgFG) %>% 
+  rstatix::dunn_test(DaysToRepairAvgFG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgFG <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgFG) %>%
+  rstatix::dunn_test(DaysToRepairAvgFG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgFG <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgFG) %>%
+  rstatix::dunn_test(DaysToRepairAvgFG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgFG %>% 
+    rbind(pwdt_HH_DaysToRepairAvgFG, pwdt_OHU_DaysToRepairAvgFG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/FG/pwdt_DaysToRepairAvgFG.csv"))
+
+# # C1 days to repair avg
+# pwdt_DaysToRepairAvgFGC1 <- dfpW %>% 
+#   drop_na(DaysToRepairAvgFGC1) %>% 
+#   rstatix::dunn_test(DaysToRepairAvgFGC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_DaysToRepairAvgFGC1 <- dfpW_HH %>% 
+#   drop_na(DaysToRepairAvgFGC1) %>%
+#   rstatix::dunn_test(DaysToRepairAvgFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_DaysToRepairAvgFGC1 <- dfpW_OHU %>% 
+#   drop_na(DaysToRepairAvgFGC1) %>%
+#   rstatix::dunn_test(DaysToRepairAvgFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_DaysToRepairAvgFGC1 %>% 
+#     rbind(pwdt_HH_DaysToRepairAvgFGC1, pwdt_OHU_DaysToRepairAvgFGC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_DaysToRepairAvgFGC1.csv"))
+# 
+# # C2 days to repair avg
+# pwdt_DaysToRepairAvgFGC2 <- dfpW %>% 
+#   drop_na(DaysToRepairAvgFGC2) %>% 
+#   rstatix::dunn_test(DaysToRepairAvgFGC2 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_DaysToRepairAvgFGC2 <- dfpW_HH %>% 
+#   drop_na(DaysToRepairAvgFGC2) %>%
+#   rstatix::dunn_test(DaysToRepairAvgFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_DaysToRepairAvgFGC2 <- dfpW_OHU %>% 
+#   drop_na(DaysToRepairAvgFGC2) %>%
+#   rstatix::dunn_test(DaysToRepairAvgFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_DaysToRepairAvgFGC2 %>% 
+#     rbind(pwdt_HH_DaysToRepairAvgFGC2, pwdt_OHU_DaysToRepairAvgFGC2) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_DaysToRepairAvgFGC2.csv"))
+# 
+# # C3 days to repair avg
+# pwdt_DaysToRepairAvgFGC3 <- dfpW %>% 
+#   drop_na(DaysToRepairAvgFGC3) %>% 
+#   rstatix::dunn_test(DaysToRepairAvgFGC3 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_DaysToRepairAvgFGC3 <- dfpW_HH %>% 
+#   drop_na(DaysToRepairAvgFGC3) %>%
+#   rstatix::dunn_test(DaysToRepairAvgFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_DaysToRepairAvgFGC3 <- dfpW_OHU %>% 
+#   drop_na(DaysToRepairAvgFGC3) %>%
+#   rstatix::dunn_test(DaysToRepairAvgFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_DaysToRepairAvgFGC3 %>% 
+#     rbind(pwdt_HH_DaysToRepairAvgFGC3, pwdt_OHU_DaysToRepairAvgFGC3) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_DaysToRepairAvgFGC3.csv"))
+
+# leak age days avg
+pwdt_LeakAgeDaysAvgFG <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgFG) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgFG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgFG <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgFG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgFG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgFG <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgFG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgFG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgFG %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgFG, pwdt_OHU_LeakAgeDaysAvgFG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/FG/pwdt_LeakAgeDaysAvgFG.csv"))
+
+# # C1 leak age days avg
+# pwdt_LeakAgeDaysAvgFGC1 <- dfpW %>% 
+#   drop_na(LeakAgeDaysAvgFGC1) %>% 
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC1 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_LeakAgeDaysAvgFGC1 <- dfpW_HH %>% 
+#   drop_na(LeakAgeDaysAvgFGC1) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_LeakAgeDaysAvgFGC1 <- dfpW_OHU %>% 
+#   drop_na(LeakAgeDaysAvgFGC1) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC1 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_LeakAgeDaysAvgFGC1 %>% 
+#     rbind(pwdt_HH_LeakAgeDaysAvgFGC1, pwdt_OHU_LeakAgeDaysAvgFGC1) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_LeakAgeDaysAvgFGC1.csv"))
+# 
+# # C2 leak age days avg
+# pwdt_LeakAgeDaysAvgFGC2 <- dfpW %>% 
+#   drop_na(LeakAgeDaysAvgFGC2) %>% 
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC2 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_LeakAgeDaysAvgFGC2 <- dfpW_HH %>% 
+#   drop_na(LeakAgeDaysAvgFGC2) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_LeakAgeDaysAvgFGC2 <- dfpW_OHU %>% 
+#   drop_na(LeakAgeDaysAvgFGC2) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC2 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_LeakAgeDaysAvgFGC2 %>% 
+#     rbind(pwdt_HH_LeakAgeDaysAvgFGC2, pwdt_OHU_LeakAgeDaysAvgFGC2) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_LeakAgeDaysAvgFGC2.csv"))
+# 
+# # C3 leak age days avg
+# pwdt_LeakAgeDaysAvgFGC3 <- dfpW %>% 
+#   drop_na(LeakAgeDaysAvgFGC3) %>% 
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC3 ~ group, p.adjust.method = "bonferroni") 
+# 
+# pwdt_HH_LeakAgeDaysAvgFGC3 <- dfpW_HH %>% 
+#   drop_na(LeakAgeDaysAvgFGC3) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# pwdt_OHU_LeakAgeDaysAvgFGC3 <- dfpW_OHU %>% 
+#   drop_na(LeakAgeDaysAvgFGC3) %>%
+#   rstatix::dunn_test(LeakAgeDaysAvgFGC3 ~ group, p.adjust.method = "bonferroni")
+# 
+# (pwdt_LeakAgeDaysAvgFGC3 %>% 
+#     rbind(pwdt_HH_LeakAgeDaysAvgFGC3, pwdt_OHU_LeakAgeDaysAvgFGC3) %>% 
+#     filter(group2 == "totalpopE" | 
+#              group2 == "total_occ_unitsE" |
+#              (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+#              (group2 == "under5E" & group1 == "totalpopE")) %>% 
+#     arrange(statistic) %>% 
+#     write_csv("Tables/Tract/FG/pwdt_LeakAgeDaysAvgFGC3.csv"))
+
+
+
+
+### Liberty Utilities
+ppLeakDensityLU <- ma_tracts %>% 
+  as.data.frame() %>% 
+  filter(GAS == "Liberty Utilities") %>% # limit to BGs in LU svc area
+  mutate(leaks_sqkmLU = (`Liberty Utilities_19unrepaired`)/area_sqkm,
+         # leaks_sqkmLUC1 = (`Liberty Utilities_19unrepairedC1`)/area_sqkm,
+         leaks_sqkmLUC1 = 0,
+         leaks_sqkmLUC2 = (`Liberty Utilities_19unrepairedC2`)/area_sqkm,
+         leaks_sqkmLUC3 = (`Liberty Utilities_19unrepairedC3`)/area_sqkm,
+         REPleaks_sqkmLU = (`Liberty Utilities_19repaired`)/area_sqkm,
+         REPleaks_sqkmLUC1 = (`Liberty Utilities_19repairedC1`)/area_sqkm,
+         REPleaks_sqkmLUC2 = (`Liberty Utilities_19repairedC2`)/area_sqkm,
+         REPleaks_sqkmLUC3 = (`Liberty Utilities_19repairedC3`)/area_sqkm,
+         AllLeaks2019_sqkmLU = (`Liberty Utilities_19unrepaired` +
+                                  `Liberty Utilities_19repaired`)/area_sqkm,
+         # AllLeaks2019_sqkmLUC1 = (`Liberty Utilities_19unrepairedC1` +
+         #                            `Liberty Utilities_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmLUC1 = (`Liberty Utilities_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmLUC2 = (`Liberty Utilities_19unrepairedC2` + 
+                                    `Liberty Utilities_19repairedC2`)/area_sqkm,
+         AllLeaks2019_sqkmLUC3 = (`Liberty Utilities_19unrepairedC3` + 
+                                    `Liberty Utilities_19repairedC3`)/area_sqkm,
+         leaks_huLU = if_else(total_occ_unitsE == 0, 0, 
+                              (`Liberty Utilities_19unrepaired`)/total_occ_unitsE),
+         # leaks_huLUC1 = if_else(total_occ_unitsE == 0, 0,
+         #                        (`Liberty Utilities_19unrepairedC1`)/total_occ_unitsE),
+         leaks_huLUC1 = 0,
+         leaks_huLUC2 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Liberty Utilities_19unrepairedC2`)/total_occ_unitsE),
+         leaks_huLUC3 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Liberty Utilities_19unrepairedC3`)/total_occ_unitsE),
+         REPleaks_huLU = if_else(total_occ_unitsE == 0, 0,
+                                 (`Liberty Utilities_19repaired`)/total_occ_unitsE),
+         REPleaks_huLUC1 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Liberty Utilities_19repairedC1`)/total_occ_unitsE),
+         REPleaks_huLUC2 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Liberty Utilities_19repairedC2`)/total_occ_unitsE),
+         REPleaks_huLUC3 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Liberty Utilities_19repairedC3`)/total_occ_unitsE),
+         AllLeaks2019_huLU = if_else(total_occ_unitsE == 0, 0,
+                                     (`Liberty Utilities_19unrepaired` + 
+                                        `Liberty Utilities_19repaired`)/total_occ_unitsE),
+         # AllLeaks2019_huLUC1 = if_else(total_occ_unitsE == 0, 0,
+         #                               (`Liberty Utilities_19unrepairedC1` +
+         #                                  `Liberty Utilities_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huLUC1 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Liberty Utilities_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huLUC2 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Liberty Utilities_19unrepairedC2` +
+                                          `Liberty Utilities_19repairedC2`)/total_occ_unitsE),
+         AllLeaks2019_huLUC3 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Liberty Utilities_19unrepairedC3` +
+                                          `Liberty Utilities_19repairedC3`)/total_occ_unitsE),
+         PctRepaired19LU = (`Liberty Utilities_19repaired`)/ (`Liberty Utilities_19unrepaired` + `Liberty Utilities_19repaired`)*100,
+         DaysToRepairAvgLU = `Liberty Utilities_19repairedDaysAvg`,
+         DaysToRepairAvgLUC1 = `Liberty Utilities_19repairedDaysAvgC1`,
+         DaysToRepairAvgLUC2 = `Liberty Utilities_19repairedDaysAvgC2`,
+         DaysToRepairAvgLUC3 = `Liberty Utilities_19repairedDaysAvgC3`,
+         LeakAgeDaysAvgLU = `Liberty Utilities_19unrepairedDaysAvg`,
+         # LeakAgeDaysAvgLUC1 = `Liberty Utilities_19unrepairedDaysAvgC1`,
+         LeakAgeDaysAvgLUC1 = NA,
+         LeakAgeDaysAvgLUC2 = `Liberty Utilities_19unrepairedDaysAvgC2`,
+         LeakAgeDaysAvgLUC3 = `Liberty Utilities_19unrepairedDaysAvgC3`) %>% 
+  select(totalpopE, nhwhitepop_E, nhblackpop_E, hisppop_E, nhasianpop_E, 
+         minority_E, eng_limitE, num2povE, lthsE, under5E, over64E,
+         disabledOver18E,
+         renter_occ_unitsE, house_burdened_E, total_occ_unitsE, eng_hhE, (starts_with("leaks_") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))), 
+         (starts_with("AllLeaks") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))), 
+         (starts_with("LeakAgeDaysAvg") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))),
+         (starts_with("REPleaks_") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))), 
+         (starts_with("DaystoRepairAvg") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))), 
+         (starts_with("PctRepaired19") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))),
+         (starts_with("leaks_hu") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))), 
+         (starts_with("REPleaks_hu") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))),
+         (starts_with("ALLleaks_hu") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))))
+
+# pivot df to long format so that so new df = #groups x #rows
+dfp <- ppLeakDensityLU %>% 
+  select(-eng_limitE, -c(renter_occ_unitsE:eng_hhE)) %>% 
+  pivot_longer(., cols = totalpopE:disabledOver18E, 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for households
+dfpHH <- ppLeakDensityLU %>% 
+  select(eng_limitE, eng_hhE, c(leaks_sqkmLU:DaysToRepairAvgLUC3)) %>% 
+  pivot_longer(., cols = c(eng_limitE, eng_hhE), 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for OHU
+dfpOHU <- ppLeakDensityLU %>% 
+  select(renter_occ_unitsE, house_burdened_E, total_occ_unitsE,
+         c(leaks_sqkmLU:DaysToRepairAvgLUC3)) %>% 
+  pivot_longer(., cols = c(renter_occ_unitsE, house_burdened_E, total_occ_unitsE),
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# make sure it looks right
+table(dfp$group)
+table(dfpHH$group)
+table(dfpOHU$group)
+
+# try weighting by replicating observations by weights following suggestion at https://r.789695.n4.nabble.com/OT-a-weighted-rank-based-non-paired-test-statistic-td883773.html
+dfpW <- dfp[rep(1:nrow(dfp), dfp$pop),]
+
+dfpW_HH <- dfpHH[rep(1:nrow(dfpHH), dfpHH$pop),]
+
+dfpW_OHU <- dfpOHU[rep(1:nrow(dfpOHU), dfpOHU$pop),]
+
+# look at summary stats. should be equivalent to weighted means. 
+dfpW %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmLU, type = "common") %>% 
+  arrange(desc(median))
+
+dfpW_OHU %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmLU, type = "common") %>% 
+  arrange(desc(median))
+
+# Pairwise comparisons using Dunn's test with `rstatix` package. Compared to the Wilcoxon’s test, the Dunn’s test takes into account the rankings used by the Kruskal-Wallis test. It also does ties adjustments. See https://www.datanovia.com/en/lessons/kruskal-wallis-test-in-r/#multiple-pairwise-comparisons
+# unreparied leaks per sqkm
+pwdt_leaks_sqkmLU <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmLU ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmLU <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmLU ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmLU <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmLU ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmLU %>% 
+    rbind(pwdt_HH_leaks_sqkmLU, pwdt_OHU_leaks_sqkmLU) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_sqkmLU.csv"))
+
+# C1 unrepaired leaks per sqkm
+pwdt_leaks_sqkmLUC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmLUC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmLUC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmLUC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmLUC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmLUC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmLUC1 %>% 
+    rbind(pwdt_HH_leaks_sqkmLUC1, pwdt_OHU_leaks_sqkmLUC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_sqkmLUC1.csv"))
+
+# C2 unrepaired leaks per sqkm
+pwdt_leaks_sqkmLUC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmLUC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmLUC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmLUC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmLUC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmLUC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmLUC2 %>% 
+    rbind(pwdt_HH_leaks_sqkmLUC2, pwdt_OHU_leaks_sqkmLUC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_sqkmLUC2.csv"))
+
+# C3 unrepaired leaks per sqkm
+pwdt_leaks_sqkmLUC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmLUC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmLUC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmLUC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmLUC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmLUC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmLUC3 %>% 
+    rbind(pwdt_HH_leaks_sqkmLUC3, pwdt_OHU_leaks_sqkmLUC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_sqkmLUC3.csv"))
+
+# repaired leaks per sqkm
+pwdt_REPleaks_sqkmLU <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmLU ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmLU <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmLU ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmLU <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmLU ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmLU %>% 
+    rbind(pwdt_HH_REPleaks_sqkmLU, pwdt_OHU_REPleaks_sqkmLU) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_sqkmLU.csv"))
+
+# C1 repaired leaks per sqkm
+pwdt_REPleaks_sqkmLUC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmLUC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmLUC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmLUC1 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmLUC1, pwdt_OHU_REPleaks_sqkmLUC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_sqkmLUC1.csv"))
+
+# C2 repaired leaks per sqkm
+pwdt_REPleaks_sqkmLUC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmLUC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmLUC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmLUC2 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmLUC2, pwdt_OHU_REPleaks_sqkmLUC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_sqkmLUC2.csv"))
+
+# C3 repaired leaks per sqkm
+pwdt_REPleaks_sqkmLUC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmLUC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmLUC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmLUC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmLUC3 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmLUC3, pwdt_OHU_REPleaks_sqkmLUC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_sqkmLUC3.csv"))
+
+# unrepaired leaks per OHU
+pwdt_leaks_huLU <- dfpW %>% 
+  rstatix::dunn_test(leaks_huLU ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huLU <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huLU ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huLU <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huLU ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huLU %>% 
+    rbind(pwdt_HH_leaks_huLU, pwdt_OHU_leaks_huLU) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>%  
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_huLU.csv"))
+
+# C1 unrepaired leaks per OHU
+pwdt_leaks_huLUC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huLUC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huLUC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huLUC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huLUC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huLUC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huLUC1 %>% 
+    rbind(pwdt_HH_leaks_huLUC1, pwdt_OHU_leaks_huLUC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_huLUC1.csv"))
+
+# C2 unrepaired leaks per OHU
+pwdt_leaks_huLUC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huLUC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huLUC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huLUC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huLUC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huLUC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huLUC2 %>% 
+    rbind(pwdt_HH_leaks_huLUC2, pwdt_OHU_leaks_huLUC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_huLUC2.csv"))
+
+# C3 unrepaired leaks per OHU
+pwdt_leaks_huLUC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huLUC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huLUC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huLUC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huLUC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huLUC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huLUC3 %>% 
+    rbind(pwdt_HH_leaks_huLUC3, pwdt_OHU_leaks_huLUC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_leaks_huLUC3.csv"))
+
+# repaired leaks per OHU
+pwdt_REPleaks_huLU <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huLU ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huLU <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huLU ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huLU <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huLU ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huLU %>% 
+    rbind(pwdt_HH_REPleaks_huLU, pwdt_OHU_REPleaks_huLU) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_huLU.csv"))
+
+# C1 repaired leaks per OHU
+pwdt_REPleaks_huLUC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huLUC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huLUC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huLUC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huLUC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huLUC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huLUC1 %>% 
+    rbind(pwdt_HH_REPleaks_huLUC1, pwdt_OHU_REPleaks_huLUC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_huLUC1.csv"))
+
+# C2 repaired leaks per OHU
+pwdt_REPleaks_huLUC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huLUC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huLUC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huLUC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huLUC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huLUC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huLUC2 %>% 
+    rbind(pwdt_HH_REPleaks_huLUC2, pwdt_OHU_REPleaks_huLUC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_huLUC2.csv"))
+
+# C3 repaired leaks per OHU
+pwdt_REPleaks_huLUC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huLUC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huLUC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huLUC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huLUC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huLUC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huLUC3 %>% 
+    rbind(pwdt_HH_REPleaks_huLUC3, pwdt_OHU_REPleaks_huLUC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_REPleaks_huLUC3.csv"))
+
+# days to repair avg
+pwdt_DaysToRepairAvgLU <- dfpW %>% 
+  drop_na(DaysToRepairAvgLU) %>% 
+  rstatix::dunn_test(DaysToRepairAvgLU ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgLU <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgLU) %>%
+  rstatix::dunn_test(DaysToRepairAvgLU ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgLU <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgLU) %>%
+  rstatix::dunn_test(DaysToRepairAvgLU ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgLU %>% 
+    rbind(pwdt_HH_DaysToRepairAvgLU, pwdt_OHU_DaysToRepairAvgLU) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_DaysToRepairAvgLU.csv"))
+
+# C1 days to repair avg
+pwdt_DaysToRepairAvgLUC1 <- dfpW %>% 
+  drop_na(DaysToRepairAvgLUC1) %>% 
+  rstatix::dunn_test(DaysToRepairAvgLUC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgLUC1 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgLUC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgLUC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgLUC1 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgLUC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgLUC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgLUC1 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgLUC1, pwdt_OHU_DaysToRepairAvgLUC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_DaysToRepairAvgLUC1.csv"))
+
+# C2 days to repair avg
+pwdt_DaysToRepairAvgLUC2 <- dfpW %>% 
+  drop_na(DaysToRepairAvgLUC2) %>% 
+  rstatix::dunn_test(DaysToRepairAvgLUC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgLUC2 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgLUC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgLUC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgLUC2 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgLUC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgLUC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgLUC2 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgLUC2, pwdt_OHU_DaysToRepairAvgLUC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_DaysToRepairAvgLUC2.csv"))
+
+# C3 days to repair avg
+pwdt_DaysToRepairAvgLUC3 <- dfpW %>% 
+  drop_na(DaysToRepairAvgLUC3) %>% 
+  rstatix::dunn_test(DaysToRepairAvgLUC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgLUC3 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgLUC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgLUC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgLUC3 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgLUC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgLUC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgLUC3 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgLUC3, pwdt_OHU_DaysToRepairAvgLUC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_DaysToRepairAvgLUC3.csv"))
+
+# leak age days avg
+pwdt_LeakAgeDaysAvgLU <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgLU) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgLU ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgLU <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgLU) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLU ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgLU <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgLU) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLU ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgLU %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgLU, pwdt_OHU_LeakAgeDaysAvgLU) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_LeakAgeDaysAvgLU.csv"))
+
+# C1 leak age days avg
+pwdt_LeakAgeDaysAvgLUC1 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgLUC1) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgLUC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgLUC1 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgLUC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLUC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgLUC1 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgLUC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLUC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgLUC1 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgLUC1, pwdt_OHU_LeakAgeDaysAvgLUC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_LeakAgeDaysAvgLUC1.csv"))
+
+# C2 leak age days avg
+pwdt_LeakAgeDaysAvgLUC2 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgLUC2) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgLUC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgLUC2 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgLUC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLUC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgLUC2 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgLUC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLUC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgLUC2 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgLUC2, pwdt_OHU_LeakAgeDaysAvgLUC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_LeakAgeDaysAvgLUC2.csv"))
+
+# C3 leak age days avg
+pwdt_LeakAgeDaysAvgLUC3 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgLUC3) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgLUC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgLUC3 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgLUC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLUC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgLUC3 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgLUC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgLUC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgLUC3 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgLUC3, pwdt_OHU_LeakAgeDaysAvgLUC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/LU/pwdt_LeakAgeDaysAvgLUC3.csv"))
+
+
+
+
+### Berkshire Gas
+ppLeakDensityBG <- ma_tracts %>% 
+  as.data.frame() %>% 
+  filter(GAS == "The Berkshire Gas Company") %>% # limit to BGs in BG svc area
+  mutate(leaks_sqkmBG = (`Berkshire Gas_19unrepaired`)/area_sqkm,
+         # leaks_sqkmBGC1 = (`Berkshire Gas_19unrepairedC1`)/area_sqkm,
+         leaks_sqkmBGC1 = 0,
+         leaks_sqkmBGC2 = (`Berkshire Gas_19unrepairedC2`)/area_sqkm,
+         leaks_sqkmBGC3 = (`Berkshire Gas_19unrepairedC3`)/area_sqkm,
+         REPleaks_sqkmBG = (`Berkshire Gas_19repaired`)/area_sqkm,
+         REPleaks_sqkmBGC1 = (`Berkshire Gas_19repairedC1`)/area_sqkm,
+         REPleaks_sqkmBGC2 = (`Berkshire Gas_19repairedC2`)/area_sqkm,
+         REPleaks_sqkmBGC3 = (`Berkshire Gas_19repairedC3`)/area_sqkm,
+         AllLeaks2019_sqkmBG = (`Berkshire Gas_19unrepaired` +
+                                  `Berkshire Gas_19repaired`)/area_sqkm,
+         # AllLeaks2019_sqkmBGC1 = (`Berkshire Gas_19unrepairedC1` +
+         #                            `Berkshire Gas_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmBGC1 = (`Berkshire Gas_19repairedC1`)/area_sqkm,
+         AllLeaks2019_sqkmBGC2 = (`Berkshire Gas_19unrepairedC2` + 
+                                    `Berkshire Gas_19repairedC2`)/area_sqkm,
+         AllLeaks2019_sqkmBGC3 = (`Berkshire Gas_19unrepairedC3` + 
+                                    `Berkshire Gas_19repairedC3`)/area_sqkm,
+         leaks_huBG = if_else(total_occ_unitsE == 0, 0, 
+                              (`Berkshire Gas_19unrepaired`)/total_occ_unitsE),
+         # leaks_huBGC1 = if_else(total_occ_unitsE == 0, 0,
+         #                        (`Berkshire Gas_19unrepairedC1`)/total_occ_unitsE),
+         leaks_huBGC1 = 0,
+         leaks_huBGC2 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Berkshire Gas_19unrepairedC2`)/total_occ_unitsE),
+         leaks_huBGC3 = if_else(total_occ_unitsE == 0, 0, 
+                                (`Berkshire Gas_19unrepairedC3`)/total_occ_unitsE),
+         REPleaks_huBG = if_else(total_occ_unitsE == 0, 0,
+                                 (`Berkshire Gas_19repaired`)/total_occ_unitsE),
+         REPleaks_huBGC1 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Berkshire Gas_19repairedC1`)/total_occ_unitsE),
+         REPleaks_huBGC2 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Berkshire Gas_19repairedC2`)/total_occ_unitsE),
+         REPleaks_huBGC3 = if_else(total_occ_unitsE == 0, 0,
+                                   (`Berkshire Gas_19repairedC3`)/total_occ_unitsE),
+         AllLeaks2019_huBG = if_else(total_occ_unitsE == 0, 0,
+                                     (`Berkshire Gas_19unrepaired` + 
+                                        `Berkshire Gas_19repaired`)/total_occ_unitsE),
+         # AllLeaks2019_huBGC1 = if_else(total_occ_unitsE == 0, 0,
+         #                               (`Berkshire Gas_19unrepairedC1` +
+         #                                  `Berkshire Gas_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huBGC1 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Berkshire Gas_19repairedC1`)/total_occ_unitsE),
+         AllLeaks2019_huBGC2 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Berkshire Gas_19unrepairedC2` +
+                                          `Berkshire Gas_19repairedC2`)/total_occ_unitsE),
+         AllLeaks2019_huBGC3 = if_else(total_occ_unitsE == 0, 0,
+                                       (`Berkshire Gas_19unrepairedC3` +
+                                          `Berkshire Gas_19repairedC3`)/total_occ_unitsE),
+         PctRepaired19BG = (`Berkshire Gas_19repaired`)/ (`Berkshire Gas_19unrepaired` + `Berkshire Gas_19repaired`)*100,
+         DaysToRepairAvgBG = `Berkshire Gas_19repairedDaysAvg`,
+         DaysToRepairAvgBGC1 = `Berkshire Gas_19repairedDaysAvgC1`,
+         DaysToRepairAvgBGC2 = `Berkshire Gas_19repairedDaysAvgC2`,
+         DaysToRepairAvgBGC3 = `Berkshire Gas_19repairedDaysAvgC3`,
+         LeakAgeDaysAvgBG = `Berkshire Gas_19unrepairedDaysAvg`,
+         # LeakAgeDaysAvgBGC1 = `Berkshire Gas_19unrepairedDaysAvgC1`,
+         LeakAgeDaysAvgBGC1 = NA,
+         LeakAgeDaysAvgBGC2 = `Berkshire Gas_19unrepairedDaysAvgC2`,
+         LeakAgeDaysAvgBGC3 = `Berkshire Gas_19unrepairedDaysAvgC3`) %>% 
+  select(totalpopE, nhwhitepop_E, nhblackpop_E, hisppop_E, nhasianpop_E, 
+         minority_E, eng_limitE, nu
+         m2povE, lthsE, under5E, over64E,disabledOver18E,
+         renter_occ_unitsE, house_burdened_E, total_occ_unitsE, eng_hhE, (starts_with("leaks_") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))), 
+         (starts_with("AllLeaks") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))), 
+         (starts_with("LeakAgeDaysAvg") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))),
+         (starts_with("REPleaks_") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))), 
+         (starts_with("DaystoRepairAvg") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))), 
+         (starts_with("PctRepaired19") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))),
+         (starts_with("leaks_hu") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))), 
+         (starts_with("REPleaks_hu") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))),
+         (starts_with("ALLleaks_hu") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))))
+
+# pivot df to long format so that so new df = #groups x #rows
+dfp <- ppLeakDensityBG %>% 
+  select(-eng_limitE, -c(renter_occ_unitsE:eng_hhE)) %>% 
+  pivot_longer(., cols = totalpopE:disabledOver18E, 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for households
+dfpHH <- ppLeakDensityBG %>% 
+  select(eng_limitE, eng_hhE, c(leaks_sqkmBG:DaysToRepairAvgBGC3)) %>% 
+  pivot_longer(., cols = c(eng_limitE, eng_hhE), 
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# repeat for OHU
+dfpOHU <- ppLeakDensityBG %>% 
+  select(renter_occ_unitsE, house_burdened_E, total_occ_unitsE,
+         c(leaks_sqkmBG:DaysToRepairAvgBGC3)) %>% 
+  pivot_longer(., cols = c(renter_occ_unitsE, house_burdened_E, total_occ_unitsE),
+               names_to = "group", values_to = "pop") %>% 
+  mutate(group = as.factor(group))
+
+# make sure it looks right
+table(dfp$group)
+table(dfpHH$group)
+table(dfpOHU$group)
+
+# try weighting by replicating observations by weights following suggestion at https://r.789695.n4.nabble.com/OT-a-weighted-rank-based-non-paired-test-statistic-td883773.html
+dfpW <- dfp[rep(1:nrow(dfp), dfp$pop),]
+
+dfpW_HH <- dfpHH[rep(1:nrow(dfpHH), dfpHH$pop),]
+
+dfpW_OHU <- dfpOHU[rep(1:nrow(dfpOHU), dfpOHU$pop),]
+
+# look at summary stats. should be equivalent to weighted means. 
+dfpW %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmBG, type = "common") %>% 
+  arrange(desc(median))
+
+dfpW_OHU %>% 
+  group_by(group) %>% 
+  rstatix::get_summary_stats(leaks_sqkmBG, type = "common") %>% 
+  arrange(desc(median))
+
+# Pairwise comparisons using Dunn's test with `rstatix` package. Compared to the Wilcoxon’s test, the Dunn’s test takes into account the rankings used by the Kruskal-Wallis test. It also does ties adjustments. See https://www.datanovia.com/en/lessons/kruskal-wallis-test-in-r/#multiple-pairwise-comparisons
+# unreparied leaks per sqkm
+pwdt_leaks_sqkmBG <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmBG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmBG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmBG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmBG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmBG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmBG %>% 
+    rbind(pwdt_HH_leaks_sqkmBG, pwdt_OHU_leaks_sqkmBG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_sqkmBG.csv"))
+
+# C1 unrepaired leaks per sqkm
+pwdt_leaks_sqkmBGC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmBGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmBGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmBGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmBGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmBGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmBGC1 %>% 
+    rbind(pwdt_HH_leaks_sqkmBGC1, pwdt_OHU_leaks_sqkmBGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_sqkmBGC1.csv"))
+
+# C2 unrepaired leaks per sqkm
+pwdt_leaks_sqkmBGC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmBGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmBGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmBGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmBGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmBGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmBGC2 %>% 
+    rbind(pwdt_HH_leaks_sqkmBGC2, pwdt_OHU_leaks_sqkmBGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_sqkmBGC2.csv"))
+
+# C3 unrepaired leaks per sqkm
+pwdt_leaks_sqkmBGC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_sqkmBGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_sqkmBGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_sqkmBGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_sqkmBGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_sqkmBGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_sqkmBGC3 %>% 
+    rbind(pwdt_HH_leaks_sqkmBGC3, pwdt_OHU_leaks_sqkmBGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_sqkmBGC3.csv"))
+
+# repaired leaks per sqkm
+pwdt_REPleaks_sqkmBG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmBG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmBG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmBG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmBG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmBG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmBG %>% 
+    rbind(pwdt_HH_REPleaks_sqkmBG, pwdt_OHU_REPleaks_sqkmBG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_sqkmBG.csv"))
+
+# C1 repaired leaks per sqkm
+pwdt_REPleaks_sqkmBGC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmBGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmBGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmBGC1 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmBGC1, pwdt_OHU_REPleaks_sqkmBGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_sqkmBGC1.csv"))
+
+# C2 repaired leaks per sqkm
+pwdt_REPleaks_sqkmBGC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmBGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmBGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmBGC2 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmBGC2, pwdt_OHU_REPleaks_sqkmBGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_sqkmBGC2.csv"))
+
+# C3 repaired leaks per sqkm
+pwdt_REPleaks_sqkmBGC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_sqkmBGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_sqkmBGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_sqkmBGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_sqkmBGC3 %>% 
+    rbind(pwdt_HH_REPleaks_sqkmBGC3, pwdt_OHU_REPleaks_sqkmBGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_sqkmBGC3.csv"))
+
+# unrepaired leaks per OHU
+pwdt_leaks_huBG <- dfpW %>% 
+  rstatix::dunn_test(leaks_huBG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huBG <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huBG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huBG <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huBG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huBG %>% 
+    rbind(pwdt_HH_leaks_huBG, pwdt_OHU_leaks_huBG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>%  
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_huBG.csv"))
+
+# C1 unrepaired leaks per OHU
+pwdt_leaks_huBGC1 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huBGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huBGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huBGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huBGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huBGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huBGC1 %>% 
+    rbind(pwdt_HH_leaks_huBGC1, pwdt_OHU_leaks_huBGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_huBGC1.csv"))
+
+# C2 unrepaired leaks per OHU
+pwdt_leaks_huBGC2 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huBGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huBGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huBGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huBGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huBGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huBGC2 %>% 
+    rbind(pwdt_HH_leaks_huBGC2, pwdt_OHU_leaks_huBGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_huBGC2.csv"))
+
+# C3 unrepaired leaks per OHU
+pwdt_leaks_huBGC3 <- dfpW %>% 
+  rstatix::dunn_test(leaks_huBGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_leaks_huBGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(leaks_huBGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_leaks_huBGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(leaks_huBGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_leaks_huBGC3 %>% 
+    rbind(pwdt_HH_leaks_huBGC3, pwdt_OHU_leaks_huBGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_leaks_huBGC3.csv"))
+
+# repaired leaks per OHU
+pwdt_REPleaks_huBG <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huBG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huBG <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huBG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huBG <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huBG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huBG %>% 
+    rbind(pwdt_HH_REPleaks_huBG, pwdt_OHU_REPleaks_huBG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_huBG.csv"))
+
+# C1 repaired leaks per OHU
+pwdt_REPleaks_huBGC1 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huBGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huBGC1 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huBGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huBGC1 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huBGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huBGC1 %>% 
+    rbind(pwdt_HH_REPleaks_huBGC1, pwdt_OHU_REPleaks_huBGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_huBGC1.csv"))
+
+# C2 repaired leaks per OHU
+pwdt_REPleaks_huBGC2 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huBGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huBGC2 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huBGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huBGC2 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huBGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huBGC2 %>% 
+    rbind(pwdt_HH_REPleaks_huBGC2, pwdt_OHU_REPleaks_huBGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_huBGC2.csv"))
+
+# C3 repaired leaks per OHU
+pwdt_REPleaks_huBGC3 <- dfpW %>% 
+  rstatix::dunn_test(REPleaks_huBGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_REPleaks_huBGC3 <- dfpW_HH %>% 
+  rstatix::dunn_test(REPleaks_huBGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_REPleaks_huBGC3 <- dfpW_OHU %>% 
+  rstatix::dunn_test(REPleaks_huBGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_REPleaks_huBGC3 %>% 
+    rbind(pwdt_HH_REPleaks_huBGC3, pwdt_OHU_REPleaks_huBGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_REPleaks_huBGC3.csv"))
+
+# days to repair avg
+pwdt_DaysToRepairAvgBG <- dfpW %>% 
+  drop_na(DaysToRepairAvgBG) %>% 
+  rstatix::dunn_test(DaysToRepairAvgBG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgBG <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgBG) %>%
+  rstatix::dunn_test(DaysToRepairAvgBG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgBG <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgBG) %>%
+  rstatix::dunn_test(DaysToRepairAvgBG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgBG %>% 
+    rbind(pwdt_HH_DaysToRepairAvgBG, pwdt_OHU_DaysToRepairAvgBG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_DaysToRepairAvgBG.csv"))
+
+# C1 days to repair avg
+pwdt_DaysToRepairAvgBGC1 <- dfpW %>% 
+  drop_na(DaysToRepairAvgBGC1) %>% 
+  rstatix::dunn_test(DaysToRepairAvgBGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgBGC1 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgBGC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgBGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgBGC1 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgBGC1) %>%
+  rstatix::dunn_test(DaysToRepairAvgBGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgBGC1 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgBGC1, pwdt_OHU_DaysToRepairAvgBGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_DaysToRepairAvgBGC1.csv"))
+
+# C2 days to repair avg
+pwdt_DaysToRepairAvgBGC2 <- dfpW %>% 
+  drop_na(DaysToRepairAvgBGC2) %>% 
+  rstatix::dunn_test(DaysToRepairAvgBGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgBGC2 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgBGC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgBGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgBGC2 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgBGC2) %>%
+  rstatix::dunn_test(DaysToRepairAvgBGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgBGC2 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgBGC2, pwdt_OHU_DaysToRepairAvgBGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_DaysToRepairAvgBGC2.csv"))
+
+# C3 days to repair avg
+pwdt_DaysToRepairAvgBGC3 <- dfpW %>% 
+  drop_na(DaysToRepairAvgBGC3) %>% 
+  rstatix::dunn_test(DaysToRepairAvgBGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_DaysToRepairAvgBGC3 <- dfpW_HH %>% 
+  drop_na(DaysToRepairAvgBGC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgBGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_DaysToRepairAvgBGC3 <- dfpW_OHU %>% 
+  drop_na(DaysToRepairAvgBGC3) %>%
+  rstatix::dunn_test(DaysToRepairAvgBGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_DaysToRepairAvgBGC3 %>% 
+    rbind(pwdt_HH_DaysToRepairAvgBGC3, pwdt_OHU_DaysToRepairAvgBGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_DaysToRepairAvgBGC3.csv"))
+
+# leak age days avg
+pwdt_LeakAgeDaysAvgBG <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgBG) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgBG ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgBG <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgBG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBG ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgBG <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgBG) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBG ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgBG %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgBG, pwdt_OHU_LeakAgeDaysAvgBG) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_LeakAgeDaysAvgBG.csv"))
+
+# C1 leak age days avg
+pwdt_LeakAgeDaysAvgBGC1 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgBGC1) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgBGC1 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgBGC1 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgBGC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBGC1 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgBGC1 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgBGC1) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBGC1 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgBGC1 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgBGC1, pwdt_OHU_LeakAgeDaysAvgBGC1) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_LeakAgeDaysAvgBGC1.csv"))
+
+# C2 leak age days avg
+pwdt_LeakAgeDaysAvgBGC2 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgBGC2) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgBGC2 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgBGC2 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgBGC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBGC2 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgBGC2 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgBGC2) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBGC2 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgBGC2 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgBGC2, pwdt_OHU_LeakAgeDaysAvgBGC2) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_LeakAgeDaysAvgBGC2.csv"))
+
+# C3 leak age days avg
+pwdt_LeakAgeDaysAvgBGC3 <- dfpW %>% 
+  drop_na(LeakAgeDaysAvgBGC3) %>% 
+  rstatix::dunn_test(LeakAgeDaysAvgBGC3 ~ group, p.adjust.method = "bonferroni") 
+
+pwdt_HH_LeakAgeDaysAvgBGC3 <- dfpW_HH %>% 
+  drop_na(LeakAgeDaysAvgBGC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBGC3 ~ group, p.adjust.method = "bonferroni")
+
+pwdt_OHU_LeakAgeDaysAvgBGC3 <- dfpW_OHU %>% 
+  drop_na(LeakAgeDaysAvgBGC3) %>%
+  rstatix::dunn_test(LeakAgeDaysAvgBGC3 ~ group, p.adjust.method = "bonferroni")
+
+(pwdt_LeakAgeDaysAvgBGC3 %>% 
+    rbind(pwdt_HH_LeakAgeDaysAvgBGC3, pwdt_OHU_LeakAgeDaysAvgBGC3) %>% 
+    filter(group2 == "totalpopE" | 
+             group2 == "total_occ_unitsE" |
+             (group2 == "eng_limitE" & group1 == "eng_hhE") | 
+             (group2 == "under5E" & group1 == "totalpopE")) %>% 
+    arrange(statistic) %>% 
+    write_csv("Tables/Tract/BG/pwdt_LeakAgeDaysAvgBGC3.csv"))
+
+
+
+
+
+
+
+######## Look at unrepaired stats per block group
+# count per BG
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(starts_with("unrepaired2019total")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "unrepaired2019total" = "All",
+                        "unrepaired2019totalC1" = "1",
+                        "unrepaired2019totalC2" = "2",
+                        "unrepaired2019totalC3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats,
+                   .names = "{.fn}"))
+
+# leak density per BG
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(starts_with("leaks_sqkm")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "leaks_sqkm" = "All",
+                        "leaks_sqkmC1" = "1",
+                        "leaks_sqkmC2" = "2",
+                        "leaks_sqkmC3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats, 
+                   .names = "{.fn}"))
+
+# leaks per OHU
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(starts_with("leaks_hu")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "leaks_hu" = "All",
+                        "leaks_huC1" = "1",
+                        "leaks_huC2" = "2",
+                        "leaks_huC3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats, 
+                   .names = "{.fn}"))
+
+
+ma_tracts %>% 
+  as.data.frame() %>% 
+  pivot_longer(cols = c(unrepaired2019totalC1, unrepaired2019totalC2, 
+                        unrepaired2019totalC3, unrepaired2019total),
+               names_to = "Class", values_to = "count") %>% 
+  mutate(Class = recode(Class, "unrepaired2019totalC1" = "1",
+                        "unrepaired2019totalC2" = "2",
+                        "unrepaired2019totalC3" = "3",
+                        "unrepaired2019total" = "All")) %>% 
+  # filter(count < 10) %>% 
+  ggplot(aes(x = Class, y = count)) + geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Unrepaired Leaks Per Block Group in 2019", x = "leak class")
+
+ggsave("Data/boxplotBGunrepaired.png")
+
+# what pct of BGs with unrepaired leaks? Actually, most (75%) of BGs in gas service territories had at least 1 unrepaired gas leak in 2019
+ma_tracts %>% 
+  filter(unrepaired2019total > 0) %>% 
+  nrow()/nrow(ma_tracts)
+
+# Look at repaired stats per block group
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(starts_with("repaired2019total")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "repaired2019total" = "Total",
+                        "repaired2019totalC1" = "1",
+                        "repaired2019totalC2" = "2",
+                        "repaired2019totalC3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   list(min = ~ min(., na.rm = TRUE),
+                        med = ~ median(., na.rm = TRUE),
+                        avg = ~ round(mean(., na.rm = TRUE),2),
+                        mod = ~ Mode(.),
+                        max = ~ max(., na.rm = TRUE)),
+                   .names = "{.fn}"))
+
+# leak density per BG
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(starts_with("REPleaks_sqkm")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "REPleaks_sqkm" = "Total",
+                        "REPleaks_sqkmC1" = "1",
+                        "REPleaks_sqkmC2" = "2",
+                        "REPleaks_sqkmC3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats, 
+                   .names = "{.fn}"))
+
+# leaks per OHU
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(starts_with("REPleaks_hu")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "REPleaks_hu" = "Total",
+                        "REPleaks_huC1" = "1",
+                        "REPleaks_huC2" = "2",
+                        "REPleaks_huC3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats, 
+                   .names = "{.fn}"))
+
+ma_tracts %>% 
+  as.data.frame() %>% 
+  pivot_longer(cols = starts_with("repaired2019total"),
+               names_to = "Class", values_to = "count") %>% 
+  mutate(Class = recode(Class, "repaired2019totalC1" = "1",
+                        "repaired2019totalC2" = "2",
+                        "repaired2019totalC3" = "3",
+                        "repaired2019total" = "Total")) %>% 
+  # filter(count < 10) %>% 
+  ggplot(aes(x = Class, y = count)) + geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Repaired Leaks Per Block Group in 2019", x = "leak class")
+
+ggsave("Data/boxplotBGrepaired.png")
+
+# what pct of BGs with repaired leaks? Actually, most (73%) of BGs in gas service territories had at least 1 repaired gas leak in 2019
+ma_tracts %>% 
+  filter(repaired2019total > 0) %>% 
+  nrow()/nrow(ma_tracts)
+
+# look at all leaks per block group
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(AllLeaks2019, AllLeaks2019C1, AllLeaks2019C2, AllLeaks2019C3) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "AllLeaks2019" = "Total",
+                        "AllLeaks2019C1" = "1",
+                        "AllLeaks2019C2" = "2",
+                        "AllLeaks2019C3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats, 
+                   .names = "{.fn}"))
+
+# leak density per BG
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select("AllLeaks2019_sqkm", "AllLeaks2019C1_sqkm", 
+         "AllLeaks2019C2_sqkm", "AllLeaks2019C3_sqkm") %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "AllLeaks2019_sqkm" = "Total",
+                        "AllLeaks2019C1_sqkm" = "1",
+                        "AllLeaks2019C2_sqkm" = "2",
+                        "AllLeaks2019C3_sqkm" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats, 
+                   .names = "{.fn}"))
+
+# leaks per OHU
+ma_tracts %>% 
+  as.data.frame() %>% 
+  select(starts_with("ALLleaks_hu")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Leaks") %>% 
+  mutate(Class = recode(Class, "ALLleaks_hu" = "Total",
+                        "ALLleaks_huC1" = "1",
+                        "ALLleaks_huC2" = "2",
+                        "ALLleaks_huC3" = "3")) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = everything(), 
+                   summary_stats, 
+                   .names = "{.fn}"))
+
+ma_tracts %>% 
+  as.data.frame() %>% 
+  pivot_longer(cols = c(AllLeaks2019, AllLeaks2019C1, 
+                        AllLeaks2019C2, AllLeaks2019C3),
+               names_to = "Class", values_to = "count") %>% 
+  mutate(Class = recode(Class, "AllLeaks2019" = "Total",
+                        "AllLeaks2019C1" = "1",
+                        "AllLeaks2019C2" = "2",
+                        "AllLeaks2019C3" = "3")) %>% 
+  # filter(count < 10) %>% 
+  ggplot(aes(x = Class, y = count)) + geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Total Leaks Per Block Group in 2019", x = "leak class")
+
+ggsave("Data/boxplotBGallleaks.png")
+
+# what pct of BGs with any reported leaks? Actually, most (87%) of BGs in gas service territories had at least 1 reported gas leak in 2019
+ma_tracts %>% 
+  filter(AllLeaks2019 > 0) %>% 
+  nrow()/nrow(ma_tracts)
+
+# create a qunatile plot to see distribution of counts for all leaks
+ma_tracts %>% 
+  as.data.frame() %>% 
+  ggplot(aes(sample = AllLeaks2019)) + 
+  stat_qq(distribution = qunif) + 
+  theme_minimal() +
+  labs(title = "Percentile plot of total leaks per Block Group",
+       x = "percentile", y = "leak count")
+
+colors_quant <- c("All" = "#8da0cb", "Unrepaired" = "#fc8d62", 
+                  "Repaired" = "#66c2a5")
+ma_tracts %>% 
+  as.data.frame() %>% 
+  mutate(All = percent_rank(AllLeaks2019),
+         Unrepaired = percent_rank(unrepaired2019total),
+         Repaired = percent_rank(repaired2019total)) %>% 
+  ggplot() + 
+  geom_line(aes(x = All, y = AllLeaks2019, 
+                color = "All"), size = 1.25) +
+  geom_line(aes(x = Unrepaired, y = unrepaired2019total, 
+                color = "Unrepaired"), size = 1.25) +
+  geom_line(aes(x = Repaired, y = repaired2019total, 
+                color = "Repaired"), size = 1.25) +
+  theme_minimal() +
+  labs(title = "Percentile plot of leaks per Block Group",
+       x = "percentile", y = "leak count",
+       color = "") +
+  scale_color_manual(values = colors_quant)
+
+ma_tracts %>% 
+  as.data.frame() %>% 
+  mutate(All = percent_rank(AllLeaks2019_sqkm),
+         Unrepaired = percent_rank(leaks_sqkm),
+         Repaired = percent_rank(REPleaks_sqkm)) %>% 
+  ggplot() + 
+  geom_line(aes(x = All, y = AllLeaks2019_sqkm, 
+                color = "All"), size = 1.25) +
+  geom_line(aes(x = Unrepaired, y = leaks_sqkm, 
+                color = "Unrepaired"), size = 1.25) +
+  geom_line(aes(x = Repaired, y = REPleaks_sqkm, 
+                color = "Repaired"), size = 1.25) +
+  theme_minimal() +
+  labs(title = "Percentile plot of leak density per Block Group",
+       x = "percentile", y = "leak density",
+       color = "") +
+  scale_color_manual(values = colors_quant)
+
+
+
+
+
+# maps of leaks
+# create a hexagonal grid and create index column
+gridCnt <- st_make_grid(x = ma_tracts, cellsize = 1000, square = FALSE) %>% 
+  st_as_sf() %>% 
+  mutate(index = row_number())
+
+# spatially join to grid ids to leaks, sum aggregate numbers of leaks per grid index, and then join sums back to hexagons for mapping and analysis
+gridCnt <- unrepaired2019final %>% 
+  st_join(., gridCnt) %>% 
+  st_drop_geometry() %>% 
+  group_by(index) %>% 
+  summarize(unrepaired = n()) %>% 
+  left_join(gridCnt, ., by = "index") %>% 
+  replace_na(list(unrepaired = 0))
+
+gridCnt <- repaired2019final %>% 
+  st_join(., gridCnt) %>% 
+  st_drop_geometry() %>% 
+  group_by(index) %>% 
+  summarize(repaired = n()) %>% 
+  left_join(gridCnt, ., by = "index") %>% 
+  replace_na(list(repaired = 0))
+
+# create column with total leak points and clip to MA
+gridCnt1 <- gridCnt %>% 
+  mutate(total = unrepaired + repaired) %>% 
+  crop_shape(., ma_tracts, polygon = TRUE) %>% 
+  st_make_valid()
+
+# map out counts of leaks per hexagons > 0 
+m_gridUnrepaired <- gridCnt1 %>% 
+  filter(unrepaired > 0) %>%
+  tm_shape(.) + tm_fill(col = "unrepaired", palette = "YlOrRd",
+                        style = "fisher",
+                        # breaks = c(1,5,10,20,40,80), 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+tmap_save(m_gridUnrepaired, filename = "Images/m_gridUnrepaired.png", dpi = 600)
+
+m_gridRepaired <- gridCnt1 %>% 
+  filter(repaired > 0) %>%
+  tm_shape(.) + tm_fill(col = "repaired", palette = "YlOrRd",
+                        style = "fisher",
+                        # breaks = c(1,5,10,20,40,80), 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+tmap_save(m_gridRepaired, filename = "Images/m_gridRepaired.png", dpi = 600)
+
+m_gridTotal <- gridCnt1 %>% 
+  filter(total > 0) %>%
+  tm_shape(.) + 
+  tm_fill(col = "total", palette = "YlOrRd",
+          legend.format = list(digits = 0), 
+          style = "fisher",
+          # breaks = c(1,5,10,20,40,80),
+          legend.hist = TRUE)
+tmap_save(m_gridTotal, filename = "Images/m_gridTotal.png", dpi = 600)
+
+
+
+# map out leaks  by blkgrp
+m1 <- ma_tracts %>% 
+  filter(AllLeaks2019 > 0) %>% 
+  tm_shape(.) + tm_fill(col = "AllLeaks2019", style = "fisher", 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+
+m2 <- ma_tracts %>% 
+  filter(unrepaired2019total > 0) %>% 
+  tm_shape(.) + tm_fill(col = "unrepaired2019total", style = "fisher", 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+
+# mArrange <- tmap_arrange(m1, m2)
+# tmap_save(mArrange, "Images/arranged.png")
+
+# map out leak densities by blockgroup
+ma_tracts %>% 
+  filter(AllLeaks2019_sqkm > 0) %>% 
+  tm_shape(.) + tm_fill(col = "AllLeaks2019_sqkm", style = "fisher", 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+
+ma_tracts %>% 
+  filter(leaks_sqkm > 0) %>% 
+  tm_shape(.) + tm_fill(col = "leaks_sqkm", style = "fisher", 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+
+# leask per OHU
+ma_tracts %>% 
+  filter(ALLleaks_hu > 0) %>% 
+  tm_shape(.) + tm_fill(col = "ALLleaks_hu", style = "fisher", 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+
+ma_tracts %>% 
+  filter(leaks_hu > 0) %>% 
+  tm_shape(.) + tm_fill(col = "leaks_hu", style = "fisher", 
+                        legend.format = list(digits = 0), 
+                        legend.hist = TRUE)
+
+
+### explore geostatistical visualizations
+# first, identify the bandwidth at which spatial autocorrelation plateaus using an empirical semivariogram
+library(gstat)
+# convert it to spdf for use in gstat
+gridCnt1_sp <- as_Spatial(gridCnt1)
+
+# generate empirical semivariogram
+v <- variogram(unrepaired ~ 1, gridCnt1_sp, cutoff = 20000, width = 500)
+v
+
+# plot it
+plot(v, plot.numbers = F)
+# first inflection in curve happens around 3000m
+v %>% 
+  ggplot(aes(x = dist, y = gamma)) + geom_point()
+
+# create a smoothed raster of leak density
+library(SpatialKDE)
+grid <- create_grid_hexagonal(ma_tracts, cell_size = 1000)
+# kde_estimate_grid10k <- kde(unrepaired2019final, band_width = 10000, grid = grid)
+# m_KDE10k <- kde_estimate_grid10k %>% 
+#   crop_shape(., ma_tracts, polygon = TRUE) %>% 
+#   tm_shape(.) + tm_fill(col = "kde_value", style = "fisher")
+# # save the map for comparison
+# tmap_save(m_KDE10k, filename = "Images/m_KDE10k.png", dpi = 600)
+# 
+# kde_estimate_grid5k <- kde(unrepaired2019final, band_width = 5000, grid = grid)
+# m_KDE5k <- kde_estimate_grid5k %>% 
+#   crop_shape(., ma_tracts, polygon = TRUE) %>% 
+#   tm_shape(.) + tm_fill(col = "kde_value", style = "fisher")
+# m_KDE5k
+# # save the map for comparison
+# tmap_save(m_KDE5k, filename = "Images/m_KDE5k.png", dpi = 600)
+
+Unrepaired_kde_grid3k <- kde(unrepaired2019final, band_width = 3000, grid = grid)
+m_UnrepairedKDE3k <- Unrepaired_kde_grid3k %>% 
+  crop_shape(., ma_tracts, polygon = TRUE) %>% 
+  st_make_valid() %>% 
+  tm_shape(.) + tm_fill(col = "kde_value", style = "fisher")
+m_UnrepairedKDE3k
+# save the map for comparison
+tmap_save(m_UnrepairedKDE3k, filename = "Images/m_UnrepairedKDE3k.png", dpi = 600)
+
+repaired_kde_grid3k <- kde(repaired2019final, band_width = 3000, grid = grid)
+m_RepairedKDE3k <- repaired_kde_grid3k %>% 
+  crop_shape(., ma_tracts, polygon = TRUE) %>% 
+  st_make_valid() %>% 
+  tm_shape(.) + tm_fill(col = "kde_value", style = "fisher")
+m_RepairedKDE3k
+# save the map for comparison
+tmap_save(m_RepairedKDE3k, filename = "Images/m_RepairedKDE3k.png", dpi = 600)
+
+# all leak points
+total2019 <- rbind(st_as_sf(st_geometry(unrepaired2019final)), 
+                   st_as_sf(st_geometry(repaired2019final)))
+
+total_kde_grid3k <- kde(total2019, band_width = 3000, grid = grid)
+m_TotalKDE3k <- total_kde_grid3k %>% 
+  # filter(kde_value > 0) %>% 
+  crop_shape(., ma_tracts, polygon = TRUE) %>% 
+  st_make_valid() %>% 
+  tm_shape(.) + tm_fill(col = "kde_value", style = "fisher")
+m_TotalKDE3k
+# save the map for comparison
+tmap_save(m_TotalKDE3k, filename = "Images/m_TotalKDE3k.png", dpi = 600)
+
+# arrange total leaks and KDE smoothed
+tmap_arrange(m_gridUnrepaired,m_gridTotal,
+             m_UnrepairedKDE3k,m_TotalKDE3k, ncol = 2)
+
+tmap_arrange(m_gridUnrepaired, m_UnrepairedKDE3k)
+
+
+### Look for statistically significant clusters of leak points based on standard hexagonal grid. 
+
+# Calculate distance based neighbors
+nb <- dnearneigh(coordinates(gridCnt1_sp),0,15000)
+
+# find max distance to nearest neighbor
+# create vector of nearest neighbor distances
+nn <- ma_tracts %>% 
+  filter(!st_is_empty(.)) %>% 
+  select(leaks_sqkm) %>% 
+  st_centroid(., of_largest_polygon = TRUE) %>% 
+  spatstat::as.ppp(.) %>% 
+  spatstat::nndist(.)
+# identify maximum distance
+max(nn)
+
+nb <- ma_tracts %>% 
+  filter(!st_is_empty(.)) %>% 
+  select(leaks_sqkm) %>% 
+  as_Spatial(.) %>% 
+  coordinates(.) %>% 
+  dnearneigh(., 0, 6000) 
+
+# compute neighbor weights
+listw <- nb2listw(nb, style = "B")
+
+# compute Getis-Ord Gi statistic
+local_g <- localG(ma_tracts$leaks_hu, listw)
+local_g <- cbind(ma_tracts, as.matrix(local_g))
+names(local_g)[403] <- "gstat"
+
+# map out hotspots
+tm_shape(local_g, unit = "mi",) + 
+  tm_fill("gstat",
+          palette = "-RdBu", 
+          style = "pretty",
+          title = expression(paste("Getis-Ord ", G[i]^"*")),
+          showNA = FALSE,
+          midpoint = NA,
+          labels = c("Significant Clusters","of Low Values", "","","","", "Significant Clusters","of High Values"),
+          legend.show = FALSE,
+          alpha = 0.5)
+
+# map out leak density and and leaks per OHU to see if these patterns are different
+# Calculate Queen's case neighbors
+neighborsQC <- poly2nb(ma_tracts, queen = TRUE)
+
+# Compute neighbor weights
+# spdep::set.ZeroPolicyOption(TRUE)
+listw <- nb2listw(neighborsQC, style = "W", zero.policy = TRUE)
+
+# compute Getis-Ord Gi statistic
+local_g <- localG(ma_tracts$leaks_sqkm, listw)
+local_g <- cbind(ma_tracts, as.matrix(local_g))
+names(local_g)[403] <- "gstat"
+
+# map out hotspots
+tm_shape(local_g, unit = "mi",) + 
+  tm_fill("gstat",
+          palette = "-RdBu", 
+          style = "pretty",
+          title = expression(paste("Getis-Ord ", G[i]^"*")),
+          showNA = FALSE,
+          midpoint = NA,
+          labels = c("Significant Clusters","of Low Values", "","","","", "Significant Clusters","of High Values"),
+          legend.show = FALSE,
+          alpha = 0.5)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
