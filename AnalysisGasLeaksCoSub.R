@@ -958,7 +958,7 @@ ppLeakDensity_df %>%
   arrange(desc(wLeaksPerSqKm)) %>% 
   kable(longtable = T, booktabs = T,
         format.args = list(big.mark = ','), 
-        caption = "Population-weighted mean leak density (leaks/sqkm) of unrepaired leaks in 2019.", align = "r", digits = c(0,1,1,2,1,2,1,2,1), 
+        caption = "Population-weighted mean leak density (leaks/sqkm) of unrepaired leaks in 2019.", align = "r", digits = c(0,1,2,2,2,2,2,2,2), 
         col.names = c("Group","Per SqKm","RR","Per SqKm","RR",
                       "Per SqKm","RR","Per SqKm","RR")) %>% 
   add_header_above(., c(" ", "All Unrepaired Leaks" = 2, "Class 1 Leaks" = 2, 
@@ -1192,7 +1192,7 @@ ppLeakDensity_df %>%
   arrange(desc(wLeaksPerHU)) %>% 
   kable(longtable = T, booktabs = T,
         format.args = list(big.mark = ','), 
-        caption = "Population-weighted mean unrepaired leaks per occupied housing unit in 2019.", align = "r", digits = c(0,1,1,2,1,2,1,2,1), 
+        caption = "Population-weighted mean unrepaired leaks per occupied housing unit in 2019.", align = "r", digits = c(0,2,2,4,2,2,2,2,2), 
         col.names = c("Group","Per OHU","RR","Per OHU","RR",
                       "Per OHU","RR","Per OHU","RR")) %>% 
   add_header_above(., c(" ", "All Leaks" = 2, "Class 1 Leaks" = 2, 
@@ -1268,7 +1268,7 @@ ppLeakDensity_df %>%
   arrange(desc(wREPLeaksPerHU)) %>% 
   kable(longtable = T, booktabs = T,
         format.args = list(big.mark = ','), 
-        caption = "Population-weighted mean repaired leaks per occupied housing unit in 2019.", align = "r", digits = c(0,1,1,2,1,2,1,2,1), 
+        caption = "Population-weighted mean repaired leaks per occupied housing unit in 2019.", align = "r", digits = c(0,2,2,3,2,2,2,2,2), 
         col.names = c("Group","Per OHU","RR","Per OHU","RR",
                       "Per OHU","RR","Per OHU","RR")) %>% 
   add_header_above(., c(" ", "All Leaks" = 2, "Class 1 Leaks" = 2, 
@@ -1420,7 +1420,7 @@ ppLeakDensity_df %>%
   arrange(desc(wDaysToRepairAvg)) %>% 
   kable(longtable = T, booktabs = T,
         format.args = list(big.mark = ','), 
-        caption = "Population-weighted mean leak repair times (days) in 2019.", align = "r", digits = 1, 
+        caption = "Population-weighted mean leak repair times (days) in 2019.", align = "r", digits = c(0,1,2,1,2,1,2,1,2), 
         col.names = c("Group","Days","RR","Days","RR",
                       "Days","RR","Days","RR")) %>% 
   add_header_above(., c(" ", "All Leaks" = 2, "Class 1 Leaks" = 2, 
