@@ -1192,7 +1192,7 @@ ppLeakDensity_df %>%
   arrange(desc(wLeaksPerHU)) %>% 
   kable(longtable = T, booktabs = T,
         format.args = list(big.mark = ','), 
-        caption = "Population-weighted mean unrepaired leaks per occupied housing unit in 2019.", align = "r", digits = c(0,1,1,2,1,2,1,2,1), 
+        caption = "Population-weighted mean unrepaired leaks per occupied housing unit in 2019.", align = "r", digits = c(0,1,2,2,2,2,2,2,2), 
         col.names = c("Group","Per OHU","RR","Per OHU","RR",
                       "Per OHU","RR","Per OHU","RR")) %>% 
   add_header_above(., c(" ", "All Leaks" = 2, "Class 1 Leaks" = 2, 
