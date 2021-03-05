@@ -3128,6 +3128,26 @@ saveRDS(ppLeakDensityJoinedU, file = "Data/ppLeakDensityJoinedU_Tract.Rds")
 # load data
 ppLeakDensityJoinedU <- readRDS("Data/ppLeakDensityJoinedU_Tract.Rds")
 
+# create tables and figures for each metric
+# Unrepaired leaks per square kilometer
+ppLeakDensityJoinedU %>% 
+  select(Group, wLeaksPerSqKmBG, wLeaksRRBG, wLeaksPerSqKmCG, wLeaksRRCG, wLeaksPerSqKmEV, wLeaksRREV, wLeaksPerSqKmLU, wLeaksRRLU, wLeaksPerSqKmNG, wLeaksRRNG, wLeaksPerSqKmFG, wLeaksRRFG) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  arrange(desc(wLeaksPerSqKmNG)) %>% 
+  kable(longtable = T, booktabs = T,
+        format.args = list(big.mark = ','), 
+        caption = "Population-weighted mean leak density (leaks/sqkm) of unrepaired leaks in 2019 by utility.", align = "r", digits = 2, 
+        col.names = c("Group","Per SqKm","RR","Per SqKm","RR",
+                      "Per SqKm","RR","Per SqKm","RR","Per SqKm","RR",
+                      "Per SqKm","RR")) %>% 
+  add_header_above(., c(" ", "Berkshire" = 2, "Columbia" = 2, 
+                        "Eversource" = 2, "Liberty" = 2,
+                        "NGrid" = 2, "Fitchburg" = 2)) %>% 
+  kable_styling(latex_options = c("repeat_header")) %>% 
+  add_footnote(., "RR = Relative Risk or ratio of group leak density to leak density of total population, total households, or total occupied housing units", notation = "none")
+
 
 # Facet wrap by utility for unrepaired leaks
 ppLeakDensityJoinedU %>% 
