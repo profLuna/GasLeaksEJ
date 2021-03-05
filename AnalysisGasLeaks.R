@@ -3211,7 +3211,25 @@ saveRDS(ppLeakDensityJoinedU, file = "Data/ppLeakDensityJoinedU_BG.Rds")
 # load data
 ppLeakDensityJoinedU <- readRDS("Data/ppLeakDensityJoinedU_BG.Rds")
 
-
+# create tables and figures for each metric
+# Unrepaired leaks per square kilometer
+ppLeakDensityJoinedU %>% 
+  select(Group, wLeaksPerSqKmBG, wLeaksRRBG, wLeaksPerSqKmCG, wLeaksRRCG, wLeaksPerSqKmEV, wLeaksRREV, wLeaksPerSqKmLU, wLeaksRRLU, wLeaksPerSqKmNG, wLeaksRRNG, wLeaksPerSqKmFG, wLeaksRRFG) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  arrange(desc(wLeaksPerSqKmNG)) %>% 
+  kable(longtable = T, booktabs = T,
+        format.args = list(big.mark = ','), 
+        caption = "Population-weighted mean leak density (leaks/sqkm) of unrepaired leaks in 2019 by utility.", align = "r", digits = 2, 
+        col.names = c("Group","Per SqKm","RR","Per SqKm","RR",
+                      "Per SqKm","RR","Per SqKm","RR","Per SqKm","RR",
+                      "Per SqKm","RR")) %>% 
+  add_header_above(., c(" ", "Berkshire" = 2, "Columbia" = 2, 
+                        "Eversource" = 2, "Liberty" = 2,
+                        "NGrid" = 2, "Fitchburg" = 2)) %>% 
+  kable_styling(latex_options = c("repeat_header")) %>% 
+  add_footnote(., "RR = Relative Risk or ratio of group leak density to leak density of total population, total households, or total occupied housing units", notation = "none")
 
 # Facet wrap by utility for unrepaired leaks
 ppLeakDensityJoinedU %>% 
@@ -7520,6 +7538,15 @@ unrepaired2019final %>%
   summarize(across(.cols = LeakAgeDays, summary_stats, 
                    .names = "{.fn}"))
 
+unrepaired2019final %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, 
+                          "National Grid - Colonial Gas" = "National Grid",
+                          "National Grid - Boston Gas" = "National Grid")) %>% 
+  filter(Class == "1") %>% 
+  group_by(Utility) %>% 
+  summarize(n())
+
 # stats on class 2 leaks per utility
 unrepaired2019final %>% 
   as.data.frame() %>% 
@@ -10579,6 +10606,11 @@ ggsave("Data/boxplotBGallleaks.png")
 # what pct of BGs with any reported leaks? Actually, most (87%) of BGs in gas service territories had at least 1 reported gas leak in 2019
 ma_blkgrps %>% 
   filter(AllLeaks2019 > 0) %>% 
+  nrow()/nrow(ma_blkgrps)
+
+# at least one unrepaired leak? 75%
+ma_blkgrps %>% 
+  filter(unrepaired2019total > 0) %>% 
   nrow()/nrow(ma_blkgrps)
 
 # create a qunatile plot to see distribution of counts for all leaks
