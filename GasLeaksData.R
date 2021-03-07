@@ -283,7 +283,8 @@ eversource2019repaired <- repaired2019 %>%
   mutate(LeakNo = NA,
          RptDate = parse_date_time(RptDate, orders = c("dmy","mdy")), 
          RepairDate = parse_date_time(RepairDate, orders = c("dmy","mdy")),
-         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1))) %>% 
+  filter(year(RptDate) <= 2019 & year(RepairDate) <= 2019) # remove transcription error in original data
 
 # Liberty Utilities
 liberty2019repaired <- repaired2019 %>%
