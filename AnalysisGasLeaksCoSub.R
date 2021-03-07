@@ -3276,8 +3276,7 @@ ppLeakDensityJoinedU %>%
   theme(legend.title=element_blank(), legend.position = "top") +
   facet_wrap(~ Utility, scales = "free_y") +
   labs(x = NULL, 
-       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
-                            km^2, ")", " to population mean by Municipality",sep = "")),
+       y = expression(paste("Ratio of group population-weighted mean leaks per occupied housing unit to population mean by Municipality",sep = "")),
        title = "Relative Risk of Priority Populations and Unrepaired Gas Leaks Per Occupied Housing Unit in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
 
 ggsave("Images/LeaksPPbyUtility_HU_RR_cosub.png")
