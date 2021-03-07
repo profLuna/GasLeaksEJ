@@ -138,7 +138,7 @@ natlGrid2019unrepaired <- unrepaired2019 %>%
                         "National Grid - Colonial Gas")) %>% 
   separate(Description, c("ReptAddress", "Class", "LeakNo", 
                           "RptLoc", "RptDate", "RptTown", "MapAddress"), 
-           sep = "<br>", extra = "merge")
+           sep = "<br>", extra = "merge") 
 
 # Columbia Gas
 columbia2019unrepaired <- unrepaired2019 %>%
@@ -219,7 +219,11 @@ natlGrid2019repaired <- repaired2019 %>%
                         "National Grid - Colonial Gas")) %>% 
   separate(Description, c("ReptAddress", "Class", "LeakNo", "RepairDate",
                           "RptLoc", "RptDate", "RptTown", "MapAddress"), 
-           sep = "<br>", extra = "merge")
+           sep = "<br>", extra = "merge") %>% 
+  mutate(Class = recode(Class, "2A" = "2"),
+         RptDate = parse_date_time(RptDate, orders = "mdy"), 
+         RepairDate = parse_date_time(RepairDate, orders = "mdy"),
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
 
 # Columbia Gas
 columbia2019repaired <- repaired2019 %>%
@@ -227,14 +231,20 @@ columbia2019repaired <- repaired2019 %>%
   separate(Description, c("ReptAddress", "RptDate", "Class", "LeakNo", 
                           "RepairDate", "RptLoc", "RptTown", "Status",
                           "MapAddress"), 
-           sep = "<br>", extra = "merge")
+           sep = "<br>", extra = "merge") %>% 
+  mutate(RptDate = parse_date_time(RptDate, orders = "mdy"), 
+         RepairDate = parse_date_time(RepairDate, orders = "mdy"),
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
 
 # Berkshire Gas
 berkshire2019repaired <- repaired2019 %>%
   filter(Utility == "Berkshire Gas") %>% 
   separate(Description, c("ReptAddress", "RptDate", "Class", "LeakNo", 
                           "RepairDate", "RptLoc", "RptTown", "MapAddress"), 
-           sep = "<br>", extra = "merge")
+           sep = "<br>", extra = "merge") %>% 
+  mutate(RptDate = parse_date_time(RptDate, orders = "mdy"), 
+         RepairDate = parse_date_time(RepairDate, orders = "mdy"),
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
 
 # Fitchburg Gas
 fitchburg2019repaired <- repaired2019 %>%
@@ -242,7 +252,10 @@ fitchburg2019repaired <- repaired2019 %>%
   separate(Description, c("ReptAddress", "RptDate", "LeakNo", "RepairDate",
                           "RptLoc", "RptTown", "MapAddress"), 
            sep = "<br>", extra = "merge") %>% 
-  mutate(Class = NA)
+  mutate(Class = NA,
+         RptDate = parse_date_time(RptDate, orders = "mdy"), 
+         RepairDate = parse_date_time(RepairDate, orders = "mdy"),
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
 
 # # Check Eversource Energy for parsing problems because some dates aren't being converted. 
 # temp <- st_read("KML/leaks2019/Eversource Energy - 2019 REPAIRED.kml")
@@ -267,7 +280,10 @@ eversource2019repaired <- repaired2019 %>%
                           "RptIntSt", "RptStreet", "RptStNo", "RptTown", 
                           "MapAddress"), 
            sep = "<br>") %>% 
-  mutate(LeakNo = NA)
+  mutate(LeakNo = NA,
+         RptDate = parse_date_time(RptDate, orders = c("dmy","mdy")), 
+         RepairDate = parse_date_time(RepairDate, orders = c("dmy","mdy")),
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
 
 # Liberty Utilities
 liberty2019repaired <- repaired2019 %>%
@@ -275,20 +291,19 @@ liberty2019repaired <- repaired2019 %>%
   separate(Description, c("ReptAddress", "RptDate", "Class", 
                           "RptLoc", "RptTown", "RepairDate", "MapAddress"), 
            sep = "<br>", extra = "merge") %>% 
-  mutate(LeakNo = NA, Class = str_extract(Class, "[0-9]"))
+  mutate(LeakNo = NA, Class = str_extract(Class, "[0-9]"),
+         RptDate = parse_date_time(RptDate, orders = "mdy"), 
+         RepairDate = parse_date_time(RepairDate, orders = "mdy"),
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
 
 # bring them together in a merged file with common fields. note that there are inconsistencies in date format (only for Eversource) AND some some report and repair dates are reversed (hence the abs() for getting interval)
 repaired2019final <- mget(ls(pattern = "9repaired$")) %>% 
   lapply(., function(x){
     x %>% 
-      select(Name, RptDate, Class, LeakNo, RepairDate, Utility)
+      select(Name, RptDate, Class, LeakNo, RepairDate, Utility, DaysToRepair)
   }) %>% 
   do.call(rbind, .) %>% 
-  rename(Address = Name) %>% 
-  mutate(RptDate = parse_date_time(RptDate, orders = c("dmy","mdy")), 
-         RepairDate = parse_date_time(RepairDate, orders = c("dmy","mdy")),
-         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)),
-         Class = recode(Class, "2A" = "2"))
+  rename(Address = Name)
 
 # compare by utility
 repaired2019final %>% 
