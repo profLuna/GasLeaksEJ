@@ -7039,6 +7039,12 @@ repaired2019final %>%
   drop_na() %>% 
   bind_rows(timeAll)
 
+repaired2019final %>% 
+  as.data.frame() %>% 
+  group_by(Class) %>% 
+  summarize(total = n()) %>% 
+  mutate(pct = total/sum(total)*100)
+
 ### Test for significant differences using Wilcoxon test and Dunn's pairwise comparison tests
 # create a small df
 df <- ma_blkgrps %>% 
