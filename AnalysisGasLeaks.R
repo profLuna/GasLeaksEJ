@@ -7026,7 +7026,7 @@ unrepaired2019final %>%
 # tabulate repair time for all leaks
 timeAll <- repaired2019final %>% 
   as.data.frame() %>% 
-  filter(year(RptDate) <= 2019 & year(RepairDate) <= 2019) %>%
+  # filter(year(RptDate) <= 2019 & year(RepairDate) <= 2019) %>%
   summarize(across(.cols = DaysToRepair, summary_stats, 
                    .names = "{.fn}")) %>% 
   mutate(Class = "All", .before = Min)
@@ -7036,7 +7036,7 @@ repaired2019final %>%
   as.data.frame() %>% 
   # mutate(RptDate = if_else(year(RptDate) > 2019,
   #                          `year<-`(RptDate, 2019), RptDate)) %>%
-  filter(year(RptDate) <= 2019 & year(RepairDate) <= 2019) %>%
+  # filter(year(RptDate) <= 2019 & year(RepairDate) <= 2019) %>%
   group_by(Class) %>% 
   summarize(across(.cols = DaysToRepair, summary_stats, 
                    .names = "{.fn}")) %>% 
