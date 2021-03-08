@@ -280,11 +280,14 @@ eversource2019repaired <- repaired2019 %>%
                           "RptIntSt", "RptStreet", "RptStNo", "RptTown", 
                           "MapAddress"), 
            sep = "<br>") %>% 
+  mutate(RptDate = recode(RptDate, "01-May-29" = "01-May-19")) %>% # fix improperly coded year from original data
   mutate(LeakNo = NA,
          RptDate = parse_date_time(RptDate, orders = c("dmy","mdy")), 
          RepairDate = parse_date_time(RepairDate, orders = c("dmy","mdy")),
-         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1))) %>% 
-  filter(year(RptDate) <= 2019 & year(RepairDate) <= 2019) # remove transcription error in original data
+         DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)))
+  # filter(year(RptDate) <= 2019 & year(RepairDate) <= 2019) # remove transcription error in original data
+
+
 
 # Liberty Utilities
 liberty2019repaired <- repaired2019 %>%
@@ -308,9 +311,8 @@ repaired2019final <- mget(ls(pattern = "9repaired$")) %>%
 
 # compare by utility
 repaired2019final %>% 
-  group_by(Utility) %>% 
-  summarize(n(), min(DaysToRepair), mean(DaysToRepair), median(DaysToRepair), 
-            max(DaysToRepair))
+  group_by(Class, Utility) %>% 
+  summarize(n(), min(DaysToRepair), mean(DaysToRepair), max(DaysToRepair))
 
 # write it out to shapefile
 repaired2019final %>% 
