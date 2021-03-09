@@ -3709,6 +3709,24 @@ ppLeakDensityJoinedU %>%
 
 ggsave("Images/LeaksPPbyUtilityPctFix_blkgrp.png")
 
+# table of figures by utility for average age of unrepaired leaks
+ppLeakDensityJoinedU %>% 
+  select(Group, wLeakAgeDaysAvgBG, wLeakAgeDaysAvgRRBG, wLeakAgeDaysAvgCG, wLeakAgeDaysAvgRRCG, wLeakAgeDaysAvgEV, wLeakAgeDaysAvgRREV, wLeakAgeDaysAvgLU, wLeakAgeDaysAvgRRLU, wLeakAgeDaysAvgNG, wLeakAgeDaysAvgRRNG, wLeakAgeDaysAvgFG, wLeakAgeDaysAvgRRFG) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  arrange(desc(wLeakAgeDaysAvgNG)) %>% 
+  kable(longtable = T, booktabs = T,
+        format.args = list(big.mark = ','), 
+        caption = "Population-weighted mean age (days) of unrepaired leaks in 2019 by utility.", align = "r", digits = 2, 
+        col.names = c("Group","Age","RR","Age","RR",
+                      "Age","RR","Age","RR","Age","RR",
+                      "Age","RR")) %>% 
+  add_header_above(., c(" ", "Berkshire" = 2, "Columbia" = 2, 
+                        "Eversource" = 2, "Liberty" = 2,
+                        "NGrid" = 2, "Fitchburg" = 2)) %>% 
+  kable_styling(latex_options = c("repeat_header")) %>% 
+  add_footnote(., "RR = Relative Risk or ratio of group leak age to leak age of total population, total households, or total occupied housing units", notation = "none")
 
 # Facet wrap by utility for average age of unrepaired leaks
 ppLeakDensityJoinedU %>% 
@@ -7017,11 +7035,65 @@ ageAll <- unrepaired2019final %>%
 # tabulate stats age of unrepaired leaks
 unrepaired2019final %>% 
   as.data.frame() %>% 
-  group_by(Class) %>% 
+  group_by(Utility,Class) %>% 
   summarize(across(.cols = LeakAgeDays, summary_stats, 
                    .names = "{.fn}")) %>% 
   drop_na() %>% 
   bind_rows(ageAll)
+
+unrepaired2019final %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
+                          "National Grid - Colonial Gas" = "National Grid")) %>% 
+  group_by(Class,Utility) %>% 
+  summarize(across(.cols = LeakAgeDays, summary_stats, 
+                   .names = "{.fn}")) %>% 
+  drop_na() %>% 
+  bind_rows(ageAll)
+
+# ordered boxplot of age of unrepaired leak ages by utility
+unrepaired2019final %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
+                          "National Grid - Colonial Gas" = "National Grid")) %>% 
+  ggplot(aes(x = reorder(Utility, LeakAgeDays, fun = median), 
+             y = LeakAgeDays, fill = Utility)) +
+  # geom_violin(width=1.4) +
+  # geom_boxplot(width=0.1, color="grey", alpha=0.2) + 
+  geom_boxplot() + 
+  coord_flip() +
+  theme_minimal() +
+  theme(
+    legend.position="none") +
+  ggtitle("Age (days) of unrepaired leaks by utility") +
+  xlab("") + ylab("Days since leak reported to end of 2019")
+  # scale_y_continuous(labels = function(x) format(x, big.mark = ",")) +
+  # facet_wrap("Class", scales = "free")
+
+ggsave(filename = "Images/boxplotLeaksByUtilityAge.png")
+
+ng_service_areasU <- ng_service_areas %>% 
+  filter(!GAS %in% c("Holyoke Gas and Electric Department",
+                     "Middleboro Municipal Gas and Electric Department",
+                     "No gas service",
+                     "Wakefield Municipal Gas and Light Department",
+                     "Westfield Gas and Electric Department")) %>% 
+  spdep::poly2nb(., row.names = "GAS", queen = TRUE) %>% 
+  group_by(GAS) %>% 
+  summarize() %>% 
+  st_make_valid() %>% 
+  mutate(ID = row_number())
+
+
+# create a centroid layer for labeling
+ng_service_areasC <- st_centroid(ng_service_areasU, of_largest_polygon = TRUE)
+
+tm_shape(unrepaired2019final) + 
+  tm_dots(col = "LeakAgeDays", palette = "YlOrRd", alpha = 0.4) +
+  # tm_shape(ng_service_areasU) + tm_fill(col = "GAS")
+  tm_shape(ng_service_areasU) + tm_borders() +
+  tm_shape(ng_service_areasC) + tm_text("ID")
+
 
 # tabulate repair time for all leaks
 timeAll <- repaired2019final %>% 
