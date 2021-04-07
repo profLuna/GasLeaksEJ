@@ -46,7 +46,7 @@ This is an analysis of transportation-related emissions and related externalitie
 
 
 # Results
-```{r data}
+```{r data, include=FALSE}
 # load packages and data
 library(tidyverse)
 library(sf)
@@ -289,7 +289,7 @@ tmap_save(m_gridTotal, filename = "Images/m_gridTotalUtil.png",
 
 knitr::include_graphics("Images/m_gridTotalUtil.png")
 ```
-```{r mapAllLeaksBG, fig.align='center'}
+```{r mapAllLeaksBG, fig.align='center', cache=TRUE}
 # create map of leak densities by BG
 blkgrpsLeaksAll <- ma_blkgrps %>% 
   filter(AllLeaks2019_sqkm > 0)
@@ -326,7 +326,7 @@ tmap_save(m1, filename = "Images/m_blkgrpTotal.png",
 
 knitr::include_graphics("Images/m_blkgrpTotal.png")
 ```
-```{r mapAllLeaksTR, fig.align='center'}
+```{r mapAllLeaksTR, fig.align='center', cache=TRUE}
 tractsLeaksAll <- ma_tracts %>% 
   filter(AllLeaks2019_sqkm > 0)
 
@@ -362,7 +362,7 @@ tmap_save(m2, filename = "Images/m_tractTotal.png",
 
 knitr::include_graphics("Images/m_tractTotal.png")
 ```
-```{r mapAllLeaksCO, fig.align='center'}
+```{r mapAllLeaksCO, fig.align='center', cache=TRUE}
 cosubLeaksAll <- ma_cosub %>% 
   filter(AllLeaks2019_sqkm > 0)
 
@@ -864,7 +864,7 @@ ggsave("Images/DotGraphallscalesUtilityRE.png")
 
 ### Statewide exposure normalized by occupied housing units
 
-```{r mapOHUbg, fig.align='center'}
+```{r mapOHUbg, fig.align='center', cache=TRUE}
 # create map of leaks per OHU by BG
 blkgrpsLeaksOHU <- ma_blkgrps %>% 
   filter(ALLleaks_hu > 0)
@@ -902,7 +902,7 @@ tmap_save(m1b, filename = "Images/m_blkgrpOHU.png",
 knitr::include_graphics("Images/m_blkgrpOHU.png")
 ```
 
-```{r mapOHUtr, fig.align='center'}
+```{r mapOHUtr, fig.align='center', cache=TRUE}
 # create map of leaks per OHU by Tract
 tractsLeaksOHU <- ma_tracts %>% 
   filter(ALLleaks_hu > 0)
@@ -940,7 +940,7 @@ tmap_save(m2b, filename = "Images/m_tractOHU.png",
 knitr::include_graphics("Images/m_tractOHU.png")
 ```
 
-```{r mapOHUco, fig.align='center'}
+```{r mapOHUco, fig.align='center', cache=TRUE}
 # create map of leaks per OHU by Tract
 cosubsLeaksOHU <- ma_cosub %>% 
   filter(ALLleaks_hu > 0)
@@ -1321,7 +1321,7 @@ repaired2019final %>%
 ggsave("Images/histRepairTime.png")
 ```
 
-```{r mapTimeBG, fig.align='center'}
+```{r mapTimeBG, fig.align='center', cache=TRUE}
 # create a map of average repair times by block group
 blkgrpsLeaksTime <- ma_blkgrps %>% 
   filter(repaired2019total > 0)
@@ -1360,7 +1360,7 @@ tmap_save(m4, filename = "Images/m_blkgrpTime.png",
 knitr::include_graphics("Images/m_blkgrpTime.png")
 ```
 
-```{r mapTimeTR, fig.align='center'}
+```{r mapTimeTR, fig.align='center', cache=TRUE}
 # create a map of average repair times by block group
 tractsLeaksTime <- ma_tracts %>% 
   filter(repaired2019total > 0)
@@ -1399,7 +1399,7 @@ tmap_save(m4, filename = "Images/m_tractTime.png",
 knitr::include_graphics("Images/m_tractTime.png")
 ```
 
-```{r mapTimeCO, fig.align='center'}
+```{r mapTimeCO, fig.align='center', cache=TRUE}
 # create a map of average repair times by block group
 cosubLeaksTime <- ma_cosub %>% 
   filter(repaired2019total > 0)
@@ -1798,7 +1798,7 @@ unrepaired2019final %>%
 ggsave("Images/histAge.png")
 ```
 
-```{r magBGage, fig.align='center'}
+```{r magBGage, fig.align='center', cache=TRUE}
 # create a map of average leak age by block group
 blkgrpsLeaksAge <- ma_blkgrps %>% 
   filter(unrepaired2019total > 0)
@@ -1837,7 +1837,7 @@ tmap_save(m5, filename = "Images/m_blkgrpAge.png",
 knitr::include_graphics("Images/m_blkgrpAge.png")
 ```
 
-```{r magTRage, fig.align='center'}
+```{r magTRage, fig.align='center', cache=TRUE}
 # create a map of average leak age by block group
 tractsLeaksAge <- ma_tracts %>% 
   filter(unrepaired2019total > 0)
@@ -1876,7 +1876,7 @@ tmap_save(m5, filename = "Images/m_tractAge.png",
 knitr::include_graphics("Images/m_tractAge.png")
 ```
 
-```{r magCOage, fig.align='center'}
+```{r magCOage, fig.align='center', cache=TRUE}
 # create a map of average leak age by municipality
 cosubLeaksAge <- ma_cosub %>% 
   filter(unrepaired2019total > 0)
