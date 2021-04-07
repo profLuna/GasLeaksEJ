@@ -4,6 +4,8 @@ author: "Marcos Luna and Dominic Nicholas"
 date: "`r Sys.Date()`"
 output: 
   bookdown::pdf_document2:
+    bibliography: [EJbib.bib, GASbib.bib]
+    keep_tex: yes
     toc: true
     number_sections: true
     fig_caption: yes        
@@ -2187,10 +2189,15 @@ ggsave("Images/DotAgeUtilityRE.png")
 
 # Discussion
 
+
 # Conclusion and Policy Implications
 
 
-# Supplementary {-}
+# References
+
+<div id="refs"></div>
+
+# (APPENDIX) Appendix {-} 
 
 ```{r tabUnrepairedBG, fig.align='center'}
 # Unrepaired leaks per square kilometer
@@ -2211,7 +2218,7 @@ ppLeakDensity_df_bg %>%
   add_footnote(., "RE = Relative Exposure or ratio of group leak density to leak density of total population, total households, or total occupied housing units", notation = "none")
 ```
 
-```{r tabDunnBG_HU}
+```{r tabDunnBGHU}
 # Dunn's Test tables
 read_csv("Tables/BG/pwdt_leaks_hu.csv") %>% 
   select(-.y.) %>% 
