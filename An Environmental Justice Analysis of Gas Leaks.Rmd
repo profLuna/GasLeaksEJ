@@ -77,47 +77,8 @@ ppLeakDensity_df_co <- readRDS("Data/ppLeakDensity_df_cosubs.Rds")
 ppLeakDensityJoinedU_bg <- readRDS("Data/ppLeakDensityJoinedU_BG.Rds")
 ppLeakDensityJoinedU_tr <- readRDS("Data/ppLeakDensityJoinedU_Tract.Rds")
 ppLeakDensityJoinedU_co <- readRDS("Data/ppLeakDensityJoinedU_Cosub.Rds")
-```
-In calendar year 2019, there were 27,124 natural gas leaks in the distribution system reported by seven of the eight investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities. Repairs were reported for 11,399 (42%) of these, leaving 15,725 (58%) unrepaired leaks across the state as of December 31, 2019. 
 
-```{r tabLeaks, fig.align='center'}
-# table of leak stats by class and repair status
-unrepaired_Sumdf <- unrepaired2019final %>% as.data.frame() %>% 
-  group_by(Class) %>% summarize(Unrepaired = n())
-
-repaired_Sumdf <- repaired2019final %>% as.data.frame() %>% 
-  group_by(Class) %>% summarize(Repaired = n())
-
-total_Sumdf <- left_join(unrepaired_Sumdf, repaired_Sumdf, by = "Class") %>% 
-  drop_na() %>%
-  mutate(Total = Unrepaired + Repaired) %>% 
-  bind_rows(summarize(.,
-                      across(where(is.numeric), sum),
-                      across(where(is.character), ~ "Total"))) %>% 
-  mutate(PctUnrepaired = Unrepaired/Total*100,
-         PctRepaired = Repaired/Total*100,
-         PctTotal = Total/Total[Class == "Total"]*100) %>%
-  select(Class, Unrepaired, PctUnrepaired, Repaired, PctRepaired, 
-         Total, PctTotal)
-
-total_Sumdf %>% 
-  mutate(PctUnrepaired = paste0(round(PctUnrepaired,1),"%"),
-         PctRepaired = paste0(round(PctRepaired,1),"%"),
-         PctTotal = paste0(round(PctTotal,1),"%")) %>% 
-  kable(., longtable = T, booktabs = T,
-        format.args = list(big.mark = ','), 
-        caption = "Gas leaks by class and repair status, 2019", align = "r", 
-        # digits = c(0,0,1,0,1,0,1), 
-        col.names = c("Class","Count","Percent","Count","Percent",
-                      "Total","Pct Total")) %>% 
-  add_header_above(., c(" ", "Unrepaired Leaks" = 2, "Repaired Leaks" = 2, 
-                        " " = 2)) %>% 
-  row_spec(4, bold = T) %>% 
-  kable_styling(latex_options = c("repeat_header"))
-```
-
-```{r mapAllLeaks, fig.align='center'}
-# Map of leak counts by hexagons and utility territories
+# Set up recurring map elements
 # Load natural gas utility service areas dbf from MassGIS and join to MassGIS towns layer
 ng_dbf <- read.dbf("Data/pubutil/TOWNS_POLY_UTILITIES.dbf")
 
@@ -187,35 +148,6 @@ ng_service_labels3 <- ng_service_areas2 %>%
   filter(TOWN == "BOSTON") %>% 
   st_centroid(., of_largest_polygon = TRUE)
 
-
-# create a hexagonal grid and create index column
-gridCnt <- st_make_grid(x = ma_blkgrps, cellsize = 1000, square = FALSE) %>% 
-  st_as_sf() %>% 
-  mutate(index = row_number())
-
-# spatially join to grid ids to leaks, sum aggregate numbers of leaks per grid index, and then join sums back to hexagons for mapping and analysis
-gridCnt <- unrepaired2019final %>% 
-  st_join(., gridCnt) %>% 
-  st_drop_geometry() %>% 
-  group_by(index) %>% 
-  summarize(unrepaired = n()) %>% 
-  left_join(gridCnt, ., by = "index") %>% 
-  replace_na(list(unrepaired = 0))
-
-gridCnt <- repaired2019final %>% 
-  st_join(., gridCnt) %>% 
-  st_drop_geometry() %>% 
-  group_by(index) %>% 
-  summarize(repaired = n()) %>% 
-  left_join(gridCnt, ., by = "index") %>% 
-  replace_na(list(repaired = 0))
-
-# create column with total leak points and clip to MA
-gridCnt <- gridCnt %>% 
-  mutate(total = unrepaired + repaired) %>% 
-  crop_shape(., ma_blkgrps, polygon = TRUE) %>% 
-  st_make_valid()
-
 # separate MA for cropping
 ma_state_sf <- states(cb = TRUE) %>%
   filter(STUSPS == "MA")
@@ -254,6 +186,75 @@ newton <- county_subdivisions(state = "MA", cb = TRUE) %>%
   filter(NAME %in% c("Fitchburg","Newton","Edgartown","New Bedford")) %>% 
   st_transform(., crs = 26986) %>% 
   st_centroid(of_largest_polygon = TRUE)
+```
+In calendar year 2019, there were 27,124 natural gas leaks in the distribution system reported by seven of the eight investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities. Repairs were reported for 11,399 (42%) of these, leaving 15,725 (58%) unrepaired leaks across the state as of December 31, 2019. 
+
+```{r tabLeaks, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+# table of leak stats by class and repair status
+unrepaired_Sumdf <- unrepaired2019final %>% as.data.frame() %>% 
+  group_by(Class) %>% summarize(Unrepaired = n())
+
+repaired_Sumdf <- repaired2019final %>% as.data.frame() %>% 
+  group_by(Class) %>% summarize(Repaired = n())
+
+total_Sumdf <- left_join(unrepaired_Sumdf, repaired_Sumdf, by = "Class") %>% 
+  drop_na() %>%
+  mutate(Total = Unrepaired + Repaired) %>% 
+  bind_rows(summarize(.,
+                      across(where(is.numeric), sum),
+                      across(where(is.character), ~ "Total"))) %>% 
+  mutate(PctUnrepaired = Unrepaired/Total*100,
+         PctRepaired = Repaired/Total*100,
+         PctTotal = Total/Total[Class == "Total"]*100) %>%
+  select(Class, Unrepaired, PctUnrepaired, Repaired, PctRepaired, 
+         Total, PctTotal)
+
+total_Sumdf %>% 
+  mutate(PctUnrepaired = paste0(round(PctUnrepaired,1),"%"),
+         PctRepaired = paste0(round(PctRepaired,1),"%"),
+         PctTotal = paste0(round(PctTotal,1),"%")) %>% 
+  kable(., longtable = T, booktabs = T,
+        format.args = list(big.mark = ','), 
+        caption = "Gas leaks by class and repair status, 2019", align = "r", 
+        # digits = c(0,0,1,0,1,0,1), 
+        col.names = c("Class","Count","Percent","Count","Percent",
+                      "Total","Pct Total")) %>% 
+  add_header_above(., c(" ", "Unrepaired Leaks" = 2, "Repaired Leaks" = 2, 
+                        " " = 2)) %>% 
+  row_spec(4, bold = T) %>% 
+  kable_styling(latex_options = c("repeat_header"))
+```
+
+```{r mapAllLeaks, fig.align='center', fig.cap= "Massachusetts Gas Leaks and Utility Territories, 2019, aggregated by 1km hexagon tessellations"}
+# Map of leak counts by hexagons and utility territories
+
+# create a hexagonal grid and create index column
+gridCnt <- st_make_grid(x = ma_blkgrps, cellsize = 1000, square = FALSE) %>% 
+  st_as_sf() %>% 
+  mutate(index = row_number())
+
+# spatially join to grid ids to leaks, sum aggregate numbers of leaks per grid index, and then join sums back to hexagons for mapping and analysis
+gridCnt <- unrepaired2019final %>% 
+  st_join(., gridCnt) %>% 
+  st_drop_geometry() %>% 
+  group_by(index) %>% 
+  summarize(unrepaired = n()) %>% 
+  left_join(gridCnt, ., by = "index") %>% 
+  replace_na(list(unrepaired = 0))
+
+gridCnt <- repaired2019final %>% 
+  st_join(., gridCnt) %>% 
+  st_drop_geometry() %>% 
+  group_by(index) %>% 
+  summarize(repaired = n()) %>% 
+  left_join(gridCnt, ., by = "index") %>% 
+  replace_na(list(repaired = 0))
+
+# create column with total leak points and clip to MA
+gridCnt <- gridCnt %>% 
+  mutate(total = unrepaired + repaired) %>% 
+  crop_shape(., ma_blkgrps, polygon = TRUE) %>% 
+  st_make_valid()
 
 gridCntT <- gridCnt %>% 
   filter(total > 0)
@@ -282,8 +283,9 @@ m_gridTotal <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) +
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
   tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
   tm_layout(legend.position = c("left","bottom"),
-            title = "Massachusetts Gas Leaks and Utility Territories, 2019",
-            inner.margins = c(0.02,0.02,0.09,0.02)) +
+            # title = "Massachusetts Gas Leaks and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)
+            ) +
   tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
 
 tmap_save(m_gridTotal, filename = "Images/m_gridTotalUtil.png", 
@@ -564,7 +566,6 @@ totalUSum_df <- left_join(unrepairedUSum_df, repairedUSum_df, by = "Utility") %>
          PctRepaired = Repaired/Total*100,
          PctTotal = Total/Total[Utility == "Total"]*100) %>% 
   select(Utility, Unrepaired, PctUnrepaired, Repaired, PctRepaired, Total, PctTotal)
-totalUSum_df
 
 totalUSum_df %>% 
   filter(Utility != "Total") %>% 
