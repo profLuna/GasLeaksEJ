@@ -4,13 +4,15 @@ author: "Marcos Luna and Dominic Nicholas"
 date: "`r Sys.Date()`"
 output: 
   bookdown::pdf_document2:
-    bibliography: [EJbib.bib, GASbib.bib]
     keep_tex: yes
     toc: true
     number_sections: true
     fig_caption: yes        
     includes:  
       in_header: my_header.tex
+link-citations: yes
+bibliography: GasLeaksEJBIB.bib
+csl: chicago-author-date.csl
 ---
 
 ```{r setup, include=FALSE}
@@ -22,7 +24,7 @@ A growing body of research shows that natural gas leaks at the distribution leve
 \pagebreak
 # Introduction
 
-This is an analysis of transportation-related emissions and related externalities in Connecticut.
+This is an analysis of transportation-related emissions and related externalities in Connecticut. This is a test of my bib file (@AGA). I'd like to see what gets included (@ClimateRoad).
 
 # Background
 ## Gas service provision in Massachusetts
@@ -62,6 +64,7 @@ library(kableExtra)
 # library(sp)
 # library(spdep)
 library(tigris)
+# library(bibtex)
 
 # Load demographic and gas leaks data
 load("Data/Demographics.rds")
@@ -225,7 +228,7 @@ total_Sumdf %>%
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-```{r mapAllLeaks, fig.align='center', fig.cap= "Massachusetts Gas Leaks and Utility Territories, 2019, aggregated by 1km hexagon tessellations"}
+```{r mapAllLeaks, fig.align='center', fig.cap= "Massachusetts Gas Leaks and Utility Territories, 2019, aggregated by 1km hexagon tessellations", cache=TRUE}
 # Map of leak counts by hexagons and utility territories
 
 # create a hexagonal grid and create index column
