@@ -24,7 +24,7 @@ A growing body of research shows that natural gas leaks at the distribution leve
 \pagebreak
 # Introduction
 
-This is an analysis of transportation-related emissions and related externalities in Connecticut. This is a test of my bib file (@AGA). I'd like to see what gets included (@ClimateRoad).
+This is an analysis of transportation-related emissions and related externalities in Connecticut. 
 
 # Background
 ## Gas service provision in Massachusetts
@@ -2197,11 +2197,14 @@ ggsave("Images/DotAgeUtilityRE.png")
 # Conclusion and Policy Implications
 
 
-# References
+# References {-}
 
 <div id="refs"></div>
 
+
 # (APPENDIX) Appendix {-} 
+
+# Tables
 
 ```{r tabUnrepairedBG, fig.align='center'}
 # Unrepaired leaks per square kilometer
@@ -2222,6 +2225,8 @@ ppLeakDensity_df_bg %>%
   add_footnote(., "RE = Relative Exposure or ratio of group leak density to leak density of total population, total households, or total occupied housing units", notation = "none")
 ```
 
+
+# Dunn's Test Results
 ```{r tabDunnBGHU}
 # Dunn's Test tables
 read_csv("Tables/BG/pwdt_leaks_hu.csv") %>% 
