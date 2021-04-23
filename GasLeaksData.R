@@ -123,10 +123,10 @@ unrepaired2020 <- unrepaired2020 %>%
 
 # convert to sf
 repaired2020 <- repaired2020 %>% 
-  st_as_sf(., coords = c("lon","lat"))
+  st_as_sf(., coords = c("lon","lat"), crs = 4326)
 
 unrepaired2020 <- unrepaired2020 %>% 
-  st_as_sf(., coords = c("lon","lat"))
+  st_as_sf(., coords = c("lon","lat"), crs = 4326)
 
 # save data
 # write it out to shapefile
@@ -260,10 +260,10 @@ unrepaired2019 <- unrepaired2019 %>%
 
 # convert to sf
 repaired2019 <- repaired2019 %>% 
-  st_as_sf(., coords = c("lon","lat"))
+  st_as_sf(., coords = c("lon","lat"), crs = 4326)
 
 unrepaired2019 <- unrepaired2019 %>% 
-  st_as_sf(., coords = c("lon","lat"))
+  st_as_sf(., coords = c("lon","lat"), crs = 4326)
 
 # save data
 # write it out to shapefile
