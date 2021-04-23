@@ -62,7 +62,7 @@ repaired2020 <- excel_sheets("Data/DATA - 2021 - cleaned - 4.16.2021.xlsx") %>%
                 Class = as.character(.[[3]]),
                 RepairDate = .[[4]],
                 Utility = as.character(Utility),
-                DaystoRepair = abs(interval(RptDate, RepairDate)/days(1)),
+                DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)),
                 lon = as.numeric(lon),
                 lat = as.numeric(lat))
   }) %>% 
@@ -197,7 +197,7 @@ repaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>%
                 Class = .[[3]],
                 RepairDate = .[[4]],
                 Utility = as.character(Utility),
-                DaystoRepair = abs(interval(RptDate, RepairDate)/days(1)),
+                DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)),
                 lon = as.numeric(lon),
                 lat = as.numeric(lat))
   }) %>% 
