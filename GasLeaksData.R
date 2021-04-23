@@ -1,12 +1,289 @@
-# Import geocoded gas leaks data from HEET - kmls downloaded Nov 14, 2020
+# Processing natural gas leak data supplied by Dominic Nicholas at HEET
 
 library(tidyverse)
 library(sf)
 library(tmap)
 library(tmaptools)
-library(tigris)
+# library(tigris)
 library(lubridate)
+library(readxl)
 
+# Process 2020 gas leak data
+# Look at available sheets
+excel_sheets("Data/DATA - 2021 - cleaned - 4.16.2021.xlsx")
+
+# NOTE PROBLEM WITH FITCBURG AND EGMA-REPAIRED SHEETS. `DATE REPORTED` AND `DATE REPAIRED` COLUMNS WOULD NOT IMPORT CORRECTLY INTO R BECAUSE SOME DATES WERE NOT FORMATTED AS DATES AND TWO ENTRIES FOR FITCHBURG WERE NOT DATES - HAD TO DELETE.
+
+# Desired variable names
+# [1] "Address"      "RptDate"      "Class"        "LeakNo"       "RepairDate"  
+# [6] "Utility"      "DaysToRepair"
+
+# look at names of fields to determine what needs to be harmonized
+lapply(repaired2020, names)
+# Address = formatted_address
+# RptDateDate = Reported/Classification Date/Classification Date/DATE REPORTED/Date Discovered/Reported Date/Reported Date
+# Class = Leak Class/Grade/Grade [1, 2, 3]/LEAK GRADE/Grade/Ending Leak Grade/Ending Leak Grade
+# LeakNo = Leak Number/Leak ID/Leak ID (if applicable)/Leak #/
+# RepairDate = Repair/Repair Dates (during 2019)/Repair Dates (during quarter)/DATE REPAIRED/Resolved Date/Repaired Date
+# Utility
+# DaysToRepair
+# lon = lon
+# lat = lat
+
+# create list of various versions of variable names
+rptdateV <- c("Reported","Classification Date","DATE REPORTED", "Date Reported",
+              "Date Discovered","Reported Date")
+
+classV <- c("Leak Class", "Grade", "Grade [1, 2, 3]", "LEAK GRADE", "Ending Leak Grade", "Leak Grade")
+
+# leaknoV <- c("Leak Number", "Leak ID", "Leak ID (if applicable)", "Leak #")
+
+repairV <- c("Repair", "Repair Dates (during 2019)", "Repair Dates (during quarter)", "DATE REPAIRED", "Resolved Date", "Repaired Date", "Date Repaired", "Repair Date")
+
+# Extract repaired sheets and harmonize variables
+repaired2020 <- excel_sheets("Data/DATA - 2021 - cleaned - 4.16.2021.xlsx") %>% 
+  .[str_detect(., "- re")|str_detect(., "- Colonial")] %>% 
+  lapply(., function(x) {
+    ret <- read_excel(path = "Data/DATA - 2021 - cleaned - 4.16.2021FIXED.xlsx", 
+                      sheet = x)
+    ret$Utility = str_extract_all(x, "^.*?(?= -)")
+    ret}) %>% 
+  lapply(., function(x){
+    select(x, formatted_address,
+           any_of(rptdateV), 
+           any_of(classV),
+           # any_of(leaknoV),
+           any_of(repairV),
+           Utility,
+           lon,
+           lat) %>%   
+      transmute(Address = formatted_address,
+                RptDate = .[[2]],
+                Class = as.character(.[[3]]),
+                RepairDate = .[[4]],
+                Utility = as.character(Utility),
+                DaystoRepair = abs(interval(RptDate, RepairDate)/days(1)),
+                lon = as.numeric(lon),
+                lat = as.numeric(lat))
+  }) %>% 
+  do.call(rbind, .)
+
+# Standardize leak grades; note weird hyphen that will not be recognized by mutate or recode. See https://stackoverflow.com/questions/44353306/r-regex-not-matching-all-hyphens
+repaired2020 <- repaired2020 %>% 
+  mutate(Class = gsub("\\p{Pd}","", Class, perl = T), #get rid of weird hyphen
+         Class = recode(Class, "Grade 1" = "1",
+                        "Grade 2" = "2",
+                        "Grade 3" = "3",
+                        "21" = "2"))
+
+# Process unrepaired leaks
+# desired variable names
+# [1] "Address"     "RptDate"     "Class"       "LeakNo"      "Utility" 
+# [7] "EndDate"     "LeakAgeDays"
+
+# look at names of fields to determine what needs to be harmonized
+lapply(unrepaired2019, names)
+# Address = formatted_address
+# RptDateDate = Reported/Classification Date/DATE REPORTED/Date Discovered/Reported Date/Date Reported
+# Class = Leak Class/Grade/Grade [1, 2, 3]/LEAK GRADE/Ending Leak Grade
+# Utility
+# lon = lon
+# lat = lat
+
+unrepaired2020 <- excel_sheets("Data/DATA - 2021 - cleaned - 4.16.2021FIXED.xlsx") %>% 
+  .[str_detect(., "- un")|str_detect(., "Sheet16")] %>% 
+  lapply(., function(x) {
+    ret <- read_excel(path = "Data/DATA - 2021 - cleaned - 4.16.2021FIXED.xlsx", sheet = x)
+    ret$Utility = str_extract_all(x, "^.*?(?= -)")
+    ret}) %>% 
+  lapply(., function(x){
+    select(x, formatted_address,
+           any_of(rptdateV), 
+           any_of(classV),
+           Utility,
+           lon,
+           lat) %>% 
+      transmute(Address = formatted_address,
+                RptDate = .[[2]],
+                Class = .[[3]],
+                Utility = as.character(Utility),
+                EndDate = as.Date("2020-12-31"),
+                LeakAgeDays = abs(interval(EndDate,RptDate)/days(1)),
+                lon = as.numeric(lon),
+                lat = as.numeric(lat))
+  }) %>% 
+  do.call(rbind, .)
+
+# Standardize leak grades and assign utility name
+unrepaired2020 <- unrepaired2020 %>% 
+  mutate(Class = recode(Class, "Grade 1" = "1",
+                        "Grade 2" = "2",
+                        "Grade 3" = "3"),
+         Utility = recode(Utility, "character(0)" = "National Grid"))
+
+# convert to sf
+repaired2020 <- repaired2020 %>% 
+  st_as_sf(., coords = c("lon","lat"))
+
+unrepaired2020 <- unrepaired2020 %>% 
+  st_as_sf(., coords = c("lon","lat"))
+
+# save data
+# write it out to shapefile
+repaired2020 %>% 
+  st_write(., delete_layer = TRUE, "Data/HEETrepaired2020.shp")
+
+unrepaired2020 %>% 
+  st_write(., delete_layer = TRUE, "Data/HEETunrepaired2020.shp")
+
+# save everything
+save(unrepaired2020, repaired2020, file = "Data/HEET2020Leaks.rds")
+
+
+
+
+# Process 2019 gas leak data
+# view sheets in workbook to identify sheet names
+excel_sheets("Data/DATA - cleaned.xlsx")
+
+# NOTE PROBLEM WITH EVERSOURCE-REPAIRED SHEET. `DATE REPORTED` COLUMN WOULD NOT IMPORT CORRECTLY INTO R BECAUSE 48 DATES WERE FORMATTED ODDLY IN EXCEL. TO FIX, IN EXCEL, CREATE NEW COLUMN, USE DATEVALUE FORMULA TO EXTRACT DATE VALUES ONLY FOR MESSED UP DATES, SORT TO IDENTIFY THEM, SET FORMAT OF DATE VALUES TO SAME AS ORIGINAL CUSTOM FORMAT, PASTE VALUES BACK INTO ORIGINAL COLUMN.
+# NOTE THAT REPAIRED LEAKS FOR COLUMBIA INCLUDE THOSE THAT WERE 'REPAIRED BY REPLACEMENT' WHICH IS NOT THE SAME AS THE OTHER UTILITIES. THOSE REPAIRED BY REPLACEMENT HAVE BEEN DELETED IN THE EXCEL SHEET.
+
+# Desired variable names
+# [1] "Address"      "RptDate"      "Class"        "LeakNo"       "RepairDate"  
+# [6] "Utility"      "DaysToRepair"
+
+# look at names of fields to determine what needs to be harmonized
+lapply(RepairedList, names)
+# Address = formatted_address
+# RptDateDate = Reported/Classification Date/Classification Date/DATE REPORTED/Date Discovered/Reported Date/Reported Date
+# Class = Leak Class/Grade/Grade [1, 2, 3]/LEAK GRADE/Grade/Ending Leak Grade/Ending Leak Grade
+# LeakNo = Leak Number/Leak ID/Leak ID (if applicable)/Leak #/
+# RepairDate = Repair/Repair Dates (during 2019)/Repair Dates (during quarter)/DATE REPAIRED/Resolved Date/Repaired Date
+# Utility
+# DaysToRepair
+# lon = lon
+# lat = lat
+
+# create list of various versions of variable names
+rptdateV <- c("Reported","Classification Date","DATE REPORTED", "Date Reported",
+              "Date Discovered","Reported Date")
+
+classV <- c("Leak Class", "Grade", "Grade [1, 2, 3]", "LEAK GRADE", "Ending Leak Grade", "Leak Grade")
+
+# leaknoV <- c("Leak Number", "Leak ID", "Leak ID (if applicable)", "Leak #")
+
+repairV <- c("Repair", "Repair Dates (during 2019)", "Repair Dates (during quarter)", "DATE REPAIRED", "Resolved Date", "Repaired Date", "Date Repaired", "Repair Date")
+
+
+# Extract repaired sheets and harmonize variables
+repaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>% 
+  .[str_detect(., "- re")|str_detect(., "- Colonial")] %>% 
+  lapply(., function(x) {
+    ret <- read_excel(path = "Data/DATA - cleanedFIXED.xlsx", sheet = x)
+    ret$Utility = str_extract_all(x, "^.*?(?= -)")
+    ret}) %>% 
+  lapply(., function(x){
+    select(x, formatted_address,
+           any_of(rptdateV), 
+           any_of(classV),
+           # any_of(leaknoV),
+           any_of(repairV),
+           Utility,
+           lon,
+           lat) %>% 
+      transmute(Address = formatted_address,
+                RptDate = .[[2]],
+                Class = .[[3]],
+                RepairDate = .[[4]],
+                Utility = as.character(Utility),
+                DaystoRepair = abs(interval(RptDate, RepairDate)/days(1)),
+                lon = as.numeric(lon),
+                lat = as.numeric(lat))
+  }) %>% 
+  do.call(rbind, .)
+
+# Standardize leak grades and fix wayward report date year
+repaired2019 <- repaired2019 %>% 
+  mutate(Class = recode(Class, "Grade 1" = "1",
+                        "Grade 2" = "2",
+                        "Grade 3" = "3",
+                        "2A" = "2"),
+         RptDate = if_else(year(RptDate) > 2019, 
+                           `year<-`(RptDate, 2019), RptDate))
+
+# Process unrepaired leaks
+# desired variable names
+# [1] "Address"     "RptDate"     "Class"       "LeakNo"      "Utility" 
+# [7] "EndDate"     "LeakAgeDays"
+
+# look at names of fields to determine what needs to be harmonized
+lapply(unrepaired2019, names)
+# Address = formatted_address
+# RptDateDate = Reported/Classification Date/DATE REPORTED/Date Discovered/Reported Date/Date Reported
+# Class = Leak Class/Grade/Grade [1, 2, 3]/LEAK GRADE/Ending Leak Grade
+# Utility
+# lon = lon
+# lat = lat
+
+unrepaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>% 
+  .[str_detect(., "- un")|str_detect(., "Sheet30")] %>% 
+  lapply(., function(x) {
+    ret <- read_excel(path = "Data/DATA - cleaned.xlsx", sheet = x)
+    ret$Utility = str_extract_all(x, "^.*?(?= -)")
+    ret}) %>% 
+  lapply(., function(x){
+    select(x, formatted_address,
+           any_of(rptdateV), 
+           any_of(classV),
+           Utility,
+           lon,
+           lat) %>% 
+      transmute(Address = formatted_address,
+                RptDate = .[[2]],
+                Class = .[[3]],
+                Utility = as.character(Utility),
+                EndDate = as.Date("2019-12-31"),
+                LeakAgeDays = abs(interval(EndDate,RptDate)/days(1)),
+                lon = as.numeric(lon),
+                lat = as.numeric(lat))
+  }) %>% 
+  do.call(rbind, .)
+
+# Standardize leak grades and assign utility name
+unrepaired2019 <- unrepaired2019 %>% 
+  mutate(Class = recode(Class, "Grade 1" = "1",
+                        "Grade 2" = "2",
+                        "Grade 3" = "3",
+                        "2A" = "2"),
+         Utility = recode(Utility, "character(0)" = "National Grid"))
+
+# convert to sf
+repaired2019 <- repaired2019 %>% 
+  st_as_sf(., coords = c("lon","lat"))
+
+unrepaired2019 <- unrepaired2019 %>% 
+  st_as_sf(., coords = c("lon","lat"))
+
+# save data
+# write it out to shapefile
+repaired2019 %>% 
+  st_write(., delete_layer = TRUE, "Data/HEETrepaired2019v2.shp")
+
+unrepaired2019 %>% 
+  st_write(., delete_layer = TRUE, "Data/HEETunrepaired2019v2.shp")
+
+# save everything
+save(unrepaired2019, repaired2019, file = "Data/HEET2019Leaksv2.rds")
+
+
+
+
+
+
+
+#### STEPS BELOW ARE FOR PROCESSING KML FILES FROM HEET
+# Import geocoded gas leaks data from HEET - kmls downloaded Nov 14, 2020
 # create vector of text and regex to remove descriptors and : from Description column but leave <br> to separate columns
 removeTxt <- c("description: <br>", 
                "(?<=<br>).*?: ")
