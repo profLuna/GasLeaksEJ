@@ -1,0 +1,2266 @@
+---
+title: "An Environmental Justice Analysis of Distribution-Level Natural Gas Leaks in Massachusetts, USA"
+author: "Marcos Luna and Dominic Nicholas"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::pdf_document2:
+    keep_tex: yes
+    toc: true
+    number_sections: true
+    fig_caption: yes        
+    includes:  
+      in_header: my_header.tex
+link-citations: yes
+bibliography: GasLeaksEJBIB.bib
+csl: chicago-author-date.csl
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
+```
+# Abstract {-}
+A growing body of research shows that natural gas leaks at the distribution level are much more common and extensive than previously thought. Although scholars and advocates have raised alarms about the climate change and economic significance of these leaks, there has been little consideration of the problem from an environmental justice perspective. Using recently available high resolution leak data, this analysis of natural gas leaks across the state of Massachusetts shows that People of Color, limited English speaking households, and renters are disproportionately exposed to natural gas leaks, as compared to the general population, to White residents, and to homeowners. This pattern is evident for all leaks in the state, for leaks disaggregated by leak class or grade, and for leaks disaggregated by utility. This analysis shows that natural gas leaks are an environmental justice issue warranting further study and policy attention.
+
+\pagebreak
+# Introduction
+
+This is an analysis of transportation-related emissions and related externalities in Connecticut. 
+
+# Background
+## Gas service provision in Massachusetts
+
+## Crises of gas leakage
+
+## Another gas disaster reveals systemic problems
+
+## An Environmental Justice framework
+
+# Data and methods
+## Data
+
+## Methodology
+
+### Population-weighted mean exposure
+
+### Relative exposure
+
+### Tests of Significant Difference
+
+### Sensitivity Analyses
+
+
+# Results
+```{r data, include=FALSE}
+# load packages and data
+library(tidyverse)
+library(sf)
+library(tigris)
+library(tmap)
+library(tmaptools)
+library(ggplot2)
+library(foreign) # for reading in dbf
+library(tidytext) # for reordering within ggplot2 facets
+library(kableExtra)
+# library(sp)
+# library(spdep)
+library(tigris)
+# library(bibtex)
+
+# Load demographic and gas leaks data
+load("Data/Demographics.rds")
+load("Data/HEET2019Leaksv2.rds")
+ma_blkgrps <- readRDS("Data/ma_blkgrps2019.Rds")
+ma_tracts <- readRDS("Data/ma_tracts2019.Rds")
+ma_cosub <- readRDS("Data/ma_cosub2019.Rds")
+
+ppLeakDensity_df_bg <- readRDS("Data/ppLeakDensity_df_blkgrps2019.Rds")
+ppLeakDensity_df_tr <- readRDS("Data/ppLeakDensity_df_tracts2019.Rds")
+ppLeakDensity_df_co <- readRDS("Data/ppLeakDensity_df_cosubs2019.Rds")
+
+ppLeakDensityJoinedU_bg <- readRDS("Data/ppLeakDensityJoinedU_BG2019.Rds")
+ppLeakDensityJoinedU_tr <- readRDS("Data/ppLeakDensityJoinedU_Tract2019.Rds")
+ppLeakDensityJoinedU_co <- readRDS("Data/ppLeakDensityJoinedU_Cosub2019.Rds")
+
+# set common CRS
+unrepaired2019 <- st_transform(unrepaired2019, crs = st_crs(ma_blkgrps))
+repaired2019 <- st_transform(repaired2019, crs = st_crs(ma_blkgrps))
+
+# Set up recurring map elements
+# Load natural gas utility service areas dbf from MassGIS and join to MassGIS towns layer
+ng_dbf <- read.dbf("Data/pubutil/TOWNS_POLY_UTILITIES.dbf")
+
+ng_service_areas <- st_read(dsn = "Data/townssurvey_shp",
+                            layer = "TOWNSSURVEY_POLYM") %>% 
+  select(-TOWN) %>% 
+  left_join(., ng_dbf, by = "TOWN_ID") %>% 
+  select(TOWN, GAS, GAS_LABEL) %>%  
+  st_transform(., crs = st_crs(ma_blkgrps)) %>% 
+  st_make_valid()
+
+# isolate No gas areas and municipal
+ng_nogas_muni <- ng_service_areas %>% 
+  filter(GAS_LABEL %in% c("No Natural Gas Service","Municipal")) %>% 
+  group_by(GAS_LABEL) %>%
+  summarize() %>% 
+  mutate(GAS_LABEL = as.character(GAS_LABEL))
+
+# consolidate into basic gas service districts
+ng_service_areas2 <- ng_service_areas %>% 
+  filter(!GAS_LABEL %in% c("No Natural Gas Service","Municipal")) %>% 
+  group_by(GAS_LABEL) %>% 
+  summarize(TownCnt = n()) %>% 
+  mutate(ID = case_when(
+    GAS_LABEL == "National Grid" ~ "NG",
+    GAS_LABEL == "Blackstone Gas Company" ~ "BGC",
+    GAS_LABEL == "Columbia Gas" ~ "CG",
+    GAS_LABEL == "Eversource Energy" ~ "EV",
+    GAS_LABEL == "Columbia Gas, Eversource Energy" ~ "CG,EV",
+    GAS_LABEL == "Unitil" ~ "UN",
+    GAS_LABEL == "National Grid, Unitil" ~ "NG,UN",
+    GAS_LABEL == "Eversource Energy, National Grid" ~ "EV,NG",
+    GAS_LABEL == "The Berkshire Gas Company" ~ "BG",
+    GAS_LABEL == "Columbia Gas, Blackstone Gas Company" ~ "CG,BGC",
+    GAS_LABEL == "Liberty Utilities" ~ "LU",
+    GAS_LABEL == "Colonial Gas" ~ "NG",
+    GAS_LABEL == "Columbia Gas, National Grid" ~ "CG,NG"
+  ))
+
+# join ID to original municipalities within ng_service_area to use centroids as labels; restrict to central municipalities within territories
+ng_service_labels <- ng_service_areas2 %>% 
+  as.data.frame() %>% 
+  select(ID, GAS_LABEL) %>% 
+  inner_join(ng_service_areas, ., by = "GAS_LABEL") %>% 
+  filter(TOWN %in% c("LANESBOROUGH","DEERFIELD","NORTHAMPTON","LUDLOW",
+                     "NORTH BROOKFIELD","OXFORD",
+                     "WESTMINSTER","CARLISLE","ANDOVER","WESTBOROUGH",
+                     "BLACKSTONE","MILTON",
+                     "NORWOOD","WEST BRIDGEWATER","PLAINVILLE","PLYMOUTH",
+                     "WESTPORT","ACUSHNET","WAREHAM","BARNSTABLE",
+                     "SWANSEA","MARSHFIELD","COHASSET",
+                     "HAMILTON","WEST NEWBURY","DOVER","DUNSTABLE")) %>% 
+  st_centroid(., of_largest_polygon = TRUE)
+
+ng_service_labels2 <- ng_service_areas2 %>% 
+  as.data.frame() %>% 
+  select(ID, GAS_LABEL) %>% 
+  inner_join(ng_service_areas, ., by = "GAS_LABEL") %>% 
+  filter(TOWN %in% c("LEICESTER","LUNENBURG","MENDON","BELLINGHAM","HANSON",
+                     "WAYLAND","NATICK","BOSTON","SOMERVILLE")) %>% 
+  st_centroid(., of_largest_polygon = TRUE)
+
+ng_service_labels3 <- ng_service_areas2 %>% 
+  as.data.frame() %>% 
+  select(ID, GAS_LABEL) %>% 
+  inner_join(ng_service_areas, ., by = "GAS_LABEL") %>% 
+  filter(TOWN == "BOSTON") %>% 
+  st_centroid(., of_largest_polygon = TRUE)
+
+# separate MA for cropping
+ma_state_sf <- states(cb = TRUE) %>%
+  filter(STUSPS == "MA")
+
+# grab municipal boundaries
+ma_towns_sf <- county_subdivisions(state = "MA", cb = TRUE) %>% 
+  st_transform(., crs = 26986)
+
+# create point layer of towns for context
+ma_towns_sf_pts <- county_subdivisions(state = "MA", cb = TRUE) %>% 
+  filter(NAME %in% c("Boston",
+                     "Lawrence",
+                     "Lowell",
+                     "Brockton",
+                     "Worcester",
+                     "Springfield",
+                     "Pittsfield", 
+                     "Stockbridge",
+                     "Fall River",
+                     "West Yarmouth",
+                     "Lynn",
+                     "Randolph",
+                     "Webster",
+                     "Attleboro",
+                     "Medford",
+                     "Amherst",
+                     "Quincy",
+                     "Weymouth Town",
+                     "Nantucket")) %>% 
+  mutate(NAME = recode(NAME, "Weymouth Town" = "Weymouth")) %>% 
+  st_transform(., crs = 26986) %>% 
+  st_centroid(of_largest_polygon = TRUE)
+
+# create a separate point for Newton so that it can be repositioned
+newton <- county_subdivisions(state = "MA", cb = TRUE) %>% 
+  filter(NAME %in% c("Fitchburg","Newton","Edgartown","New Bedford")) %>% 
+  st_transform(., crs = 26986) %>% 
+  st_centroid(of_largest_polygon = TRUE)
+```
+In calendar year 2019, there were 27,124 natural gas leaks in the distribution system reported by seven of the eight investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities. Repairs were reported for 11,399 (42%) of these, leaving 15,725 (58%) unrepaired leaks across the state as of December 31, 2019. 
+
+```{r tabLeaks, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
+# table of leak stats by class and repair status
+unrepaired_Sumdf <- unrepaired2019 %>% as.data.frame() %>% 
+  group_by(Class) %>% summarize(Unrepaired = n())
+
+repaired_Sumdf <- repaired2019 %>% as.data.frame() %>% 
+  group_by(Class) %>% summarize(Repaired = n())
+
+total_Sumdf <- left_join(unrepaired_Sumdf, repaired_Sumdf, by = "Class") %>% 
+  drop_na() %>%
+  mutate(Total = Unrepaired + Repaired) %>% 
+  bind_rows(summarize(.,
+                      across(where(is.numeric), sum),
+                      across(where(is.character), ~ "Total"))) %>% 
+  mutate(PctUnrepaired = Unrepaired/Total*100,
+         PctRepaired = Repaired/Total*100,
+         PctTotal = Total/Total[Class == "Total"]*100) %>%
+  select(Class, Unrepaired, PctUnrepaired, Repaired, PctRepaired, 
+         Total, PctTotal)
+
+total_Sumdf %>% 
+  mutate(PctUnrepaired = paste0(round(PctUnrepaired,1),"%"),
+         PctRepaired = paste0(round(PctRepaired,1),"%"),
+         PctTotal = paste0(round(PctTotal,1),"%")) %>% 
+  kable(., longtable = T, booktabs = T,
+        format.args = list(big.mark = ','), 
+        caption = "Gas leaks by class and repair status, 2019", align = "r", 
+        # digits = c(0,0,1,0,1,0,1), 
+        col.names = c("Class","Count","Percent","Count","Percent",
+                      "Total","Pct Total")) %>% 
+  add_header_above(., c(" ", "Unrepaired Leaks" = 2, "Repaired Leaks" = 2, 
+                        " " = 2)) %>% 
+  row_spec(4, bold = T) %>% 
+  kable_styling(latex_options = c("repeat_header"))
+```
+
+```{r mapAllLeaks, fig.align='center', fig.cap= "Massachusetts Gas Leaks and Utility Territories, 2019, aggregated by 1km hexagon tessellations", cache=TRUE}
+# Map of leak counts by hexagons and utility territories
+
+# create a hexagonal grid and create index column
+gridCnt <- st_make_grid(x = ma_blkgrps, cellsize = 1000, square = FALSE) %>% 
+  st_as_sf() %>% 
+  mutate(index = row_number())
+
+# spatially join to grid ids to leaks, sum aggregate numbers of leaks per grid index, and then join sums back to hexagons for mapping and analysis
+gridCnt <- unrepaired2019 %>% 
+  st_join(., gridCnt) %>% 
+  st_drop_geometry() %>% 
+  group_by(index) %>% 
+  summarize(unrepaired = n()) %>% 
+  left_join(gridCnt, ., by = "index") %>% 
+  replace_na(list(unrepaired = 0))
+
+gridCnt <- repaired2019 %>% 
+  st_join(., gridCnt) %>% 
+  st_drop_geometry() %>% 
+  group_by(index) %>% 
+  summarize(repaired = n()) %>% 
+  left_join(gridCnt, ., by = "index") %>% 
+  replace_na(list(repaired = 0))
+
+# create column with total leak points and clip to MA
+gridCnt <- gridCnt %>% 
+  mutate(total = unrepaired + repaired) %>% 
+  crop_shape(., ma_blkgrps, polygon = TRUE) %>% 
+  st_make_valid()
+
+gridCntT <- gridCnt %>% 
+  filter(total > 0)
+
+m_gridTotal <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") +
+  tm_shape(gridCntT, unit = "km", bbox = ma_state_sf) + 
+  tm_fill(col = "total", palette = "YlOrRd",
+          style = "fisher",
+          # breaks = c(1,5,10,20,40,80), 
+          legend.format = list(digits = 0),
+          title = "Number\nof leaks") +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            # title = "Massachusetts Gas Leaks and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)
+            ) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m_gridTotal, filename = "Images/pub/m_gridTotalUtil.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_gridTotalUtil.png")
+```
+```{r mapAllLeaksBG, fig.align='center', cache=TRUE}
+# create map of leak densities by BG
+blkgrpsLeaksAll <- ma_blkgrps %>% 
+  filter(AllLeaks2019_sqkm > 0)
+
+m1 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(blkgrpsLeaksAll) + tm_fill(col = "AllLeaks2019_sqkm", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Leaks per SqKm",
+                                      legend.format = list(digits = 2)) +
+  tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Gas Leak Density by Census Block Group and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m1, filename = "Images/pub/m_blkgrpTotal.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_blkgrpTotal.png")
+```
+```{r mapAllLeaksTR, fig.align='center', cache=TRUE}
+tractsLeaksAll <- ma_tracts %>% 
+  filter(AllLeaks2019_sqkm > 0)
+
+m2 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(tractsLeaksAll) + tm_fill(col = "AllLeaks2019_sqkm", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Leaks per SqKm",
+                                      legend.format = list(digits = 2)) +
+  tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Gas Leak Density by Census Tract and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m2, filename = "Images/pub/m_tractTotal.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_tractTotal.png")
+```
+```{r mapAllLeaksCO, fig.align='center', cache=TRUE}
+cosubLeaksAll <- ma_cosub %>% 
+  filter(AllLeaks2019_sqkm > 0)
+
+m3 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(cosubLeaksAll) + tm_fill(col = "AllLeaks2019_sqkm", style = "fisher",
+                                     palette = "YlOrRd", 
+                                     title = "Leaks per SqKm",
+                                     legend.format = list(digits = 2)) +
+  tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Gas Leak Density by Municipality and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m3, filename = "Images/pub/m_cosubTotal.png", dpi = 600, height = 4, 
+          width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_cosubTotal.png")
+```
+
+Reported gas leaks were nearly ubiquitous across the state. Over 87% of Census Block Groups within the gas utility territories had at least one known gas leak in 2019, and approximately 75% had at least one unrepaired gas leak at the end of 2019. There was significant variation in geographic distribution and concentration of these leaks.
+
+```{r tabBGcount, fig.align='center'}
+# table of leak count stats by block group
+# list of stats to compute across
+summary_stats <- list(Min = ~min(., na.rm = T),
+                      Med = ~median(., na.rm = T),
+                      Avg = ~mean(., na.rm = T),
+                      Max = ~max(., na.rm = T))
+# table of stats by block group
+unrep_blkgrp_cnt <- ma_blkgrps %>% 
+  as.data.frame() %>% 
+  select(starts_with("unrepaired")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Count") %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = Count, summary_stats, 
+                             .names = "{.fn}U")) %>% 
+  mutate(Class = recode(Class, "unrepaired2019total" = "All",
+                        "unrepaired2019totalC1" = "1",
+                        "unrepaired2019totalC2" = "2",
+                        "unrepaired2019totalC3" = "3")) %>% 
+  arrange(Class)
+
+rep_blkgrp_cnt <- ma_blkgrps %>% 
+  as.data.frame() %>% 
+  select(starts_with("repaired")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Count") %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = Count, summary_stats, 
+                   .names = "{.fn}R")) %>% 
+  mutate(Class = recode(Class, "repaired2019total" = "All",
+                        "repaired2019totalC1" = "1",
+                        "repaired2019totalC2" = "2",
+                        "repaired2019totalC3" = "3")) %>% 
+  arrange(Class)
+
+all_blkgrp_cnt <- ma_blkgrps %>% 
+  as.data.frame() %>% 
+  select(AllLeaks2019:AllLeaks2019C3) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Count") %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = Count, summary_stats, 
+                   .names = "{.fn}T")) %>% 
+  mutate(Class = recode(Class, "AllLeaks2019" = "All",
+                        "AllLeaks2019C1" = "1",
+                        "AllLeaks2019C2" = "2",
+                        "AllLeaks2019C3" = "3")) %>% 
+  arrange(Class)
+
+# join together
+list(unrep_blkgrp_cnt,rep_blkgrp_cnt,all_blkgrp_cnt) %>% 
+  reduce(., left_join, by = "Class") %>% 
+  kable(., longtable = T, booktabs = T,
+        # format.args = list(big.mark = ','), 
+        caption = "Gas leak counts by class per Census Block Group, 2019", 
+        align = "r", 
+        digits = c(0,0,0,1,0,0,0,1,0,0,0,1),
+        col.names = c("Class","Min","Med","Avg","Max",
+                      "Min","Med","Avg","Max",
+                      "Min","Med","Avg","Max")) %>% 
+  add_header_above(., c(" ", "Unrepaired Leaks" = 4, "Repaired Leaks" = 4, 
+                        "Total Leaks" = 4)) %>% 
+  # row_spec(4, bold = T) %>% 
+  kable_styling(latex_options = c("repeat_header"))
+```
+
+The number of leaks in any one Block Group ranged from 0 to 41, with a strong positive skew. Half of all Block Groups (2,097) had fewer than four leaks. The vast majority of all leaks were located in the eastern half of the state, particularly in the greater Boston region, where most of the population resides. Moreover, most of these leaks (65%) occurred within the service territory of National Grid, which is the largest natural gas utility in the state, serving Boston and surrounding communities.
+
+```{r tabBGdensity, fig.align='center'}
+# table of leak density stats by block group
+# list of stats to compute across
+summary_stats <- list(Min = ~min(., na.rm = T),
+                      Med = ~median(., na.rm = T),
+                      Avg = ~mean(., na.rm = T),
+                      Max = ~max(., na.rm = T))
+# table of stats by block group
+unrep_blkgrp_dns <- ma_blkgrps %>% 
+  as.data.frame() %>% 
+  select(starts_with("leaks_sqkm")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Count") %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = Count, summary_stats, 
+                   .names = "{.fn}U")) %>% 
+  mutate(Class = recode(Class, "leaks_sqkm" = "All",
+                        "leaks_sqkmC1" = "1",
+                        "leaks_sqkmC2" = "2",
+                        "leaks_sqkmC3" = "3")) %>% 
+  arrange(Class)
+
+rep_blkgrp_dns <- ma_blkgrps %>% 
+  as.data.frame() %>% 
+  select(starts_with("REPleaks_sqkm")) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Count") %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = Count, summary_stats, 
+                   .names = "{.fn}R")) %>% 
+  mutate(Class = recode(Class, "REPleaks_sqkm" = "All",
+                        "REPleaks_sqkmC1" = "1",
+                        "REPleaks_sqkmC2" = "2",
+                        "REPleaks_sqkmC3" = "3")) %>% 
+  arrange(Class)
+
+all_blkgrp_dns <- ma_blkgrps %>% 
+  as.data.frame() %>% 
+  select(AllLeaks2019_sqkm:AllLeaks2019C3_sqkm) %>% 
+  pivot_longer(cols = everything(), names_to = "Class", values_to = "Count") %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = Count, summary_stats, 
+                   .names = "{.fn}T")) %>% 
+  mutate(Class = recode(Class, "AllLeaks2019_sqkm" = "All",
+                        "AllLeaks2019C1_sqkm" = "1",
+                        "AllLeaks2019C2_sqkm" = "2",
+                        "AllLeaks2019C3_sqkm" = "3")) %>% 
+  arrange(Class)
+
+# join together
+list(unrep_blkgrp_dns,rep_blkgrp_dns,all_blkgrp_dns) %>% 
+  reduce(., left_join, by = "Class") %>% 
+  kable(., longtable = T, booktabs = T,
+        # format.args = list(big.mark = ','), 
+        caption = "Gas leak density (per sqkm) by class per Census Block Group, 2019", 
+        align = "r", 
+        digits = 2,
+        col.names = c("Class","Min","Med","Avg","Max",
+                      "Min","Med","Avg","Max",
+                      "Min","Med","Avg","Max")) %>% 
+  add_header_above(., c(" ", "Unrepaired Leaks" = 4, "Repaired Leaks" = 4, 
+                        "Total Leaks" = 4)) %>% 
+  # row_spec(4, bold = T) %>% 
+  kable_styling(latex_options = c("repeat_header"))
+```
+
+MAYBE SHOW TABLE WITH TOTAL LEAK DENSITIES BY SCALE RATHER THAN BREAKING OUT BY UNREPAIRED VS REPAIRED LEAKS???
+
+Leaks were concentrated in and around the more populous urban areas. Leak densities for Census Block Groups ranged from 0 to 245 leaks per square kilometer, again with a strong positive skew. Half of Block Groups had less than 2.2 leaks per square kilometer. The geographic pattern of leak density - highest in the eastern half of the state and around populous urban centers - was unaffected by the unit of analysis, exhibiting the same geographic pattern from Block Group to County Subdivision levels. 
+
+```{r figLeaksUtility, fig.align='center'}
+# create a stacked bar chart of leaks by utility. shows significant difference in magnitude. 
+unrepairedUSum_df <- unrepaired2019 %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, 
+                          "National Grid - Colonial Gas" = "National Grid",
+                          "National Grid - Boston Gas" = "National Grid")) %>% 
+  group_by(Utility) %>% 
+  summarize(Unrepaired = n())
+
+repairedUSum_df <- repaired2019 %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, 
+                          "National Grid - Colonial Gas" = "National Grid",
+                          "National Grid - Boston Gas" = "National Grid")) %>% 
+  group_by(Utility) %>% 
+  summarize(Repaired = n())
+
+totalUSum_df <- left_join(unrepairedUSum_df, repairedUSum_df, by = "Utility") %>% 
+  mutate(Total = Unrepaired + Repaired) %>% 
+  bind_rows(summarize(.,
+                      across(where(is.numeric), sum),
+                      across(where(is.character), ~ "Total"))) %>% 
+  mutate(PctUnrepaired = Unrepaired/Total*100,
+         PctRepaired = Repaired/Total*100,
+         PctTotal = Total/Total[Utility == "Total"]*100) %>% 
+  select(Utility, Unrepaired, PctUnrepaired, Repaired, PctRepaired, Total, PctTotal)
+
+totalUSum_df %>% 
+  filter(Utility != "Total") %>% 
+  select(-c(Total, starts_with("Pct"))) %>% 
+  pivot_longer(., cols = c(Unrepaired,Repaired), 
+               names_to = "status", values_to = "leaks") %>% 
+    ggplot(aes(x = reorder(Utility, leaks), y = leaks, 
+             fill = status)) +
+    geom_bar(position = "stack", stat = "identity") +
+  scale_fill_manual("legend", values = c("Repaired" = "#7CB5EC", 
+                                         "Unrepaired" = "#F7A35C")) + 
+  coord_flip() +
+  theme_minimal() +
+  theme(legend.title = element_blank(), legend.position = "top") +
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE)) +
+  guides(fill = guide_legend(reverse = TRUE)) +
+  labs(x = NULL, 
+       y = "Reported Leaks",
+       title = "Reported leaks by utility in 2019 across Massachusetts")
+
+ggsave("Images/pub/LeaksbyUtility.png")
+```
+
+
+## Exposure
+### Statewide exposure
+
+```{r figDotUnrepaired, fig.align='center'}
+# dot graph of relative exposure for unrepaired leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+# Set up for dot graph to show all three scales
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeaksRR:wLeaksRRC3, 
+               names_to = "leakClass", values_to = "leakDensityBG") %>% 
+  # filter(!Group %in% c("MA_ENGLISH","MA_MINORITY21","MA_INCOME21")) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksRR" = "All Leaks",
+                            "wLeaksRRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeaksRRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeaksRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityBG, leakClass),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, leakClass, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensity_df_tr2 <- ppLeakDensity_df_tr %>% 
+  pivot_longer(wLeaksRR:wLeaksRRC3, 
+               names_to = "leakClass", values_to = "leakDensityTR") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksRR" = "All Leaks",
+                            "wLeaksRRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeaksRRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeaksRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityTR, leakClass),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, leakClass, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensity_df_co2 <- ppLeakDensity_df_co %>% 
+  pivot_longer(wLeaksRR:wLeaksRRC3, 
+               names_to = "leakClass", values_to = "leakDensityCO") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksRR" = "All Leaks",
+                            "wLeaksRRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeaksRRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeaksRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityCO, leakClass),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, leakClass, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensity_df_bg2,.)
+
+# join them all together
+ppLeakDensity_df_all <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                             ppLeakDensity_df_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensity_df_all2 <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                              ppLeakDensity_df_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+ppLeakDensity_df_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensity_df_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to total population-weighted mean by Census Block Group, Tract, and Municipality",sep = "")),
+       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotGraphallscalesRE.png")
+```
+
+
+### Utility-specific exposure
+
+```{r figDotUnrepairedUtility, fig.align='center'}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeaksRRBG, wLeaksRRCG, wLeaksRREV, 
+                 wLeaksRRFG, wLeaksRRLU, wLeaksRRNG), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksRRBG" = "Berkshire Gas",
+                          "wLeaksRRCG" = "Columbia Gas",
+                          "wLeaksRREV" = "Eversource Energy",
+                          "wLeaksRRLU" = "Liberty Utilities",
+                          "wLeaksRRNG" = "National Grid",
+                          "wLeaksRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  pivot_longer(c(wLeaksRRBG, wLeaksRRCG, wLeaksRREV, 
+                 wLeaksRRFG, wLeaksRRLU, wLeaksRRNG), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBG" = "Berkshire Gas",
+                          "wLeaksRRCG" = "Columbia Gas",
+                          "wLeaksRREV" = "Eversource Energy",
+                          "wLeaksRRLU" = "Liberty Utilities",
+                          "wLeaksRRNG" = "National Grid",
+                          "wLeaksRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  pivot_longer(c(wLeaksRRBG, wLeaksRRCG, wLeaksRREV, 
+                 wLeaksRRFG, wLeaksRRLU, wLeaksRRNG), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBG" = "Berkshire Gas",
+                          "wLeaksRRCG" = "Columbia Gas",
+                          "wLeaksRREV" = "Eversource Energy",
+                          "wLeaksRRLU" = "Liberty Utilities",
+                          "wLeaksRRNG" = "National Grid",
+                          "wLeaksRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to total population-weighted mean by Census Block Group, Tract, and Municipality",sep = "")),
+       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotGraphallscalesUtilityRE.png")
+```
+
+
+### Statewide exposure normalized by occupied housing units
+
+```{r mapOHUbg, fig.align='center', cache=TRUE}
+# create map of leaks per OHU by BG
+blkgrpsLeaksOHU <- ma_blkgrps %>% 
+  filter(ALLleaks_hu > 0)
+
+m1b <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(blkgrpsLeaksOHU) + tm_fill(col = "ALLleaks_hu", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Leaks per Occupied\nHousing Unit",
+                                      legend.format = list(digits = 2)) +
+  tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Gas Leaks per Occupied Housing Unit by Census Block Group and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m1b, filename = "Images/pub/m_blkgrpOHU.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_blkgrpOHU.png")
+```
+
+```{r mapOHUtr, fig.align='center', cache=TRUE}
+# create map of leaks per OHU by Tract
+tractsLeaksOHU <- ma_tracts %>% 
+  filter(ALLleaks_hu > 0)
+
+m2b <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(tractsLeaksOHU) + tm_fill(col = "ALLleaks_hu", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Leaks per Occupied\nHousing Unit",
+                                      legend.format = list(digits = 2)) +
+  tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Gas Leaks per Occupied Housing Unit by Census Tract and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m2b, filename = "Images/pub/m_tractOHU.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_tractOHU.png")
+```
+
+```{r mapOHUco, fig.align='center', cache=TRUE}
+# create map of leaks per OHU by Tract
+cosubsLeaksOHU <- ma_cosub %>% 
+  filter(ALLleaks_hu > 0)
+
+m2b <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(cosubsLeaksOHU) + tm_fill(col = "ALLleaks_hu", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Leaks per Occupied\nHousing Unit",
+                                      legend.format = list(digits = 2)) +
+  tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Gas Leaks per Occupied Housing Unit by Municipality and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m2b, filename = "Images/pub/m_cosubOHU.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_cosubOHU.png")
+```
+
+```{r figDotOHU, fig.align='center'}
+# dot graph of relative exposure for leaks per OHU around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+# Set up for dot graph to show all three scales
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeaksPerHURR:wLeaksPerHURRC3, 
+               names_to = "leakClass", values_to = "leakDensityBG") %>% 
+  # filter(!Group %in% c("MA_ENGLISH","MA_MINORITY21","MA_INCOME21")) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksPerHURR" = "All Leaks",
+                            "wLeaksPerHURRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeaksPerHURRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeaksPerHURRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityBG, leakClass),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, leakClass, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensity_df_tr2 <- ppLeakDensity_df_tr %>% 
+  pivot_longer(wLeaksPerHURR:wLeaksPerHURRC3, 
+               names_to = "leakClass", values_to = "leakDensityTR") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksPerHURR" = "All Leaks",
+                            "wLeaksPerHURRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeaksPerHURRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeaksPerHURRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityTR, leakClass),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, leakClass, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensity_df_co2 <- ppLeakDensity_df_co %>% 
+  pivot_longer(wLeaksPerHURR:wLeaksPerHURRC3, 
+               names_to = "leakClass", values_to = "leakDensityCO") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksPerHURR" = "All Leaks",
+                            "wLeaksPerHURRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeaksPerHURRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeaksPerHURRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityCO, leakClass),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, leakClass, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensity_df_bg2,.)
+
+# join them all together
+ppLeakDensity_df_all <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                             ppLeakDensity_df_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensity_df_all2 <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                              ppLeakDensity_df_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+ppLeakDensity_df_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensity_df_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
+       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotGraphOHUallscalesRE.png")
+```
+
+
+### Utility-specific exposure normalized by occupied housing units
+
+```{r figDotOHUUtility, fig.align='center'}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeaksPerHURRBG, wLeaksPerHURRCG, wLeaksPerHURREV, 
+                 wLeaksPerHURRFG, wLeaksPerHURRLU, wLeaksPerHURRNG), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksPerHURRBG" = "Berkshire Gas",
+                          "wLeaksPerHURRCG" = "Columbia Gas",
+                          "wLeaksPerHURREV" = "Eversource Energy",
+                          "wLeaksPerHURRLU" = "Liberty Utilities",
+                          "wLeaksPerHURRNG" = "National Grid",
+                          "wLeaksPerHURRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  pivot_longer(c(wLeaksPerHURRBG, wLeaksPerHURRCG, wLeaksPerHURREV, 
+                 wLeaksPerHURRFG, wLeaksPerHURRLU, wLeaksPerHURRNG), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBG" = "Berkshire Gas",
+                          "wLeaksPerHURRCG" = "Columbia Gas",
+                          "wLeaksPerHURREV" = "Eversource Energy",
+                          "wLeaksPerHURRLU" = "Liberty Utilities",
+                          "wLeaksPerHURRNG" = "National Grid",
+                          "wLeaksPerHURRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  pivot_longer(c(wLeaksPerHURRBG, wLeaksPerHURRCG, wLeaksPerHURREV, 
+                 wLeaksPerHURRFG, wLeaksPerHURRLU, wLeaksPerHURRNG), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBG" = "Berkshire Gas",
+                          "wLeaksPerHURRCG" = "Columbia Gas",
+                          "wLeaksPerHURREV" = "Eversource Energy",
+                          "wLeaksPerHURRLU" = "Liberty Utilities",
+                          "wLeaksPerHURRNG" = "National Grid",
+                          "wLeaksPerHURRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
+       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotGraphOHUallscalesUtilityRE.png")
+```
+
+
+## Response – Leak Repair
+Another way to evaluate the equity of natural gas leaks is to consider how responses to those leaks varies. This section considers two measures of leak response: 
+
+* the time to repair leaks that were repaired in 2019, and 
+* the age of leaks that remained unrepaired at the end of the 2019 reporting year. 
+
+
+### Time to repair
+In 2019, repairs were reported for 11,399 leaks (42% of all reported leaks) across the state. Most of the leaks repaired were Class 1 leaks (53%), which is understandable since Class 1 leaks are the most hazardous and are supposed to be repaired immediately. Class 2 leaks were 39% of leaks repaired, followed distantly by Class 3 leaks, which constituted only 8% of all repaired leaks in 2019. Repair time for these leaks was calculated as the duration of time from the date and time the leak was reported to the date and time of its reported repair. Repair times are reported as the number of days between reporting and repair. Time to repair varied dramatically both within and between leak classes and across utilities. While 73% (4,440) of Class 1 leaks were repaired in less than one day, eight were more than one year old, and at least one leak was over five years old when it was repaired. Note that Fitchburg Gas/Unitil did not report repair data by leak class. 
+
+```{r tabREP, fig.align='center'}
+# time to repair by class
+repaired_Timedf <- repaired2019 %>% 
+  as.data.frame() %>% 
+  select(Class,DaysToRepair) %>% 
+  drop_na(Class) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = DaysToRepair, summary_stats, 
+                   .names = "{.fn}")) %>% 
+  arrange(Class)
+
+# add row for all repaired
+repaired_Timedf <- repaired2019 %>% 
+  as.data.frame() %>% 
+  select(DaysToRepair) %>% 
+  summarize(across(.cols = DaysToRepair, summary_stats, 
+                   .names = "{.fn}")) %>% 
+  mutate(Class = "All", .before = Min) %>% 
+  rbind(repaired_Timedf, .)
+
+repaired_Timedf %>% kable(., longtable = T, booktabs = T,
+                          format.args = list(big.mark = ','),
+                          caption = "Leak repair time (days), 2019", 
+                          align = "r", 
+                          digits = 1) %>% 
+  # add_header_above(., c(" ", "Unrepaired Leaks" = 4, "Repaired Leaks" = 4, 
+  #                       "Total Leaks" = 4)) %>% 
+  # row_spec(4, bold = T) %>% 
+  kable_styling(latex_options = c("repeat_header"))
+```
+
+```{r histREP, fig.align='center'}
+# create group medians for histogram
+mu1 <- repaired2019 %>%
+  as.data.frame() %>%
+  drop_na(Class) %>%
+  group_by(Class) %>%
+  summarize(grp.med = median(DaysToRepair, na.rm = T))
+
+repaired2019 %>% 
+  as.data.frame() %>% 
+  select(Class,DaysToRepair) %>% 
+  drop_na(Class) %>% 
+  ggplot(aes(x = DaysToRepair, fill = Class, color = Class)) +
+  geom_histogram(alpha = 0.6, position = "identity") +
+  geom_vline(data = mu1, aes(xintercept = grp.med, color = Class), 
+             linetype = "dashed") +
+  scale_color_manual(values = c("#fc8d62","#66c2a5","#8da0cb"),
+                     guide = guide_legend(override.aes = list(fill = c("#fc8d62","#66c2a5","#8da0cb")))) +
+  scale_fill_manual(values = c("#fc8d62","#66c2a5","#8da0cb"),
+                    guide = FALSE) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0)) +
+  labs(title = "Leak Repair Times by Leak Class in 2019",
+       x = "Days to Repair",
+       y = "Number of Repaired Leaks", fill = "",
+       caption = "Column heights indicate number of leaks for a given time range. Colors correspond to leak class.\nDashed lines indicate median times by leak class. Rug plot at base shows individual repair times.") +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::comma) + geom_rug()
+
+ggsave("Images/pub/histRepairTime.png")
+```
+
+```{r mapTimeBG, fig.align='center', cache=TRUE}
+# create a map of average repair times by block group
+blkgrpsLeaksTime <- ma_blkgrps %>% 
+  filter(repaired2019total > 0)
+
+m4 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(blkgrpsLeaksTime) + tm_fill(col = "DaysToRepairAvg", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Avg Days\nto Repair",
+                                      legend.format = list(digits = 0),
+                                      colorNA = NULL) +
+  tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Mean Leak Repair Times by Census Block Group and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m4, filename = "Images/pub/m_blkgrpTime.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_blkgrpTime.png")
+```
+
+```{r mapTimeTR, fig.align='center', cache=TRUE}
+# create a map of average repair times by block group
+tractsLeaksTime <- ma_tracts %>% 
+  filter(repaired2019total > 0)
+
+m4 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(tractsLeaksTime) + tm_fill(col = "DaysToRepairAvg", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Avg Days\nto Repair",
+                                      legend.format = list(digits = 0),
+                                      colorNA = NULL) +
+  tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Mean Leak Repair Times by Census Tract and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m4, filename = "Images/pub/m_tractTime.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_tractTime.png")
+```
+
+```{r mapTimeCO, fig.align='center', cache=TRUE}
+# create a map of average repair times by block group
+cosubLeaksTime <- ma_cosub %>% 
+  filter(repaired2019total > 0)
+
+m4 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(cosubLeaksTime) + tm_fill(col = "DaysToRepairAvg", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Avg Days\nto Repair",
+                                      legend.format = list(digits = 0),
+                                      colorNA = NULL) +
+  tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Mean Leak Repair Times by Municipality and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m4, filename = "Images/pub/m_cosubTime.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_cosubTime.png")
+```
+
+```{r figDotTime, fig.align='center'}
+# dot graph of relative exposure for unrepaired leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+# Set up for dot graph to show all three scales
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_bg %>% 
+  pivot_longer(wDaysToRepairAvgRR:wDaysToRepairAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensityBG") %>% 
+  # filter(!Group %in% c("MA_ENGLISH","MA_MINORITY21","MA_INCOME21")) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wDaysToRepairAvgRR" = "All Leaks",
+                            "wDaysToRepairAvgRRC1" = "Class 1 Leaks (high hazard)",
+                            "wDaysToRepairAvgRRC2" = "Class 2 Leaks (med hazard)",
+                            "wDaysToRepairAvgRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityBG, leakClass),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, leakClass, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensity_df_tr2 <- ppLeakDensity_df_tr %>% 
+  pivot_longer(wDaysToRepairAvgRR:wDaysToRepairAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensityTR") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wDaysToRepairAvgRR" = "All Leaks",
+                            "wDaysToRepairAvgRRC1" = "Class 1 Leaks (high hazard)",
+                            "wDaysToRepairAvgRRC2" = "Class 2 Leaks (med hazard)",
+                            "wDaysToRepairAvgRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityTR, leakClass),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, leakClass, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensity_df_co2 <- ppLeakDensity_df_co %>% 
+  pivot_longer(wDaysToRepairAvgRR:wDaysToRepairAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensityCO") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wDaysToRepairAvgRR" = "All Leaks",
+                            "wDaysToRepairAvgRRC1" = "Class 1 Leaks (high hazard)",
+                            "wDaysToRepairAvgRRC2" = "Class 2 Leaks (med hazard)",
+                            "wDaysToRepairAvgRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityCO, leakClass),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, leakClass, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensity_df_bg2,.)
+
+# join them all together
+ppLeakDensity_df_all <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                             ppLeakDensity_df_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensity_df_all2 <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                              ppLeakDensity_df_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+ppLeakDensity_df_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensity_df_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak repair time to population mean",
+       title = "Relative Exposure to Mean Leak Repair Time in 2019 across Massachusetts", caption = "Colors indicate if repair time is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotGraphTimeallscalesRE.png")
+```
+
+
+### Utility-specific time to repair
+
+```{r boxTimeU, fig.align='center'}
+# ordered boxplot of time to repair by utility
+repaired2019 %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
+                          "National Grid - Colonial Gas" = "National Grid")) %>% 
+  ggplot(aes(x = reorder(Utility, DaysToRepair, fun = median), 
+             y = DaysToRepair, fill = Utility)) +
+  # geom_violin(width=1.4) +
+  # geom_boxplot(width=0.1, color="grey", alpha=0.2) + 
+  geom_boxplot() + 
+  coord_flip() +
+  theme_minimal() +
+  theme(
+    legend.position="none") +
+  ggtitle("Leak Repair Times (days) by Utility in 2019") +
+  xlab("") + ylab("Days to repair through Dec 31, 2019") + 
+  scale_y_continuous(labels = function(x) format(x, big.mark = ","))
+  # facet_wrap("Class", scales = "free")
+
+ggsave(filename = "Images/pub/boxplotLeaksByUtilityTime.png")
+```
+
+```{r figDotTimeU, fig.align='center'}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wDaysToRepairAvgRRBG, wDaysToRepairAvgRRCG, wDaysToRepairAvgRREV, 
+                 wDaysToRepairAvgRRFG, wDaysToRepairAvgRRLU, wDaysToRepairAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wDaysToRepairAvgRRBG" = "Berkshire Gas",
+                          "wDaysToRepairAvgRRCG" = "Columbia Gas",
+                          "wDaysToRepairAvgRREV" = "Eversource Energy",
+                          "wDaysToRepairAvgRRLU" = "Liberty Utilities",
+                          "wDaysToRepairAvgRRNG" = "National Grid",
+                          "wDaysToRepairAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  pivot_longer(c(wDaysToRepairAvgRRBG, wDaysToRepairAvgRRCG, wDaysToRepairAvgRREV, 
+                 wDaysToRepairAvgRRFG, wDaysToRepairAvgRRLU, wDaysToRepairAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBG" = "Berkshire Gas",
+                          "wDaysToRepairAvgRRCG" = "Columbia Gas",
+                          "wDaysToRepairAvgRREV" = "Eversource Energy",
+                          "wDaysToRepairAvgRRLU" = "Liberty Utilities",
+                          "wDaysToRepairAvgRRNG" = "National Grid",
+                          "wDaysToRepairAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  pivot_longer(c(wDaysToRepairAvgRRBG, wDaysToRepairAvgRRCG, wDaysToRepairAvgRREV, 
+                 wDaysToRepairAvgRRFG, wDaysToRepairAvgRRLU, wDaysToRepairAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBG" = "Berkshire Gas",
+                          "wDaysToRepairAvgRRCG" = "Columbia Gas",
+                          "wDaysToRepairAvgRREV" = "Eversource Energy",
+                          "wDaysToRepairAvgRRLU" = "Liberty Utilities",
+                          "wDaysToRepairAvgRRNG" = "National Grid",
+                          "wDaysToRepairAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak repair time(days) to general population-weighted mean",
+       title = "Relative Exposure to Average Leak Repair Time in 2019 across Massachusetts by Utility", caption = "Colors indicate if time is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotTimeUtilityRE.png")
+```
+
+
+### Age of unrepaired leaks
+
+```{r tabAge, fig.align='center'}
+# unrepaired age by class
+unrepaired_Timedf <- unrepaired2019 %>% 
+  as.data.frame() %>% 
+  select(Class,LeakAgeDays) %>% 
+  drop_na(Class) %>% 
+  group_by(Class) %>% 
+  summarize(across(.cols = LeakAgeDays, summary_stats, 
+                                       .names = "{.fn}")) %>% 
+  arrange(Class)
+
+# add row for all unrepaired
+unrepaired_Timedf <- unrepaired2019 %>% 
+  as.data.frame() %>% 
+  select(LeakAgeDays) %>% 
+  summarize(across(.cols = LeakAgeDays, summary_stats, 
+                   .names = "{.fn}")) %>% 
+  mutate(Class = "All", .before = Min) %>% 
+  rbind(unrepaired_Timedf, .)
+
+unrepaired_Timedf %>% kable(., longtable = T, booktabs = T,
+                          format.args = list(big.mark = ','),
+                          caption = "Unrepaired gas leak age (days), 2019", 
+                          align = "r", 
+                          digits = 1) %>% 
+  # add_header_above(., c(" ", "Unrepaired Leaks" = 4, "Repaired Leaks" = 4, 
+  #                       "Total Leaks" = 4)) %>% 
+  # row_spec(4, bold = T) %>% 
+  kable_styling(latex_options = c("repeat_header"))
+```
+
+```{r histAge, fig.align='center'}
+# create group medians for histogram
+mu <- unrepaired2019 %>% 
+  as.data.frame() %>% 
+  drop_na(Class) %>% 
+  group_by(Class) %>% 
+  summarize(grp.med = median(LeakAgeDays, na.rm = T))
+
+unrepaired2019 %>% 
+  as.data.frame() %>% 
+  select(Class,LeakAgeDays) %>% 
+  mutate(Class = factor(Class, levels = c("3","2","1"), ordered = T)) %>% 
+  drop_na(Class) %>% 
+  ggplot(aes(x = LeakAgeDays, fill = Class, color = Class)) +
+  geom_histogram(alpha = 0.6, position = "identity") +
+  geom_vline(data = mu, aes(xintercept = grp.med, color = Class), 
+             linetype = "dashed") +
+  scale_color_manual(values = c("#8da0cb","#66c2a5","#fc8d62"),
+                     guide = guide_legend(reverse = TRUE,
+                                          override.aes = list(fill = c("#fc8d62","#66c2a5","#8da0cb")))) +
+  scale_fill_manual(values = c("#8da0cb","#66c2a5","#fc8d62"),
+                    guide = FALSE) +
+  theme_minimal() +
+  theme(plot.caption = element_text(hjust = 0)) +
+  labs(title = "Unrepaired Leak Age by Leak Class in 2019",
+       x = "Age (days)",
+       y = "Number of Unrepaired Leaks", fill = "",
+       caption = "Column heights indicate number of leaks for a given age range. Colors correspond to leak class.\nDashed lines indicate median age by leak class. Rug plot at base shows individual ages.") +
+  scale_y_continuous(labels = scales::comma) +
+  scale_x_continuous(labels = scales::comma) + geom_rug()
+
+ggsave("Images/pub/histAge.png")
+```
+
+```{r magBGage, fig.align='center', cache=TRUE}
+# create a map of average leak age by block group
+blkgrpsLeaksAge <- ma_blkgrps %>% 
+  filter(unrepaired2019total > 0)
+
+m5 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(blkgrpsLeaksAge) + tm_fill(col = "LeakAgeDaysAvg", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Mean Leak\nAge (days)",
+                                      legend.format = list(digits = 0),
+                                      colorNA = NULL) +
+  tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Mean Age of Unrepaired Leaks by Census Block Group and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m5, filename = "Images/pub/m_blkgrpAge.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_blkgrpAge.png")
+```
+
+```{r magTRage, fig.align='center', cache=TRUE}
+# create a map of average leak age by block group
+tractsLeaksAge <- ma_tracts %>% 
+  filter(unrepaired2019total > 0)
+
+m5 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(tractsLeaksAge) + tm_fill(col = "LeakAgeDaysAvg", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Mean Leak\nAge (days)",
+                                      legend.format = list(digits = 0),
+                                      colorNA = NULL) +
+  tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Mean Age of Unrepaired Leaks by Census Tract and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m5, filename = "Images/pub/m_tractAge.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_tractAge.png")
+```
+
+```{r magCOage, fig.align='center', cache=TRUE}
+# create a map of average leak age by municipality
+cosubLeaksAge <- ma_cosub %>% 
+  filter(unrepaired2019total > 0)
+
+m5 <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
+  tm_fill(col = "GAS_LABEL", palette = c("honeydew2","gray88"), title = "") + 
+  tm_shape(cosubLeaksAge) + tm_fill(col = "LeakAgeDaysAvg", style = "fisher",
+                                      palette = "YlOrRd", 
+                                      title = "Mean Leak\nAge (days)",
+                                      legend.format = list(digits = 0),
+                                      colorNA = NULL) +
+  tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
+  tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
+  tm_shape(ng_service_labels) + 
+  tm_text("ID", size = 0.6, col = "gray") +
+  tm_shape(ng_service_labels2) + 
+  tm_text("ID", size = 0.4, col = "gray") +
+  tm_shape(ng_service_labels3) + 
+  tm_text("ID", size = 0.6, col = "gray", xmod = 2.7, ymod = 0.7) +
+  # tm_shape(EJlayer) + tm_borders(col = "blue", alpha = 0.7) +
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c("left","bottom"),
+            title = "Massachusetts Mean Age of Unrepaired Leaks by Municipality and Utility Territories, 2019",
+            inner.margins = c(0.02,0.02,0.09,0.02)) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+
+tmap_save(m5, filename = "Images/pub/m_cosubAge.png", 
+          dpi = 600, height = 4, width = 8, units = "in")
+
+knitr::include_graphics("Images/pub/m_cosubAge.png")
+```
+
+```{r figDotAge, fig.align='center'}
+# dot graph of relative exposure for unrepaired leak age around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+# Set up for dot graph to show all three scales
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeakAgeDaysAvgRR:wLeakAgeDaysAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensityBG") %>% 
+  # filter(!Group %in% c("MA_ENGLISH","MA_MINORITY21","MA_INCOME21")) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeakAgeDaysAvgRR" = "All Leaks",
+                            "wLeakAgeDaysAvgRRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeakAgeDaysAvgRRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeakAgeDaysAvgRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityBG, leakClass),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, leakClass, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensity_df_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensity_df_tr2 <- ppLeakDensity_df_tr %>% 
+  pivot_longer(wLeakAgeDaysAvgRR:wLeakAgeDaysAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensityTR") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wLeakAgeDaysAvgRR" = "All Leaks",
+                            "wLeakAgeDaysAvgRRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeakAgeDaysAvgRRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeakAgeDaysAvgRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityTR, leakClass),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, leakClass, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensity_df_co2 <- ppLeakDensity_df_co %>% 
+  pivot_longer(wLeakAgeDaysAvgRR:wLeakAgeDaysAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensityCO") %>% 
+  # filter(!Group %in% c("Disabled Adults", "Housing Burdened")) %>%
+  mutate(leakClass = recode(leakClass, "wLeakAgeDaysAvgRR" = "All Leaks",
+                            "wLeakAgeDaysAvgRRC1" = "Class 1 Leaks (high hazard)",
+                            "wLeakAgeDaysAvgRRC2" = "Class 2 Leaks (med hazard)",
+                            "wLeakAgeDaysAvgRRC3" = "Class 3 Leaks (low hazard)"),
+         Group = reorder_within(Group, leakDensityCO, leakClass),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, leakClass, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensity_df_bg2 <- ppLeakDensity_df_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensity_df_bg2,.)
+
+# join them all together
+ppLeakDensity_df_all <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                             ppLeakDensity_df_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensity_df_all2 <- list(ppLeakDensity_df_tr2, ppLeakDensity_df_bg2,
+                              ppLeakDensity_df_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+ppLeakDensity_df_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensity_df_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak age to population mean",
+       title = "Relative Exposure to Mean Leak Age in 2019 across Massachusetts", caption = "Colors indicate if leak age is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotGraphAgeallscalesRE.png")
+```
+
+
+### Utility-specific ages of unrepaired leaks
+
+```{r}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeakAgeDaysAvgRRBG, wLeakAgeDaysAvgRRCG, wLeakAgeDaysAvgRREV, 
+                 wLeakAgeDaysAvgRRFG, wLeakAgeDaysAvgRRLU, wLeakAgeDaysAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = "Berkshire Gas",
+                          "wLeakAgeDaysAvgRRCG" = "Columbia Gas",
+                          "wLeakAgeDaysAvgRREV" = "Eversource Energy",
+                          "wLeakAgeDaysAvgRRLU" = "Liberty Utilities",
+                          "wLeakAgeDaysAvgRRNG" = "National Grid",
+                          "wLeakAgeDaysAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  pivot_longer(c(wLeakAgeDaysAvgRRBG, wLeakAgeDaysAvgRRCG, wLeakAgeDaysAvgRREV, 
+                 wLeakAgeDaysAvgRRFG, wLeakAgeDaysAvgRRLU, wLeakAgeDaysAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = "Berkshire Gas",
+                          "wLeakAgeDaysAvgRRCG" = "Columbia Gas",
+                          "wLeakAgeDaysAvgRREV" = "Eversource Energy",
+                          "wLeakAgeDaysAvgRRLU" = "Liberty Utilities",
+                          "wLeakAgeDaysAvgRRNG" = "National Grid",
+                          "wLeakAgeDaysAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  pivot_longer(c(wLeakAgeDaysAvgRRBG, wLeakAgeDaysAvgRRCG, wLeakAgeDaysAvgRREV, 
+                 wLeakAgeDaysAvgRRFG, wLeakAgeDaysAvgRRLU, wLeakAgeDaysAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = "Berkshire Gas",
+                          "wLeakAgeDaysAvgRRCG" = "Columbia Gas",
+                          "wLeakAgeDaysAvgRREV" = "Eversource Energy",
+                          "wLeakAgeDaysAvgRRLU" = "Liberty Utilities",
+                          "wLeakAgeDaysAvgRRNG" = "National Grid",
+                          "wLeakAgeDaysAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  reduce(., full_join, by = "Group") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = if_else(min <= 1 & Status == "Greater Exposure", "Pop Mean", Status))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                             ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak age (days) to general population-weighted mean",
+       title = "Relative Exposure to Average Unrepaired Leak Age in 2019 across Massachusetts by Utility", caption = "Colors indicate if time is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotAgeUtilityRE.png")
+```
+
+
+# Discussion
+
+
+# Conclusion and Policy Implications
+
+
+# References {-}
+
+<div id="refs"></div>
+
+
+# (APPENDIX) Appendix {-} 
+
+# Tables
+
+```{r tabUnrepairedBG, fig.align='center'}
+# Unrepaired leaks per square kilometer
+ppLeakDensity_df_bg %>% 
+  select(Group, wLeaksPerSqKm, wLeaksRR, wLeaksPerSqKmC1, wLeaksRRC1, wLeaksPerSqKmC2, wLeaksRRC2, wLeaksPerSqKmC3, wLeaksRRC3) %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  arrange(desc(wLeaksPerSqKm)) %>% 
+  kable(longtable = T, booktabs = T,
+        format.args = list(big.mark = ','), 
+        caption = "Population-weighted mean leak density (leaks/sqkm) of unrepaired leaks in 2019 by Census Block Group", align = "r", digits = c(0,1,2,2,2,2,2,2,2), 
+        col.names = c("Group","Per SqKm","RE","Per SqKm","RE",
+                      "Per SqKm","RE","Per SqKm","RE")) %>% 
+  add_header_above(., c(" ", "All Unrepaired Leaks" = 2, "Class 1 Leaks" = 2, 
+                        "Class 2 Leaks" = 2, "Class 3 Leaks" = 2)) %>% 
+  kable_styling(latex_options = c("repeat_header")) %>% 
+  add_footnote(., "RE = Relative Exposure or ratio of group leak density to leak density of total population, total households, or total occupied housing units", notation = "none")
+```
+
+
+# Dunn's Test Results
+```{r tabDunnBGHU}
+# Dunn's Test tables
+read_csv("Tables/BG/pwdt_leaks_hu.csv") %>% 
+  select(-.y.) %>% 
+  mutate(group1 = recode(group1, "nhasianpop_E" = "Asian",
+                         "nhblackpop_E" = "Black",
+                         "minority_E" = "People of Color",
+                         "over64E" = "Over 64",
+                         "MA_MINORITY21"= "MA Minority",
+                         "totalpopE" = "Total Pop",
+                         "nhwhitepop_E" = "White",
+                         "eng_limitE" = "Limited English HH",
+                         "lthsE" = "No HS Dip",
+                         "renter_occ_unitsE" = "Renter Occupied HU",
+                         "hisppop_E" = "Hispanic",
+                         "num2povE" = "Low Income",
+                         "MA_ENGLISH" = "MA Limited English HH",
+                         "MA_INCOME21" = "MA Low Income"),
+         group2 = recode(group2, "under5E" = "Under 5",
+                         "totalpopE" = "Total Pop",
+                         "total_occ_unitsE" = "Total Occupied HU")) %>% 
+  kable(., longtable = T, booktabs = T,
+        format.args = list(big.mark = ','),
+        caption = "Dunn's Test for Unrepaired Leaks per Occupied Housing Unit by Census Block Group", 
+        align = "r", 
+        digits = c(0,0,0,0,3,3,7,0)
+        ) %>% 
+  # add_header_above(., c(" ", "Unrepaired Leaks" = 4, "Repaired Leaks" = 4, 
+  #                       "Total Leaks" = 4)) %>% 
+  # row_spec(4, bold = T) %>% 
+  kable_styling(latex_options = c("repeat_header"))
+```
+
