@@ -78,8 +78,8 @@ ppLeakDensity_df_tr <- readRDS("Data/ppLeakDensity_df_tracts2019.Rds")
 ppLeakDensity_df_co <- readRDS("Data/ppLeakDensity_df_cosubs2019.Rds")
 
 ppLeakDensityJoinedU_bg <- readRDS("Data/ppLeakDensityJoinedU_BG2019.Rds")
-ppLeakDensityJoinedU_tr <- readRDS("Data/ppLeakDensityJoinedU_Tract2019.Rds")
-ppLeakDensityJoinedU_co <- readRDS("Data/ppLeakDensityJoinedU_Cosub2019.Rds")
+ppLeakDensityJoinedU_tr <- readRDS("Data/ppLeakDensityJoinedU_TR2019.Rds")
+ppLeakDensityJoinedU_co <- readRDS("Data/ppLeakDensityJoinedU_CO2019.Rds")
 
 # set common CRS
 unrepaired2019 <- st_transform(unrepaired2019, crs = st_crs(ma_blkgrps))
@@ -551,16 +551,16 @@ Leaks were concentrated in and around the more populous urban areas. Leak densit
 unrepairedUSum_df <- unrepaired2019 %>% 
   as.data.frame() %>% 
   mutate(Utility = recode(Utility, 
-                          "National Grid - Colonial Gas" = "National Grid",
-                          "National Grid - Boston Gas" = "National Grid")) %>% 
+                          "Fitchburg" = "Fitchburg Gas",
+                          "Eversource" = "Eversource Energy")) %>% 
   group_by(Utility) %>% 
   summarize(Unrepaired = n())
 
 repairedUSum_df <- repaired2019 %>% 
   as.data.frame() %>% 
   mutate(Utility = recode(Utility, 
-                          "National Grid - Colonial Gas" = "National Grid",
-                          "National Grid - Boston Gas" = "National Grid")) %>% 
+                          "Fitchburg" = "Fitchburg Gas",
+                          "Eversource" = "Eversource Energy")) %>% 
   group_by(Utility) %>% 
   summarize(Repaired = n())
 
