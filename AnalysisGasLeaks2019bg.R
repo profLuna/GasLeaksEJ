@@ -2683,3 +2683,630 @@ saveRDS(ppLeakDensityJoinedU, file = "Data/ppLeakDensityJoinedU_BG2019.Rds")
 # load data
 ppLeakDensityJoinedU <- readRDS("Data/ppLeakDensityJoinedU_BG2019.Rds")
 
+
+#### FIGURES
+# faceted dot graph of RR for unrepaired leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeaksRR:wLeaksRRC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksRR" = "All Leaks",
+                            "wLeaksRRC1" = "Class 1 Leaks",
+                            "wLeaksRRC2" = "Class 2 Leaks",
+                            "wLeaksRRC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Unrepaired Gas Leaks in 2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClassRR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for repaired leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeaksRRrepair:wLeaksRRrepairC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksRRrepair" = "All Leaks",
+                            "wLeaksRRrepairC1" = "Class 1 Leaks",
+                            "wLeaksRRrepairC2" = "Class 2 Leaks",
+                            "wLeaksRRrepairC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Repaired Gas Leaks in 2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClassREPRR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for repaired leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeaksRRtotal:wLeaksRRtotalC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksRRtotal" = "All Leaks",
+                            "wLeaksRRtotalC1" = "Class 1 Leaks",
+                            "wLeaksRRtotalC2" = "Class 2 Leaks",
+                            "wLeaksRRtotalC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Total Gas Leaks (unrepaired + repaired) in 2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClassAllRR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for unrepaired per HU around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeaksPerHURR:wLeaksPerHURRC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeaksPerHURR" = "All Leaks",
+                            "wLeaksPerHURRC1" = "Class 1 Leaks",
+                            "wLeaksPerHURRC2" = "Class 2 Leaks",
+                            "wLeaksPerHURRC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean by Census Block Group",
+       title = "Relative Risk of Priority Populations and Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClass_HU_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for repaired per HU around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wREPLeaksPerHURR:wREPLeaksPerHURRC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wREPLeaksPerHURR" = "All Leaks",
+                            "wREPLeaksPerHURRC1" = "Class 1 Leaks",
+                            "wREPLeaksPerHURRC2" = "Class 2 Leaks",
+                            "wREPLeaksPerHURRC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean by Census Block Group",
+       title = "Relative Risk of Priority Populations and Repaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClassREP_HU_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for total per HU around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wALLLeaksPerHURR:wALLLeaksPerHURRC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wALLLeaksPerHURR" = "All Leaks",
+                            "wALLLeaksPerHURRC1" = "Class 1 Leaks",
+                            "wALLLeaksPerHURRC2" = "Class 2 Leaks",
+                            "wALLLeaksPerHURRC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean by Census Block Group",
+       title = "Relative Risk of Priority Populations and Total Leaks (unrepaired + repaired) Per Occupied Housing Unit in\n2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClassAll_HU_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for leak repair time around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wDaysToRepairAvgRR:wDaysToRepairAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wDaysToRepairAvgRR" = "All Leaks",
+                            "wDaysToRepairAvgRRC1" = "Class 1 Leaks",
+                            "wDaysToRepairAvgRRC2" = "Class 2 Leaks",
+                            "wDaysToRepairAvgRRC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak repair time to population mean by Census Block Group",
+       title = "Relative Risk of Priority Populations and Mean Leak Repair Time in 2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClassTime_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for leak age around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensity_df_bg %>% 
+  pivot_longer(wLeakAgeDaysAvgRR:wLeakAgeDaysAvgRRC3, 
+               names_to = "leakClass", values_to = "leakDensity") %>% 
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income")) %>%
+  mutate(leakClass = recode(leakClass, "wLeakAgeDaysAvgRR" = "All Leaks",
+                            "wLeakAgeDaysAvgRRC1" = "Class 1 Leaks",
+                            "wLeakAgeDaysAvgRRC2" = "Class 2 Leaks",
+                            "wLeakAgeDaysAvgRRC3" = "Class 3 Leaks"),
+         Group = reorder_within(Group, leakDensity, leakClass),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ leakClass, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak age to population mean by Census Block Group",
+       title = "Relative Risk of Priority Populations and Mean Age of Unrepaired Leaks in 2019 across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyClassAge_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for unrepaired leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeaksRRBG, wLeaksRRCG, wLeaksRREV, 
+                 wLeaksRRFG, wLeaksRRLU, wLeaksRRNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksRRBG" = "Berkshire Gas",
+                          "wLeaksRRCG" = "Columbia Gas",
+                          "wLeaksRREV" = "Eversource Energy",
+                          "wLeaksRRLU" = "Liberty Utilities",
+                          "wLeaksRRNG" = "National Grid",
+                          "wLeaksRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Unrepaired Gas Leaks in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtilityRR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for unrepaired leaks per occupied housing unit around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeaksPerHURRBG, wLeaksPerHURRCG, wLeaksPerHURREV, 
+                 wLeaksPerHURRFG, wLeaksPerHURRLU, wLeaksPerHURRNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksPerHURRBG" = "Berkshire Gas",
+                          "wLeaksPerHURRCG" = "Columbia Gas",
+                          "wLeaksPerHURREV" = "Eversource Energy",
+                          "wLeaksPerHURRFG" = "Unitil/Fitchburg Gas",
+                          "wLeaksPerHURRLU" = "Liberty Utilities",
+                          "wLeaksPerHURRNG" = "National Grid"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Unrepaired Gas Leaks Per Occupied Housing Unit in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtility_HU_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for repaired leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeaksRRrepairBG, wLeaksRRrepairCG, wLeaksRRrepairEV, 
+                 wLeaksRRrepairFG, wLeaksRRrepairLU, wLeaksRRrepairNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksRRrepairBG" = "Berkshire Gas",
+                          "wLeaksRRrepairCG" = "Columbia Gas",
+                          "wLeaksRRrepairEV" = "Eversource Energy",
+                          "wLeaksRRrepairLU" = "Liberty Utilities",
+                          "wLeaksRRrepairNG" = "National Grid",
+                          "wLeaksRRrepairFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Repaired Gas Leaks in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtilityREP_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for repaired leaks per occupied housing unit around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wREPLeaksPerHURRBG, wREPLeaksPerHURRCG, wREPLeaksPerHURREV, 
+                 wREPLeaksPerHURRFG, wREPLeaksPerHURRLU, wREPLeaksPerHURRNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wREPLeaksPerHURRBG" = "Berkshire Gas",
+                          "wREPLeaksPerHURRCG" = "Columbia Gas",
+                          "wREPLeaksPerHURREV" = "Eversource Energy",
+                          "wREPLeaksPerHURRFG" = "Unitil/Fitchburg Gas",
+                          "wREPLeaksPerHURRLU" = "Liberty Utilities",
+                          "wREPLeaksPerHURRNG" = "National Grid"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Repaired Gas Leaks Per Occupied Housing Unit in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtilityREP_HU_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for total leak density around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeaksRRtotalBG, wLeaksRRtotalCG, wLeaksRRtotalEV, 
+                 wLeaksRRtotalFG, wLeaksRRtotalLU, wLeaksRRtotalNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksRRtotalBG" = "Berkshire Gas",
+                          "wLeaksRRtotalCG" = "Columbia Gas",
+                          "wLeaksRRtotalEV" = "Eversource Energy",
+                          "wLeaksRRtotalLU" = "Liberty Utilities",
+                          "wLeaksRRtotalNG" = "National Grid",
+                          "wLeaksRRtotalFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Total Gas Leaks (unrepaired + repaired) in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtilityAll_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for total leaks per occupied housing unit around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wALLLeaksPerHURRBG, wALLLeaksPerHURRCG, wALLLeaksPerHURREV, 
+                 wALLLeaksPerHURRFG, wALLLeaksPerHURRLU, wALLLeaksPerHURRNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wALLLeaksPerHURRBG" = "Berkshire Gas",
+                          "wALLLeaksPerHURRCG" = "Columbia Gas",
+                          "wALLLeaksPerHURREV" = "Eversource Energy",
+                          "wALLLeaksPerHURRFG" = "Unitil/Fitchburg Gas",
+                          "wALLLeaksPerHURRLU" = "Liberty Utilities",
+                          "wALLLeaksPerHURRNG" = "National Grid"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
+                            km^2, ")", " to population mean by Census Block Group",sep = "")),
+       title = "Relative Risk of Priority Populations and Total Gas Leaks (unrepaired + repaired) Per Occupied Housing Unit in 2019\nby Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtilityAll_HU_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for age of unrepaired leaks around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wLeakAgeDaysAvgRRBG, wLeakAgeDaysAvgRRCG, wLeakAgeDaysAvgRREV, 
+                 wLeakAgeDaysAvgRRFG, wLeakAgeDaysAvgRRLU, wLeakAgeDaysAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = "Berkshire Gas",
+                          "wLeakAgeDaysAvgRRCG" = "Columbia Gas",
+                          "wLeakAgeDaysAvgRREV" = "Eversource Energy",
+                          "wLeakAgeDaysAvgRRLU" = "Liberty Utilities",
+                          "wLeakAgeDaysAvgRRNG" = "National Grid",
+                          "wLeakAgeDaysAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Population-weighted mean age (days) of unrepaired leaks by Census Block Group",
+       title = "Relative Risk of Priority Populations and Average Age of Unrepaired Leaks in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtilityAge_RR_blkgrp2019.png")
+
+
+# faceted dot graph of RR for leak repair time around zero line
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+
+ppLeakDensityJoinedU_bg %>% 
+  pivot_longer(c(wDaysToRepairAvgRRBG, wDaysToRepairAvgRRCG, wDaysToRepairAvgRREV, 
+                 wDaysToRepairAvgRRFG, wDaysToRepairAvgRRLU, wDaysToRepairAvgRRNG), 
+               names_to = "Utility", values_to = "leakDensity") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensity) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wDaysToRepairAvgRRBG" = "Berkshire Gas",
+                          "wDaysToRepairAvgRRCG" = "Columbia Gas",
+                          "wDaysToRepairAvgRREV" = "Eversource Energy",
+                          "wDaysToRepairAvgRRLU" = "Liberty Utilities",
+                          "wDaysToRepairAvgRRNG" = "National Grid",
+                          "wDaysToRepairAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Group = reorder_within(Group, leakDensity, Utility),
+         Status = case_when(
+           leakDensity == 1 ~ "Pop Mean",
+           leakDensity > 1 ~ "Greater Risk",
+           leakDensity < 1 ~ "Lower Risk"
+         )) %>%
+  ggplot(aes(x = Group, y = leakDensity, color = Status)) + 
+  geom_hline(yintercept = 1, color = "gray30") +
+  geom_point(size = 2) +
+  scale_color_manual(values = cols) +
+  coord_flip() + 
+  scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top") +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Population-weighted mean leak repair time(days) by Census Block Group",
+       title = "Relative Risk of Priority Populations and Average Leak Repair Time in 2019 by Utility across Massachusetts", caption = "Based on 5-year ACS 2015-19 estimates")
+
+ggsave("Images/LeaksPPbyUtilityTime_RR_blkgrp2019.png")
+
+
