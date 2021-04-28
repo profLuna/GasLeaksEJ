@@ -951,7 +951,7 @@ knitr::include_graphics("Images/pub/m_tractOHU.png")
 ```
 
 ```{r mapOHUco, fig.align='center', cache=TRUE}
-# create map of leaks per OHU by Tract
+# create map of leaks per OHU by Cosub
 cosubsLeaksOHU <- ma_cosub %>% 
   filter(ALLleaks_hu > 0)
 
@@ -1371,7 +1371,7 @@ knitr::include_graphics("Images/pub/m_blkgrpTime.png")
 ```
 
 ```{r mapTimeTR, fig.align='center', cache=TRUE}
-# create a map of average repair times by block group
+# create a map of average repair times by tract
 tractsLeaksTime <- ma_tracts %>% 
   filter(repaired2019total > 0)
 
@@ -1410,7 +1410,7 @@ knitr::include_graphics("Images/pub/m_tractTime.png")
 ```
 
 ```{r mapTimeCO, fig.align='center', cache=TRUE}
-# create a map of average repair times by block group
+# create a map of average repair times by cosub
 cosubLeaksTime <- ma_cosub %>% 
   filter(repaired2019total > 0)
 
