@@ -82,11 +82,35 @@ At its core, environmental justice is about the spatial distribution of environm
 # Data and methods
 ## Data
 
+Gas leaks data for this analysis were acquired from HEET (https://heetma.org/gas-leaks/gas-leak-maps/). HEET’s data on gas leaks is derived from Annual Service Quality Reports (ASQR) that are submitted by investor-owned utilities to the Massachusetts Department of Public Utilities (DPU) each February, which reflect gas leak activity for the previous calendar year [@HEET_2021; @GasLeakAct]. HEET geocoded the leaks based on their reported addresses or cross-street locations and performed extensive quality control on geocoded results. HEET’s gas leak data contain all of the original data reported in the AQSRs, including addresses and geocoded coordinate locations, date first reported, and leak class or grade (i.e., explosive hazard) of individual repaired and unrepaired gas leaks for each utility for one year – January 1 through December 31, 2019.
+
+Gas leak data was disaggregated by repaired or unrepaired status through 2019 and also by leak class or grade. For this analysis, leak class and grade are used synonymously. Under Massachusetts law (220 CMR 114.04), leaks are classified by utilities according to the following classification system: 
+
+* Grade 1 represents “an existing or probable hazard to persons or property.”  Requires “immediate commencement of repair and continuous action until the conditions are no longer hazardous, the source of the leak is eliminated, and permanent repairs have been completed.”
+* Grade 2 is recognized as “nonhazardous to persons or property at the time of detection, but justifies scheduled repair based on probable future hazard.”  Must be repaired within 12 months from the date the leak was classified.  Must be reevaluated at least once every six months until eliminated.
+* Grade 3 is recognized as “nonhazardous to persons or property at the time of detection and can be reasonably expected to remain nonhazardous.”  Must be reevaluated during the next scheduled survey, or within 12 months from the date last evaluated, whichever occurs first. Leaks classified on or after January 1, 2018 must be repaired or eliminated within eight years. 
+
+As of 2018, gas utilities are also required to repair environmentally significant grade 3 leaks (SEIs) on an accelerated schedule, within one to five years depending on the leak extent, but SEIs are not evaluated here due to the variability in classification accuracy. 
+
+*INSERT EXPLANATION OF ‘ELIMNATED LEAKS’ TO DISTINGUISH FROM ‘REPAIRED’ LEAKS AND WHY WE DID NOT INCORPORATE THEM*
+
+Although 2020 gas leaks data were available at the time of this analysis, the results of that analysis are not presented here due to concerns about their representativeness given the impact of the pandemic. Results of the 2020 analysis are largely consistent with the 2019 analysis presented here. Those results are accessible online in supplementary materials. MAYBE INCLUDE THIS AS A FOOTNOTE.
+
+Population data was derived from the American Community Survey 5-year estimates for 2015-2019 at the Census Block Group level, Census Tract level, and the municipality level (i.e., Census County Subdivisions) via the tidycensus package in R (Walker and Herman 2021).   
 
 
 ## Methodology
-
 ### Population-weighted mean exposure
+
+Exposure to gas leaks was measured as the population-weighted mean gas leaks density within the geographic unit of analysis (i.e., Block Group, Tract, or municipality). For example, gas leak density is calculated as the number of reported gas leaks in a Block Group divided by the area of the Block Group in square kilometers. Population-weighted mean gas leaks density is calculated by multiplying the gas leaks density of each Block Group and the respective population groups of the same Block Groups to get weighted values, from which a weighted mean is calculated. Only Block Groups falling within the natural gas utility service areas providing leak data were included in the analysis. 
+
+A population-weighted mean is calculated according the following formula:
+$$ \overline{x}_w = \frac{\sum_{i=1}^{n} (x_i \times w_i)}{\sum_{i=1}^{n}w_i} $$
+where $\overline{x}_w$ is the population-weighted mean of some variable, in this case gas leak density;
+where ${x_i}$ represents an individual observation, in this case the leak density of a Block Group;
+where ${w_i}$ is the weight associated with an observation, in this case the population of a block group.
+
+Population-weighted means are a common approach in analyses of the distribution of environmental burdens and amenities, particularly when comparing between population subgroups [@Bell_Ebisu_2012; @Mikati_Benson_2018; @Richmond-Bryant_Mikati_2020]. The US Environmental Protection Agency (EPA) uses population-weighted means as the primary way of expressing exposure differentials to a variety of environmental burdens in its nationwide EJSCREEN application (https://www.epa.gov/ejscreen). One of the advantages of a population-weighted approach is that population estimates for Census statistical units (i.e., Block Groups or Tracts) are not correlated with population density. This is because Census units are constructed to have similar population sizes. In Massachusetts, over 90% of Block Groups have populations between 565 and 2,700 for the 2015-2019 period. This means population weighting does not emphasize urban or high-density locations. If population-weighted gas leak density is higher in denser, more urban areas, this difference is not due to population weighting.  Instead, this difference likely reflects the underlying phenomenon itself or other drivers of the phenomenon [@EPA_2019]. 
 
 ### Relative exposure
 
