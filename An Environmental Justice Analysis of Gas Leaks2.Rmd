@@ -61,8 +61,28 @@ Sustained attention to the problem of leaking natural gas for the last decade in
 
 ## An Environmental Justice framework
 
+Environmental justice is the principle that everyone has a right to a healthy environment and to be treated fairly, with meaningful opportunity for participation in processes or decisions that affect them.  In practice, environmental justice is rooted in the recognition that specific communities and population groups – particularly People of Color and lower income people – have been denied these rights.
+
+Since the 1980s, government reports, academic scholarship, and investigative journalism have repeatedly found that People of Color and low income communities across the country are disproportionately exposed or vulnerable to a wide range of environmental burdens, including hazardous waste [@Salazar_Clauson_2019], air pollution [@Colmer_Hardman_2020], water pollution [@Schaider_2019], noise pollution [@Collins_Nadybal_2020], traffic [@Pinto_Reichmuth_2019], and more recently, the climate change enhanced risks of flooding [@Hardy_Milligan_2017], excessive heat [@Hoffman_Shandas_2020], and extreme weather [@García-López_2018]. Conversely, these same communities and groups are disproportionately denied environmental benefits or amenities, such as access to greenspace [@Rigolon_Browning_2018], urban tree canopy coverage [@Schwarz_Fragkias_2015], lead-free housing [@Whitehead_LaToria_2019], access to safe drinking water [@Fedinick_Taylor_2019], and equal environmental compliance [@McDonald_Jones_2018] and enforcement [@Konisky_Reenock_2018]. These burdens do not occur singly or in isolation, but are overlapping, cumulative, and synergistic in their effects on health and wellbeing and even economic opportunity. 
+
+The focus of an environmental justice perspective is therefore on: 
+
+* those communities that have been, and continue to be, disproportionately burdened by pollution and other environmental insults, 
+* those who are especially vulnerable to risks and threats, 
+* those who have been unfairly excluded from enjoying environmental benefits, and 
+* those who have been denied a voice in decision making about their environments – “where they live, work, and play” (Robert Bullard quoted in Schweizer 1999).
+
+Since the mid 1990s, the federal government and most states have issued some form of environmental justice policy [@Bonorris2010; @ExecutiveOrder1994]. Massachusetts issued its first environmental justice policy in 2002 under the authority of the state Environment agency [@Globe_2002]. In March 2021, the Massachusetts legislature codified this environmental justice policy into law, defining “environmental justice communities” across the state based on population thresholds for minority, low income, and limited English-speaking residents, and adding language enabling state officials to consider cumulative environmental burdens in decision making [@ClimateRoad]. 
+
+Natural gas leaks should be evaluated through an environmental justice framework. Gas leaks are environmental problems with global and local impacts, and these impacts are unequal. Methane, the primary constituent of natural gas, is many times more potent than carbon dioxide as a greenhouse gas in the near term. Because lower income communities and People of Color are more vulnerable to the effects of climate change, the consequences of delay or inaction are inherently inequitable. Methane also contributes significantly to the formation of ground-level ozone [@West_Fiore_2006], an air pollutant with serious public health impacts, especially for people with asthma or other respiratory sensitivities. People of Color, particularly children, suffer from asthma at rates two to three times that of their White counterparts [@ALA2021; @Keet_Matsui_2017]. Gas leaks have been shown to damage or kill street trees [@Schollaert_2020]. Urban communities, particularly those with higher proportions of People of Color and low-income residents, tend to have much less tree coverage in comparison to Whiter and wealthier communities [@Namin_Xu_2020; @McDonald_Jones_2018]. Tree coverage and other urban vegetation have been connected to improved air quality, reduced runoff, and to attenuated heat [@Ferrini_Fini_2020]. To the extent that gas leaks reduce or weaken already meager tree coverage, they will exacerbate these differential risks. Utilities pass on the costs of lost gas to ratepayers. For lower income households and People of Color who already experience higher energy burdens [@Drehobl_Ross_2020], the added costs of this undelivered gas have a regressive impact. And finally, of course, the presence of gas leaks always carries the risk of explosions, fires, or disruption.
+
+At its core, environmental justice is about the spatial distribution of environmental benefits and burdens [@Lee_2021]. This is because environmental phenomena are inherently geographic, and because where something happens (and its impact) is often closely related to who lives there. This analysis applies an environmental justice analysis to the phenomenon of natural gas leaks in Massachusetts using a geospatial approach to quantitatively describe and compare the experiences of different population groups with respect to both exposure to gas leaks and to the timeliness of their repair. 
+
+
 # Data and methods
 ## Data
+
+
 
 ## Methodology
 
