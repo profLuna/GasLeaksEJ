@@ -24,7 +24,11 @@ A growing body of research shows that natural gas leaks at the distribution leve
 \pagebreak
 # Introduction
 
-This is an analysis of transportation-related emissions and related externalities in Connecticut. 
+From the wellhead to the gas appliances in homes, researchers increasingly find that natural gas leaks are much more common and extensive than previously understood or reported. These leaks pose explosive fire hazards, contribute to degradation of indoor and outdoor air quality, kill street trees, and have outsized climate impacts because methane is an exceptionally powerful greenhouse gas. Moreover, the loss of natural gas represents an economic burden both to distributors and to consumers. Despite rapid growth in studies about the extent of gas leaks and methods to detect them, research on gas leaks from an equity perspective has been rare and inconclusive [@PHILLIPS20131; @Scott_Scott_2019]. As with many other forms of environmental and energy challenges, there is reason to suspect that the experience of natural gas leaks is neither equal nor equitable. 
+
+This paper assesses the degree to which distribution-level natural gas leaks are distributed inequitably and how repair of these leaks varies between communities across the state of Massachusetts, USA. To perform this assessment, we utilize newly available street-level records of gas leaks reported by natural gas utilities which have been geocoded by the Cambridge-based Home Energy Efficiency Team (HEET). The gas leaks records reveal not only detailed information about individual leak locations, but also their first reporting date, whether or when they were repaired, and their leak class or grade (i.e., hazardousness). We compare the relative frequency of these leaks across communities at varying geographic scales using American Community Survey census data to determine whether there are systematic differences in exposure or timeliness of repair for different geographic communities and population subgroups. 
+
+This high resolution, statewide assessment of gas leaks exposure and response applies a much-needed environmental justice framework to the problem of natural gas leaks. It advances on prior work on gas leaks occurrence which has been limited to independent analyses of specific municipalities, or which has been conducted at coarse geographic scales due to the lack of detailed data below regional or utility-scale reporting. This analysis draws on a robust body of environmental justice research and practice to demonstrate the application of an equity analysis to the problem of distribution-level gas leaks. The results validate concerns that exposure and response to natural gas leaks are inequitable. These findings affirm the value to regulators, utilities, and communities of adopting an environmental justice perspective to reveal and understand how inequities are created and perpetuated in natural gas distribution. This study also highlights the critical importance of detailed and transparent reporting by utilities and their regulators to support environmental justice. 
 
 # Background
 ## Gas service provision in Massachusetts
@@ -1645,7 +1649,7 @@ repaired2019 %>%
   as.data.frame() %>% 
   mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
                           "National Grid - Colonial Gas" = "National Grid")) %>% 
-  ggplot(aes(x = reorder(Utility, DaysToRepair, fun = median), 
+  ggplot(aes(x = reorder(Utility, DaysToRepair, FUN = median, na.rm = TRUE), 
              y = DaysToRepair, fill = Utility)) +
   # geom_violin(width=1.4) +
   # geom_boxplot(width=0.1, color="grey", alpha=0.2) + 
@@ -2133,6 +2137,30 @@ ggsave("Images/pub/DotGraphAgeallscalesRE.png")
 
 
 ### Utility-specific ages of unrepaired leaks
+
+```{r}
+# ordered boxplot of age of unrepaired leak ages by utility
+unrepaired2019 %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
+                          "National Grid - Colonial Gas" = "National Grid")) %>% 
+  ggplot(aes(x = reorder(Utility, LeakAgeDays, FUN = median, na.rm = TRUE), 
+             y = LeakAgeDays, fill = Utility)) +
+  # geom_violin(width=1.4) +
+  # geom_boxplot(width=0.1, color="grey", alpha=0.2) + 
+  geom_boxplot() + 
+  coord_flip() +
+  theme_minimal() +
+  theme(
+    legend.position="none") +
+  ggtitle("Age (days) of unrepaired leaks by utility") +
+  xlab("") + ylab("Days since leak reported to end of 2019") +
+  scale_y_continuous(labels = function(x) format(x, big.mark = ","))
+  # facet_wrap("Class", scales = "free")
+
+ggsave(filename = "Images/pub/boxplotLeaksByUtilityAge.png")
+```
+
 
 ```{r}
 # Set up for dot graph to show all three scales by utility
