@@ -92,7 +92,7 @@ Gas leak data was disaggregated by repaired or unrepaired status through 2019 an
 
 As of 2018, gas utilities are also required to repair environmentally significant grade 3 leaks (SEIs) on an accelerated schedule, within one to five years depending on the leak extent, but SEIs are not evaluated here due to the variability in classification accuracy. 
 
-*INSERT EXPLANATION OF ‘ELIMNATED LEAKS’ TO DISTINGUISH FROM ‘REPAIRED’ LEAKS AND WHY WE DID NOT INCORPORATE THEM*
+**INSERT EXPLANATION OF ‘ELIMNATED LEAKS’ TO DISTINGUISH FROM ‘REPAIRED’ LEAKS AND WHY WE DID NOT INCORPORATE THEM**
 
 Although 2020 gas leaks data were available at the time of this analysis, the results of that analysis are not presented here due to concerns about their representativeness given the impact of the pandemic. Results of the 2020 analysis are largely consistent with the 2019 analysis presented here. Those results are accessible online in supplementary materials. MAYBE INCLUDE THIS AS A FOOTNOTE.
 
@@ -112,11 +112,140 @@ where ${w_i}$ is the weight associated with an observation, in this case the pop
 
 Population-weighted means are a common approach in analyses of the distribution of environmental burdens and amenities, particularly when comparing between population subgroups [@Bell_Ebisu_2012; @Mikati_Benson_2018; @Richmond-Bryant_Mikati_2020]. The US Environmental Protection Agency (EPA) uses population-weighted means as the primary way of expressing exposure differentials to a variety of environmental burdens in its nationwide EJSCREEN application (https://www.epa.gov/ejscreen). One of the advantages of a population-weighted approach is that population estimates for Census statistical units (i.e., Block Groups or Tracts) are not correlated with population density. This is because Census units are constructed to have similar population sizes. In Massachusetts, over 90% of Block Groups have populations between 565 and 2,700 for the 2015-2019 period. This means population weighting does not emphasize urban or high-density locations. If population-weighted gas leak density is higher in denser, more urban areas, this difference is not due to population weighting.  Instead, this difference likely reflects the underlying phenomenon itself or other drivers of the phenomenon [@EPA_2019]. 
 
+
 ### Relative exposure
 
-### Tests of Significant Difference
+To better compare differences between groups, results are presented as relative exposures. Relative exposure is calculated similarly to relative risk or risk ratio:
+$$ RE = \frac{\overline{x_w} subgroup} {\overline{x_w} total pop} $$
+where $RE$ is the relative exposure expressed as a ratio;
+where $\overline{x_w} subgroup$ is the population-weighted mean exposure of a subgroup, such as People of Color;
+where $\overline{x_w} total pop$ is the population-weighted mean exposure of the total or comparison population.
+
+Relative exposure values greater than one indicate that the subgroup is more exposed than the general population. Values less than one indicate that the subgroup is less exposed than the general population. For example, a relative exposure of 1.5 would indicate that a group has an exposure that is 1.5 times that of, or 50% greater than, the total population. Risk or relative exposure ratios are common in both public health and in studies of environmental justice because of their simplicity in making comparisons and communicating differences in exposure between groups [@Debbage_2019; @Mikati_Benson_2018; @Harner2002]. 
+
+For this analysis, relative exposures are calculated relative to the general population ACS estimates. For relative exposure by race, ethnicity, and income, total population estimates are used as the denominator. Total households are used as the denominator for household-level relative exposure. Total occupied housing units are used as the denominator for housing-unit level relative exposure (i.e., housing tenure, housing burden).
+
 
 ### Sensitivity Analyses
+
+To assess potential bias from analytic choices, sensitivity analyses were performed to account for the impact of differences in definitions of vulnerable populations, uncertainty in ACS population estimates, and choices in scale or the geographic unit of analysis. 
+
+This analysis looks at variations in exposure for a variety of demographic groups that environmental justice policy and research have identified as being especially vulnerable to environmental burdens, or deprived of environmental benefits, as a consequence of social or economic disadvantage, physical vulnerability, or historic and persistent discrimination and inequality. These groups include:
+
+* People of Color (i.e., persons who are of Hispanic ethnicity or racially not White, including indigenous populations)
+* In addition to the aggregate category of “People of Color”, non-Hispanic Asians, non-Hispanic Blacks, and Hispanics, and non-Hispanic Whites were analyzed separately as well
+* Low income persons (i.e., income less than twice the poverty line)
+* Limited-English speaking households (i.e., households where no adult speaks English “very well”)
+* Adults 25 years or older without a high school diploma
+* Children under the age of 5
+* Adults over the age of 64
+* Disabled adults
+* Housing burdened households (i.e., households paying more than 30% of household income to rent or mortgage) 
+* People living in Environmental Justice communities as defined by the 2021 *Climate Roadmap* legislation, which capture Census Block Groups with high proportions of People of Color, limited English speaking households, or lower income persons. Massachusetts Environmental Justice communities are represented by the prefix ‘MA’. 
+
+Population numbers for this analysis were derived from the ACS 5-year estimates for the period 2015-2019. After the 2000 census, detailed data on demographic characteristics (e.g., income, education, housing) are only available from the ACS. While the decennial Census is based on a total enumeration of the population at one point in time, ACS estimates are based on a rolling sample of responses – about 3.5 million annually across the country – which are pooled from surveys compiled on a monthly basis across the year [@ACS_2020]. For small areas with populations less than 65,000, estimates are only available as pooled 5-year estimates. Because the ACS is based on a sample, estimates are subject to uncertainty or sampling error. This uncertainty is communicated through a Margin of Error (MOE) which accompanies each ACS estimate. For some population subgroups, such as racial and ethnic minorities, children, and renters, Census response rates can be low and uncertainty high [@OHare_2019]. Moreover, smaller geographic units, such as Block Groups, will also tend to have higher MOEs because they are derived from small samples. One approach to dealing with the high MOE of small area estimates is to aggregate groups (e.g., combining individual racial categories into one ‘People of Color’ category) or to use larger geographic units (e.g., Census Tracts rather than Census Block Groups). Both techniques reduce uncertainty for estimates, although this reduced uncertainty comes at the expense of demographic or spatial resolution. Both methods – aggregating groups and using larger geographic units - are applied here to consider the impacts of uncertainty and aggregation. 
+
+A separate but related issue to the uncertainty of sampling and estimation is the Modifiable Areal Unit Problem (MAUP). MAUP refers to the fact that analytical results can be influenced by the geographic size or shape of units of analysis. In other words, different geographic definitions of a study area may result in different outcomes. The MAUP is a long-recognized challenge in geographic analysis [@Openshaw_Taylor_1979], but analysts are often constrained by data availability (e.g., administrative databases, sensor resolution, reporting conventions), as well as by lack of clear guidance or theory on an appropriate geographic unit of analysis [@Dark_Bram_2007]. Varying both the areal size and shape of the units of analysis can show whether results are dependent on choices for the scale and shape of the unit of analysis. Although cumbersome, this is recommended practice in environmental justice analyses [@Cutter_Holm_1996; @Baden_Noonan_Turaga_2007; @Karner2013].To explore the impact of geographic scale and choice of unit of analysis, we replicated our analyses at the Census Block Group level, Census Tract level, and municipality level (i.e., Census County Subdivision) (see Figure \@ref(fig:MAUP)).
+
+```{r MAUP, fig.align = "center", fig.cap="Comparison of scales and units of analysis: municiplaity (i.e., county subdivision), Census Tract, and Census Block Group"}
+# create a graphic to illustrate relationship of block groups, tracts, and county subdivisions
+library(tidyverse)
+library(tigris)
+library(tmap)
+library(sf)
+library(tmaptools)
+
+ma_counties <- counties(state = "MA", cb = TRUE) %>% 
+  filter(NAME == "Suffolk")
+ma_cosub <- county_subdivisions(state = "MA", cb = TRUE, county = "025") %>% 
+  filter(NAME == "Chelsea")
+ma_tracts <- tracts(state = "MA", cb = TRUE, county = "025")
+ma_blkgrps <- block_groups(state = "MA", cb = TRUE, county = "025")
+
+
+# isolate tracts in Chelsea
+ma_tracts_chelsea <- ma_tracts %>% 
+  select(GEOID) %>% 
+  st_centroid() %>% 
+  filter(st_intersects(., ma_cosub, sparse = FALSE)) %>% 
+  as.data.frame() %>% 
+  right_join(ma_tracts, ., by = "GEOID")
+
+# tm_shape(ma_tracts_chelsea) + tm_borders() + 
+#   tm_shape(ma_tracts_chelsea) + tm_text(text = "NAME") #25025160101
+
+# isolate tract
+ma_tracts_1 <- ma_tracts_chelsea %>% 
+  filter(GEOID == "25025160101")
+
+# isolate blockgroups within tract
+ma_blkgrp_1 <- ma_blkgrps %>% 
+  filter(str_starts(GEOID, "25025160101"))
+
+# tm_shape(ma_blkgrp_1) + tm_borders() + 
+#   tm_shape(ma_blkgrp_1) + tm_text(text = "NAME")
+
+# isolate a single block group within the tract
+ma_blkgrp_4 <- ma_blkgrp_1 %>% 
+  filter(NAME == "1")
+
+# create separate maps for each level
+tmap_mode("plot")
+# first, create basemaps for each
+a_bm <- ma_counties %>% 
+  st_transform(., crs = 4326) %>% 
+  st_bbox(.) %>% 
+  tmaptools::read_osm(., type = "esri")
+
+b_bm <- ma_cosub %>% 
+  st_transform(., crs = 4326) %>% 
+  st_bbox(.) %>% 
+  tmaptools::read_osm(., type = "esri")
+
+c_bm <- ma_tracts_1 %>% 
+  st_transform(., crs = 4326) %>% 
+  st_bbox(.) %>% 
+  tmaptools::read_osm(., type = "esri")
+
+
+a <- tm_shape(a_bm) + tm_rgb() + 
+  tm_shape(ma_counties) + tm_fill(col = "gray88", alpha = 0.8) +
+  tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
+  # tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
+  # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
+  tm_scale_bar(breaks = c(0,5,10)) +
+  tm_layout(title = "Municipality\n(i.e., County Subdivision)", 
+            inner.margins = c(0.02,0.02,0.15,0.02))
+
+b <- tm_shape(b_bm) + tm_rgb() +
+  tm_shape(ma_cosub, unit = "km") + tm_fill(col = "gray88", alpha = 0.8) +
+  tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
+  # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
+  tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
+  tm_credits("Tract", position = c(0.49,0.3)) +
+  tm_credits("Municipality", position = c(0.38,0.55), 
+             col = "#7570b3", alpha = 0.7) +
+  tm_scale_bar(breaks = c(0,1,2)) +
+  tm_layout(title = "Census Tract within\nMunicipality", 
+            inner.margins = c(0.01,0.02,0.02,0.02))
+
+c <- tm_shape(c_bm, unit = "m") + tm_rgb() +
+  tm_shape(ma_tracts_1, unit = "m") + tm_fill(col = "gray88", alpha = 0.8) +
+  tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
+  tm_shape(ma_tracts_1) + tm_borders(col = "#d95f02", lwd = 3) +
+  tm_credits("Block\nGroup", position = c(0.19,0.45)) +
+  tm_credits("Census Tract", position = c(0.38,0.30), 
+             col = "#d95f02", alpha = 0.7) +
+  tm_scale_bar(breaks = c(0,250,500)) +
+  tm_layout(title = "Census Block Group\nwithin Census Tract", 
+            inner.margins = c(0.1,0,0.2,0))
+
+tmap_arrange(a,b,c, ncol = 3) %>% 
+  tmap_save(., filename = "Images/pub/census_geog.png", 
+            width = 8, height = 4, units = "in")
+
+knitr::include_graphics("Images/pub/census_geog.png")
+```
 
 
 # Results
@@ -264,7 +393,7 @@ newton <- county_subdivisions(state = "MA", cb = TRUE) %>%
   st_transform(., crs = 26986) %>% 
   st_centroid(of_largest_polygon = TRUE)
 ```
-In calendar year 2019, there were 27,124 natural gas leaks in the distribution system reported by seven of the eight investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities. Repairs were reported for 11,399 (42%) of these, leaving 15,725 (58%) unrepaired leaks across the state as of December 31, 2019. 
+In calendar year 2019, there were `r format(nrow(unrepaired2019)+nrow(repaired2019), big.mark = ",")` natural gas leaks in the distribution system reported by seven of the eight investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities. Repairs were reported for `r format(nrow(repaired2019), big.mark = ",")` (`r round(nrow(repaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)`%) of these, leaving `r format(nrow(unrepaired2019), big.mark = ",")` (`r round(nrow(unrepaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)`%) unrepaired leaks across the state as of December 31, 2019 (see \@ref(tab:tabLeaks)). 
 
 ```{r tabLeaks, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
 # table of leak stats by class and repair status
@@ -360,7 +489,7 @@ m_gridTotal <- tm_shape(ng_nogas_muni, bbox = ma_state_sf) +
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
   tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
   tm_layout(legend.position = c("left","bottom"),
-            # title = "Massachusetts Gas Leaks and Utility Territories, 2019",
+            title = "Massachusetts Gas Leaks and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)
             ) +
   tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
@@ -370,7 +499,7 @@ tmap_save(m_gridTotal, filename = "Images/pub/m_gridTotalUtil.png",
 
 knitr::include_graphics("Images/pub/m_gridTotalUtil.png")
 ```
-```{r mapAllLeaksBG, fig.align='center', cache=TRUE}
+```{r mapAllLeaksBG, fig.align='center', fig.cap= "Massachusetts gas leaks per square kilometer by Census Block Group, 2019", cache=TRUE}
 # create map of leak densities by BG
 blkgrpsLeaksAll <- ma_blkgrps %>% 
   filter(AllLeaks2019_sqkm > 0)
@@ -407,7 +536,7 @@ tmap_save(m1, filename = "Images/pub/m_blkgrpTotal.png",
 
 knitr::include_graphics("Images/pub/m_blkgrpTotal.png")
 ```
-```{r mapAllLeaksTR, fig.align='center', cache=TRUE}
+```{r mapAllLeaksTR, fig.align='center', fig.cap= "Massachusetts gas leaks per square kilometer by Census Tract, 2019",cache=TRUE}
 tractsLeaksAll <- ma_tracts %>% 
   filter(AllLeaks2019_sqkm > 0)
 
@@ -443,7 +572,7 @@ tmap_save(m2, filename = "Images/pub/m_tractTotal.png",
 
 knitr::include_graphics("Images/pub/m_tractTotal.png")
 ```
-```{r mapAllLeaksCO, fig.align='center', cache=TRUE}
+```{r mapAllLeaksCO, fig.align='center', fig.cap= "Massachusetts gas leaks per square kilometer by municipality (i.e., Census County Subdivision), 2019",cache=TRUE}
 cosubLeaksAll <- ma_cosub %>% 
   filter(AllLeaks2019_sqkm > 0)
 
@@ -480,7 +609,7 @@ tmap_save(m3, filename = "Images/pub/m_cosubTotal.png", dpi = 600, height = 4,
 knitr::include_graphics("Images/pub/m_cosubTotal.png")
 ```
 
-Reported gas leaks were nearly ubiquitous across the state. Over 87% of Census Block Groups within the gas utility territories had at least one known gas leak in 2019, and approximately 75% had at least one unrepaired gas leak at the end of 2019. There was significant variation in geographic distribution and concentration of these leaks.
+Reported gas leaks were nearly ubiquitous across the state (see Figures \@ref(fig:mapAllLeaks) - \@ref(fig:mapAllLeaksCO)). At least one gas leak was reported in `r round((ma_cosub %>% filter(AllLeaks2019>0) %>% nrow())/nrow(ma_cosub)*100,0)`% of the municipalities within natural gas service territories, and `r round((ma_cosub %>% filter(unrepaired2019total>0) %>% nrow())/nrow(ma_cosub)*100,0)`% had at least one unrepaired gas leak at the end of 2019. Over `r round((ma_blkgrps %>% filter(AllLeaks2019>0) %>% nrow())/nrow(ma_blkgrps)*100,0)`% of Census Block Groups had at least one known gas leak, and approximately `r round((ma_blkgrps %>% filter(unrepaired2019total>0) %>% nrow())/nrow(ma_blkgrps)*100,0)`% had at least one unrepaired gas leak at the end of 2019. However, there was significant variation in geographic distribution and concentration of these leaks.
 
 ```{r tabBGcount, fig.align='center'}
 # table of leak count stats by block group
