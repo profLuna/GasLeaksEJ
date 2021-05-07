@@ -976,17 +976,17 @@ ppLeakDensity_df_all2 %>%
   labs(x = NULL, 
        y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
                             km^2, ")", " to total population-weighted mean",sep = "")),
-       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphallscalesRE.png")
 ```
 
 
-
-
 ### Utility-specific exposure
 
-```{r figDotUnrepairedUtility, fig.align='center'}
+When broken out by utility, relative exposure to population-weighted unrepaired leak density is largely consistent with the statewide pattern, with a few notable variations (see Figure \@ref(fig:figDotUnrepairedUtility)). For five of the six utilities examined here, Whites consistently show the lowest relative exposure, while limited English speaking households, People of Color (especially Blacks), and lower income groups (including renters) are more exposed than the general population. These differences are greatest for Columbia Gas and Unitil/Fitchburg Gas. The specific groups with greatest relative exposures vary between utility territories. For National Grid and Eversource Energy, Blacks show the highest relative exposures, for Columbia Gas it is limited English speaking households and Hispanics, and for Berkshire Gas and Unitil it is residents living in MA Low Income environmental justice communities.
+
+```{r figDotUnrepairedUtility, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired gas leak density by utility at Census Block Group, Census Tract, and municipality scales"}
 # Set up for dot graph to show all three scales by utility
 ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
   mutate(Group = factor(Group, levels = group_orderBG)) %>% 
@@ -1133,15 +1133,20 @@ ppLeakDensityJoinedU_all2 %>%
   labs(x = NULL, 
        y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
                             km^2, ")", " to total population-weighted mean by Census Block Group, Tract, and Municipality",sep = "")),
-       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphallscalesUtilityRE.png")
 ```
+Berkshire Gas, which serves the western-most region of the state, stands out from all other utilities in Massachusetts because race and ethnicity are the least indicative of higher exposure within that utility’s service area. Indeed, Berkshire Gas is the only utility in which Whites are exposed to leak densities similar to or greater than the general population. For the Berkshire Gas territory, residents in low income environmental justice communities (MA Low Income), less educated adults, limited English speaking households, and renters, are the most disproportionately exposed groups. The ordering of those most affected groups varies slightly depending on the scale of analysis. In a few cases, the scale of analysis has a significant effect on the outcome of the analysis. In the Berkshire Gas utility territory, Blacks, Hispanics, and Housing Burdened populations may have exposures above or below that of the general population, depending on the scale of analysis. The same is true for Asians in Liberty Utilities and Unitil territories. In most cases, however, there is considerable overlap or agreement between the scales of analysis.
 
 
 ### Statewide exposure normalized by occupied housing units
 
-```{r mapOHUbg, fig.align='center', cache=TRUE}
+Previous research has found that distribution-level natural gas leaks occur more frequently where there are more gas service lines [@Gallagher_Down_2015; @Scott_Scott_2019]. Thus, to determine if leak frequency exceeds what would be expected given the infrastructure, leak counts should be normalized per mile of service lines. While the number or mileage of service lines in an area is available at the utility scale, this information is not available at smaller scales, such as by municipality or Census statistical units. We use the number of occupied housing units in an area as a proxy for service lines, assuming each occupied housing unit requires a service line.
+
+The geographic pattern of gas leaks per occupied housing unit differs from that of leak density (see Figures \@ref(fig:mapOHUbg) - \@ref(fig:mapOHUco)). While gas leaks density is highest within the state’s most populous cities, leaks per occupied housing unit are generally highest in adjacent suburban communities, such as those to the west and south of Boston, and north of Lawrence. These differences are reflected in population-weighted relative exposures to leaks per occupied housing unit. 
+
+```{r mapOHUbg, fig.align='center', fig.cap= "Massachusetts gas leaks per occupied housing unit by Census Block Group, 2019", cache=TRUE}
 # create map of leaks per OHU by BG
 blkgrpsLeaksOHU <- ma_blkgrps %>% 
   filter(ALLleaks_hu > 0)
@@ -1179,7 +1184,7 @@ tmap_save(m1b, filename = "Images/pub/m_blkgrpOHU.png",
 knitr::include_graphics("Images/pub/m_blkgrpOHU.png")
 ```
 
-```{r mapOHUtr, fig.align='center', cache=TRUE}
+```{r mapOHUtr, fig.align='center', fig.cap= "Massachusetts gas leaks per occupied housing unit by Census Tract, 2019", cache=TRUE}
 # create map of leaks per OHU by Tract
 tractsLeaksOHU <- ma_tracts %>% 
   filter(ALLleaks_hu > 0)
@@ -1217,7 +1222,7 @@ tmap_save(m2b, filename = "Images/pub/m_tractOHU.png",
 knitr::include_graphics("Images/pub/m_tractOHU.png")
 ```
 
-```{r mapOHUco, fig.align='center', cache=TRUE}
+```{r mapOHUco, fig.align='center', fig.cap= "Massachusetts gas leaks per occupied housing unit by municipality (i.e., Census County Subdivision), 2019", cache=TRUE}
 # create map of leaks per OHU by Cosub
 cosubsLeaksOHU <- ma_cosub %>% 
   filter(ALLleaks_hu > 0)
@@ -1255,7 +1260,9 @@ tmap_save(m2b, filename = "Images/pub/m_cosubOHU.png",
 knitr::include_graphics("Images/pub/m_cosubOHU.png")
 ```
 
-```{r figDotOHU, fig.align='center'}
+Across all leak classes, Asians have consistently the highest relative exposures to population-weighted mean unrepaired leaks per occupied housing unit (see Figure \@ref(fig:figDotOHU)). For all leak classes combined, Whites are also slightly more exposed to higher unrepaired leaks per occupied housing unit relative to the general population.  However, the latter pattern only holds for Class 3 leaks. For the more hazardous Class 1 and Class 2 leaks, Whites are the least exposed, while People of Color (especially Asians and Blacks) and limited-English speaking households are the most exposed at all scales of analysis.
+
+```{r figDotOHU, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired gas leaks per occupied housing unit at Census Block Group, Census Tract, and municipality scales"}
 # dot graph of relative exposure for leaks per OHU around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 shps <- c(0,2,1)
@@ -1384,7 +1391,7 @@ ppLeakDensity_df_all2 %>%
   facet_wrap(~ leakClass, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
-       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphOHUallscalesRE.png")
 ```
@@ -1392,7 +1399,9 @@ ggsave("Images/pub/DotGraphOHUallscalesRE.png")
 
 ### Utility-specific exposure normalized by occupied housing units
 
-```{r figDotOHUUtility, fig.align='center'}
+When broken out by utility for all leak classes combined, relative exposures are highest for non-White and low income groups in all territories except for Liberty Utilities (see Figure \@ref(fig:figDotOHUUtility)). As with the statewide pattern, however, the pattern of disparate exposure is reinforced for more hazardous leak classes. Figure \@ref(fig:figDotOHUUtilityC2) shows relative exposures per occupied housing unit for class 2 leaks by utility. In the latter case, residents in Limited English environmental justice communities within the Liberty Utilities territory have relative exposures six times that of the general population and exceed the relative exposures all other groups in the state. 
+
+```{r figDotOHUUtility, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired gas leaks per occupied housing unit by utility at Census Block Group, Census Tract, and municipality scales"}
 # Set up for dot graph to show all three scales by utility
 ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
   mutate(Group = factor(Group, levels = group_orderBG)) %>%
@@ -1538,9 +1547,160 @@ ppLeakDensityJoinedU_all2 %>%
   facet_wrap(~ Utility, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
-       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphOHUallscalesUtilityRE.png")
+```
+
+```{r figDotOHUUtilityC2, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired class 2 gas leaks per occupied housing unit by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC2, wLeaksPerHURRCGC2, wLeaksPerHURREVC2, 
+                 wLeaksPerHURRFGC2, wLeaksPerHURRLUC2, wLeaksPerHURRNGC2), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksPerHURRBGC2" = "Berkshire Gas",
+                          "wLeaksPerHURRCGC2" = "Columbia Gas",
+                          "wLeaksPerHURREVC2" = "Eversource Energy",
+                          "wLeaksPerHURRLUC2" = "Liberty Utilities",
+                          "wLeaksPerHURRNGC2" = "National Grid",
+                          "wLeaksPerHURRFGC2" = "Unitil/Fitchburg Gas"),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>% 
+  pivot_longer(c(wLeaksPerHURRBGC2, wLeaksPerHURRCGC2, wLeaksPerHURREVC2, 
+                 wLeaksPerHURRFGC2, wLeaksPerHURRLUC2, wLeaksPerHURRNGC2), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = "Berkshire Gas",
+                          "wLeaksPerHURRCGC2" = "Columbia Gas",
+                          "wLeaksPerHURREVC2" = "Eversource Energy",
+                          "wLeaksPerHURRLUC2" = "Liberty Utilities",
+                          "wLeaksPerHURRNGC2" = "National Grid",
+                          "wLeaksPerHURRFGC2" = "Unitil/Fitchburg Gas"),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC2, wLeaksPerHURRCGC2, wLeaksPerHURREVC2, 
+                 wLeaksPerHURRFGC2, wLeaksPerHURRLUC2, wLeaksPerHURRNGC2), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = "Berkshire Gas",
+                          "wLeaksPerHURRCGC2" = "Columbia Gas",
+                          "wLeaksPerHURREVC2" = "Eversource Energy",
+                          "wLeaksPerHURRLUC2" = "Liberty Utilities",
+                          "wLeaksPerHURRNGC2" = "National Grid",
+                          "wLeaksPerHURRFGC2" = "Unitil/Fitchburg Gas"),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2,
+                                 ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, scales = "free_y") +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
+       title = "Relative Exposure to Unrepaired Class 2 Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+ggsave("Images/pub/DotGraphOHUallscalesC2UtilityRE.png")
 ```
 
 
@@ -1552,7 +1712,8 @@ Another way to evaluate the equity of natural gas leaks is to consider how respo
 
 
 ### Time to repair
-In 2019, repairs were reported for 11,399 leaks (42% of all reported leaks) across the state. Most of the leaks repaired were Class 1 leaks (53%), which is understandable since Class 1 leaks are the most hazardous and are supposed to be repaired immediately. Class 2 leaks were 39% of leaks repaired, followed distantly by Class 3 leaks, which constituted only 8% of all repaired leaks in 2019. Repair time for these leaks was calculated as the duration of time from the date and time the leak was reported to the date and time of its reported repair. Repair times are reported as the number of days between reporting and repair. Time to repair varied dramatically both within and between leak classes and across utilities. While 73% (4,440) of Class 1 leaks were repaired in less than one day, eight were more than one year old, and at least one leak was over five years old when it was repaired. Note that Fitchburg Gas/Unitil did not report repair data by leak class. 
+
+In 2019, repairs were reported for `r format(nrow(repaired2019),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "Total") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of all reported leaks) across the state (see Table \@ref(tab:tabREP) and Figure \@ref(fig:histREP)). Most of the leaks repaired were Class 1 leaks (`r format(repaired2019 %>% filter(Class == "1") %>% nrow(),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "1") %>% select(PctRepaired) %>% pull() %>% round(., 1)`%), which is consistent with state policy which requires these most hazardous leaks to be repaired immediately. Class 2 leaks were `r format(repaired2019 %>% filter(Class == "2") %>% nrow(),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "2") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of leaks repaired, followed distantly by Class 3 leaks, which constituted only `r format(repaired2019 %>% filter(Class == "3") %>% nrow(),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "3") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of all repaired leaks in 2019. Repair time for these leaks was calculated as the duration of time from the date and time the leak was reported to the date and time of its reported repair. Repair times are reported as the number of days between reporting and repair. Time to repair varied dramatically both within and between leak classes and across utilities. While `r round((repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow())/(repaired2019 %>% filter(Class == "1") %>% nrow())*100,1)`% (`r format(repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow(), big.mark=",")`) of Class 1 leaks were repaired in less than one day, `r repaired2019 %>% filter(DaysToRepair > 365 & Class == "1") %>% nrow()` were more than one year old, and at least one leak was over five years old when it was repaired.  
 
 ```{r tabREP, fig.align='center'}
 # time to repair by class
@@ -1585,7 +1746,7 @@ repaired_Timedf %>% kable(., longtable = T, booktabs = T,
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-```{r histREP, fig.align='center'}
+```{r histREP, fig.align='center', fig.cap="Histogram of leaks repaired in 2019 by leak class"}
 # create group medians for histogram
 mu1 <- repaired2019 %>%
   as.data.frame() %>%
@@ -1617,7 +1778,9 @@ repaired2019 %>%
 ggsave("Images/pub/histRepairTime.png")
 ```
 
-```{r mapTimeBG, fig.align='center', cache=TRUE}
+There is no clear geographic pattern or clustering of areas with the longer repair times (see Figures \@ref(fig:mapTimeBG) - \@ref(fig:mapTimeCO)). Indeed, communities with the longest repair times are scattered throughout the state. Notably, these longest repair times are not concentrated within major urban areas but are instead in outlying suburbs.
+
+```{r mapTimeBG, fig.align='center', fig.cap= "Average repair times for leaks repaired in 2019 across Massachuseetts by Census Block Group", cache=TRUE}
 # create a map of average repair times by block group
 blkgrpsLeaksTime <- ma_blkgrps %>% 
   filter(repaired2019total > 0)
@@ -1656,7 +1819,7 @@ tmap_save(m4, filename = "Images/pub/m_blkgrpTime.png",
 knitr::include_graphics("Images/pub/m_blkgrpTime.png")
 ```
 
-```{r mapTimeTR, fig.align='center', cache=TRUE}
+```{r mapTimeTR, fig.align='center', fig.cap= "Average repair times for leaks repaired in 2019 across Massachuseetts by Census Tract", cache=TRUE}
 # create a map of average repair times by tract
 tractsLeaksTime <- ma_tracts %>% 
   filter(repaired2019total > 0)
@@ -1695,7 +1858,7 @@ tmap_save(m4, filename = "Images/pub/m_tractTime.png",
 knitr::include_graphics("Images/pub/m_tractTime.png")
 ```
 
-```{r mapTimeCO, fig.align='center', cache=TRUE}
+```{r mapTimeCO, fig.align='center', fig.cap= "Average repair times for leaks repaired in 2019 across Massachuseetts by municipality (i.e., Census County Subdivision)", cache=TRUE}
 # create a map of average repair times by cosub
 cosubLeaksTime <- ma_cosub %>% 
   filter(repaired2019total > 0)
@@ -1734,7 +1897,9 @@ tmap_save(m4, filename = "Images/pub/m_cosubTime.png",
 knitr::include_graphics("Images/pub/m_cosubTime.png")
 ```
 
-```{r figDotTime, fig.align='center'}
+For all leak classes combined, People of Color (especially Blacks and Asians) and renters experience the longest repair times; higher relative exposures to population-weighted mean leak repair times compared to the general population (see Figure \@ref(fig:figDotTime)). This pattern holds true for Class 2 and Class 3 leaks. For Class 1 leaks, residents of low income environmental justice communities have the greatest relative exposure. Whites also experience consistently greater population-weighted repair times for Class 1 leaks.  Note however that the differences in repair time between Class 1 leaks average only a few days, while differences in Class 2 and 3 leaks average repair times are more than a year. 
+
+```{r figDotTime, fig.align='center', fig.cap="Relative exposures to population-weighted mean gas leak repair times in 2019 at Census Block Group, Census Tract, and municipality scales"}
 # dot graph of relative exposure for unrepaired leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 shps <- c(0,2,1)
@@ -1863,7 +2028,7 @@ ppLeakDensity_df_all2 %>%
   facet_wrap(~ leakClass, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak repair time to population mean",
-       title = "Relative Exposure to Mean Leak Repair Time in 2019 across Massachusetts", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Mean Leak Repair Time in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphTimeallscalesRE.png")
 ```
@@ -1871,7 +2036,9 @@ ggsave("Images/pub/DotGraphTimeallscalesRE.png")
 
 ### Utility-specific time to repair
 
-```{r boxTimeU, fig.align='center'}
+Median repair times vary only slightly by utility, but there are significant differences in terms of outliers (see Figure \@ref(fig:boxTimeU)). Liberty Utilities and Berkshire Gas exhibited the highest median repair times, but National Grid showed the highest frequency and magnitudes of outliers. 
+
+```{r boxTimeU, fig.align='center', fig.cap="Boxplot of gas leak repair times by utility in 2019"}
 # ordered boxplot of time to repair by utility
 repaired2019 %>% 
   as.data.frame() %>% 
@@ -1894,7 +2061,9 @@ repaired2019 %>%
 ggsave(filename = "Images/pub/boxplotLeaksByUtilityTime.png")
 ```
 
-```{r figDotTimeU, fig.align='center'}
+People of Color (especially Blacks and Asians), followed by lower income groups, are most exposed to the longest repair times in the state’s three largest utilities – National Grid, Eversource Energy, and Columbia Gas (see Figure \@ref(fig:figDotTimeU)). Interestingly, Whites are also consistently exposed to repair times slightly above the general population in four out of the six utility territories, albeit primarily in the smaller utilities and never as the most exposed group. In utility territories where People of Color are less exposed, it is instead groups with less education (Berkshire Gas), people who are older (Berkshire Gas, Liberty Utilities), and residents of lower income environmental justice communities (Unitil) who are exposed to the longest repair times. 
+
+```{r figDotTimeU, fig.align='center', fig.cap="Relative exposures to population-weighted mean gas leak repair times in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
 # Set up for dot graph to show all three scales by utility
 ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
   mutate(Group = factor(Group, levels = group_orderBG)) %>% 
@@ -2039,13 +2208,15 @@ ppLeakDensityJoinedU_all2 %>%
   facet_wrap(~ Utility, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak repair time(days) to general population-weighted mean",
-       title = "Relative Exposure to Average Leak Repair Time in 2019 across Massachusetts by Utility", caption = "Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Shapes indicate scale or unit of analysis. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Average Leak Repair Time in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes indicate if exposure is consistently\nabove (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotTimeUtilityRE.png")
 ```
 
 
 ### Age of unrepaired leaks
+
+At the end of calendar year 2019, there were `r format(nrow(unrepaired2019),big.mark = ",")` unrepaired natural gas leaks across the state, representing `r total_Sumdf %>% filter(Class == "Total") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`% of all leaks reported in that year (see Table (\@ref(tab:tabAge)) and Figure \@ref(fig:histAge)). Most of the unrepaired leaks were Class 3 leaks (`r total_Sumdf %>% filter(Class == "3") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`%), the least hazardous leak classification with the most lenient repair protocols. Class 2 leaks were `r total_Sumdf %>% filter(Class == "2") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`% of unrepaired leaks, followed distantly by Class 1 leaks, which constituted only `r total_Sumdf %>% filter(Class == "1") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`% (`r unrepaired2019 %>% filter(Class == "1") %>% nrow()`) of all unrepaired leaks at the end of 2019. The age of these unrepaired leaks was calculated as the duration of time from the date and time the leak was reported to the end of the calendar year – December 31, 2019. Leak ages varied dramatically both within and between leak classes and across utilities. The median age of Class 1 leaks was 14.5 days, 151 days (5 months) for Class 2 leaks, and 1,257 days (3.4 years) for Class 3 leaks.
 
 ```{r tabAge, fig.align='center'}
 # unrepaired age by class
