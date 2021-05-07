@@ -611,7 +611,7 @@ knitr::include_graphics("Images/pub/m_cosubTotal.png")
 
 Reported gas leaks were nearly ubiquitous across the state (see Figures \@ref(fig:mapAllLeaks) - \@ref(fig:mapAllLeaksCO)). At least one gas leak was reported in `r round((ma_cosub %>% filter(AllLeaks2019>0) %>% nrow())/nrow(ma_cosub)*100,0)`% of the municipalities within natural gas service territories, and `r round((ma_cosub %>% filter(unrepaired2019total>0) %>% nrow())/nrow(ma_cosub)*100,0)`% had at least one unrepaired gas leak at the end of 2019. Over `r round((ma_blkgrps %>% filter(AllLeaks2019>0) %>% nrow())/nrow(ma_blkgrps)*100,0)`% of Census Block Groups had at least one known gas leak, and approximately `r round((ma_blkgrps %>% filter(unrepaired2019total>0) %>% nrow())/nrow(ma_blkgrps)*100,0)`% had at least one unrepaired gas leak at the end of 2019. However, there was significant variation in geographic distribution and concentration of these leaks.
 
-```{r tabBGcount, fig.align='center'}
+```{r tabBGcount, fig.align='center', include=FALSE}
 # table of leak count stats by block group
 # list of stats to compute across
 summary_stats <- list(Min = ~min(., na.rm = T),
@@ -675,9 +675,38 @@ list(unrep_blkgrp_cnt,rep_blkgrp_cnt,all_blkgrp_cnt) %>%
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-The number of leaks in any one Block Group ranged from 0 to 41, with a strong positive skew. Half of all Block Groups (2,097) had fewer than four leaks. The vast majority of all leaks were located in the eastern half of the state, particularly in the greater Boston region, where most of the population resides. Moreover, most of these leaks (65%) occurred within the service territory of National Grid, which is the largest natural gas utility in the state, serving Boston and surrounding communities.
+```{r calcUtility, include=FALSE}
+# create df of counts per utility
+unrepairedUSum_df <- unrepaired2019 %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, 
+                          "Fitchburg" = "Fitchburg Gas",
+                          "Eversource" = "Eversource Energy")) %>% 
+  group_by(Utility) %>% 
+  summarize(Unrepaired = n())
 
-```{r tabBGdensity, fig.align='center'}
+repairedUSum_df <- repaired2019 %>% 
+  as.data.frame() %>% 
+  mutate(Utility = recode(Utility, 
+                          "Fitchburg" = "Fitchburg Gas",
+                          "Eversource" = "Eversource Energy")) %>% 
+  group_by(Utility) %>% 
+  summarize(Repaired = n())
+
+totalUSum_df <- left_join(unrepairedUSum_df, repairedUSum_df, by = "Utility") %>% 
+  mutate(Total = Unrepaired + Repaired) %>% 
+  bind_rows(summarize(.,
+                      across(where(is.numeric), sum),
+                      across(where(is.character), ~ "Total"))) %>% 
+  mutate(PctUnrepaired = Unrepaired/Total*100,
+         PctRepaired = Repaired/Total*100,
+         PctTotal = Total/Total[Utility == "Total"]*100) %>% 
+  select(Utility, Unrepaired, PctUnrepaired, Repaired, PctRepaired, Total, PctTotal)
+```
+
+The number of leaks in any one Block Group ranged from 0 to 41. However, half of all Block Groups (`r format(nrow(ma_blkgrps)/2, big.mark=",")`) had fewer than four leaks. The vast majority of all leaks were located in the eastern half of the state, particularly in the greater Boston region, where most of the population resides, but also within major cities throughout the state. Moreover, most of these leaks (`r totalUSum_df %>% filter(Utility == "National Grid") %>% select(PctTotal) %>% pull() %>% round(.,0)`%) occurred within the service territory of National Grid, which is the largest natural gas utility in the state, serving Boston and surrounding communities (see Figure \@ref(fig:figLeaksUtility)).
+
+```{r tabBGdensity, fig.align='center', include=FALSE}
 # table of leak density stats by block group
 # list of stats to compute across
 summary_stats <- list(Min = ~min(., na.rm = T),
@@ -741,11 +770,7 @@ list(unrep_blkgrp_dns,rep_blkgrp_dns,all_blkgrp_dns) %>%
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-MAYBE SHOW TABLE WITH TOTAL LEAK DENSITIES BY SCALE RATHER THAN BREAKING OUT BY UNREPAIRED VS REPAIRED LEAKS???
-
-Leaks were concentrated in and around the more populous urban areas. Leak densities for Census Block Groups ranged from 0 to 245 leaks per square kilometer, again with a strong positive skew. Half of Block Groups had less than 2.2 leaks per square kilometer. The geographic pattern of leak density - highest in the eastern half of the state and around populous urban centers - was unaffected by the unit of analysis, exhibiting the same geographic pattern from Block Group to County Subdivision levels. 
-
-```{r figLeaksUtility, fig.align='center'}
+```{r figLeaksUtility, fig.align='center', fig.cap="Frequency of reported repaired and unrepaired leaks by natural gas utility in Massachusetts, 2019"}
 # create a stacked bar chart of leaks by utility. shows significant difference in magnitude. 
 unrepairedUSum_df <- unrepaired2019 %>% 
   as.data.frame() %>% 
@@ -799,7 +824,13 @@ ggsave("Images/pub/LeaksbyUtility.png")
 ## Exposure
 ### Statewide exposure
 
-```{r figDotUnrepaired, fig.align='center'}
+Exposure to unrepaired leaks demonstrates consistently strong differences both geographically and demographically. White residents and people over 64 consistently experience below average population-weighted leak densities for all classes or grades of unrepaired leaks. This is the most invariant finding and is unaffected by the scale or unit of analysis, and true for all but one of the six natural gas utility territories. Conversely, People of Color (particularly Asians and Blacks), as well as limited-English speaking households, are much more likely to live in areas with higher densities of unrepaired leaks. Moreover, race and English-language ability exhibit more consistent leak exposure disparities than income indicators in all but one of the natural gas service territories. 
+
+Figure \@ref(fig:figDotUnrepaired) shows the relative exposure by leak class for unrepaired leaks for each population group at the Census Block Group (square), Census Tract (triangle), and municipality (circle) levels. For all leak classes, White people experience population-weighted mean relative exposures to unrepaired leaks that range from `r round(1-ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)` at municipality level) to `r round(1-ppLeakDensity_df_bg %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_bg %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)` at Block Group level) below that of the general population. By contrast, Black people experience relative exposures of `r abs(round(1-ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2)` at municipality level) to `r abs(round(1-ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2)` at Block Group level) above that of the general population. The differences are starker for more hazardous Class 1 and Class 2 leaks. For Class 2 unrepaired leak densities, Whites have a relative exposure of `r round(1-ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)` at municipality level) to `r round(1-ppLeakDensity_df_tr %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)*100`% (`r round(ppLeakDensity_df_tr %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)` at Tract level) below that of the general population. By comparison, Blacks have exposures of `r abs(round(1-ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2)` at municipality level) to `r abs(round(1-ppLeakDensity_df_tr %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2))*100`% (`r round(ppLeakDensity_df_tr %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2)` at Tract level) above that of the general population. Residents in state-designated, limited English environmental justice communities (MA Limited English HH) exhibit the greatest relative exposures for higher hazard leaks; over `r abs(round(1-ppLeakDensity_df_bg %>% filter(Group == "MA_ENGLISH") %>% select(wLeaksRRC2) %>% pull(),0))*100`% above that of the general population.  
+
+Differences in relative exposure vary only slightly by the unit or scale of analysis. In general, the differences in relative exposure are most pronounced at the Census Block Group level (smallest geographic unit of analysis) and are lowest at the municipality level (largest geographic unit of analysis). For Class 2 leaks, however, Block Group-level differences fall in between those of the Tract and municipality level analyses. Relative exposures for Class 1 and Class 2 leaks exhibit the largest spread across the scales of analysis. However, Class 3 leaks, which account for the majority of unrepaired leaks, show considerable overlap or agreement between the scales of analysis. 
+
+```{r figDotUnrepaired, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired gas leak density at Census Block Group, Census Tract, and municipality scales"}
 # dot graph of relative exposure for unrepaired leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 shps <- c(0,2,1)
@@ -949,6 +980,8 @@ ppLeakDensity_df_all2 %>%
 
 ggsave("Images/pub/DotGraphallscalesRE.png")
 ```
+
+
 
 
 ### Utility-specific exposure
