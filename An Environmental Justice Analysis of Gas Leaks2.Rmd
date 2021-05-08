@@ -108,7 +108,9 @@ Exposure to gas leaks was measured as the population-weighted mean gas leaks den
 A population-weighted mean is calculated according the following formula:
 $$ \overline{x}_w = \frac{\sum_{i=1}^{n} (x_i \times w_i)}{\sum_{i=1}^{n}w_i} $$
 where $\overline{x}_w$ is the population-weighted mean of some variable, in this case gas leak density;
+
 where ${x_i}$ represents an individual observation, in this case the leak density of a Block Group;
+
 where ${w_i}$ is the weight associated with an observation, in this case the population of a block group.
 
 Population-weighted means are a common approach in analyses of the distribution of environmental burdens and amenities, particularly when comparing between population subgroups [@Bell_Ebisu_2012; @Mikati_Benson_2018; @Richmond-Bryant_Mikati_2020]. The US Environmental Protection Agency (EPA) uses population-weighted means as the primary way of expressing exposure differentials to a variety of environmental burdens in its nationwide EJSCREEN application (https://www.epa.gov/ejscreen). One of the advantages of a population-weighted approach is that population estimates for Census statistical units (i.e., Block Groups or Tracts) are not correlated with population density. This is because Census units are constructed to have similar population sizes. In Massachusetts, over 90% of Block Groups have populations between 565 and 2,700 for the 2015-2019 period. This means population weighting does not emphasize urban or high-density locations. If population-weighted gas leak density is higher in denser, more urban areas, this difference is not due to population weighting.  Instead, this difference likely reflects the underlying phenomenon itself or other drivers of the phenomenon [@EPA_2019]. 
@@ -117,10 +119,12 @@ Population-weighted means are a common approach in analyses of the distribution 
 ### Relative exposure
 
 To better compare differences between groups, results are presented as relative exposures. Relative exposure is calculated similarly to relative risk or risk ratio:
-$$ RE = \frac{\overline{x_w} subgroup} {\overline{x_w} total pop} $$
+$$ RE = \frac{\overline{x}_w subgroup} {\overline{x}_w total pop} $$
 where $RE$ is the relative exposure expressed as a ratio;
-where $\overline{x_w} subgroup$ is the population-weighted mean exposure of a subgroup, such as People of Color;
-where $\overline{x_w} total pop$ is the population-weighted mean exposure of the total or comparison population.
+
+where $\overline{x}_w subgroup$ is the population-weighted mean exposure of a subgroup, such as People of Color;
+
+where $\overline{x}_w total pop$ is the population-weighted mean exposure of the total or comparison population.
 
 Relative exposure values greater than one indicate that the subgroup is more exposed than the general population. Values less than one indicate that the subgroup is less exposed than the general population. For example, a relative exposure of 1.5 would indicate that a group has an exposure that is 1.5 times that of, or 50% greater than, the total population. Risk or relative exposure ratios are common in both public health and in studies of environmental justice because of their simplicity in making comparisons and communicating differences in exposure between groups [@Debbage_2019; @Mikati_Benson_2018; @Harner2002]. 
 
@@ -148,102 +152,101 @@ Population numbers for this analysis were derived from the ACS 5-year estimates 
 
 A separate but related issue to the uncertainty of sampling and estimation is the Modifiable Areal Unit Problem (MAUP). MAUP refers to the fact that analytical results can be influenced by the geographic size or shape of units of analysis. In other words, different geographic definitions of a study area may result in different outcomes. The MAUP is a long-recognized challenge in geographic analysis [@Openshaw_Taylor_1979], but analysts are often constrained by data availability (e.g., administrative databases, sensor resolution, reporting conventions), as well as by lack of clear guidance or theory on an appropriate geographic unit of analysis [@Dark_Bram_2007]. Varying both the areal size and shape of the units of analysis can show whether results are dependent on choices for the scale and shape of the unit of analysis. Although cumbersome, this is recommended practice in environmental justice analyses [@Cutter_Holm_1996; @Baden_Noonan_Turaga_2007; @Karner2013].To explore the impact of geographic scale and choice of unit of analysis, we replicated our analyses at the Census Block Group level, Census Tract level, and municipality level (i.e., Census County Subdivision) (see Figure \@ref(fig:MAUP)).
 
-```{r MAUP, fig.align = "center", fig.cap="Comparison of scales and units of analysis: municiplaity (i.e., county subdivision), Census Tract, and Census Block Group", echo=FALSE, message=FALSE, cache=TRUE}
-# create a graphic to illustrate relationship of block groups, tracts, and county subdivisions
-library(tidyverse)
-library(tigris)
-library(tmap)
-library(sf)
-library(tmaptools)
-
-ma_counties <- counties(state = "MA", cb = TRUE) %>% 
-  filter(NAME == "Suffolk")
-ma_cosub <- county_subdivisions(state = "MA", cb = TRUE, county = "025") %>% 
-  filter(NAME == "Chelsea")
-ma_tracts <- tracts(state = "MA", cb = TRUE, county = "025")
-ma_blkgrps <- block_groups(state = "MA", cb = TRUE, county = "025")
-
-
-# isolate tracts in Chelsea
-ma_tracts_chelsea <- ma_tracts %>% 
-  select(GEOID) %>% 
-  st_centroid() %>% 
-  filter(st_intersects(., ma_cosub, sparse = FALSE)) %>% 
-  as.data.frame() %>% 
-  right_join(ma_tracts, ., by = "GEOID")
-
-# tm_shape(ma_tracts_chelsea) + tm_borders() + 
-#   tm_shape(ma_tracts_chelsea) + tm_text(text = "NAME") #25025160101
-
-# isolate tract
-ma_tracts_1 <- ma_tracts_chelsea %>% 
-  filter(GEOID == "25025160101")
-
-# isolate blockgroups within tract
-ma_blkgrp_1 <- ma_blkgrps %>% 
-  filter(str_starts(GEOID, "25025160101"))
-
-# tm_shape(ma_blkgrp_1) + tm_borders() + 
-#   tm_shape(ma_blkgrp_1) + tm_text(text = "NAME")
-
-# isolate a single block group within the tract
-ma_blkgrp_4 <- ma_blkgrp_1 %>% 
-  filter(NAME == "1")
-
-# create separate maps for each level
-# tmap_mode("plot")
-# first, create basemaps for each
-a_bm <- ma_counties %>% 
-  st_transform(., crs = 4326) %>% 
-  st_bbox(.) %>% 
-  tmaptools::read_osm(., type = "esri")
-
-b_bm <- ma_cosub %>% 
-  st_transform(., crs = 4326) %>% 
-  st_bbox(.) %>% 
-  tmaptools::read_osm(., type = "esri")
-
-c_bm <- ma_tracts_1 %>% 
-  st_transform(., crs = 4326) %>% 
-  st_bbox(.) %>% 
-  tmaptools::read_osm(., type = "esri")
-
-
-a <- tm_shape(a_bm) + tm_rgb() + 
-  tm_shape(ma_counties) + tm_fill(col = "gray88", alpha = 0.8) +
-  tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
-  # tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
-  # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
-  tm_scale_bar(breaks = c(0,5,10)) +
-  tm_layout(title = "Municipality\n(i.e., County Subdivision)", 
-            inner.margins = c(0.02,0.02,0.15,0.02))
-
-b <- tm_shape(b_bm) + tm_rgb() +
-  tm_shape(ma_cosub, unit = "km") + tm_fill(col = "gray88", alpha = 0.8) +
-  tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
-  # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
-  tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
-  tm_credits("Tract", position = c(0.49,0.3)) +
-  tm_credits("Municipality", position = c(0.38,0.55), 
-             col = "#7570b3", alpha = 0.7) +
-  tm_scale_bar(breaks = c(0,1,2)) +
-  tm_layout(title = "Census Tract within\nMunicipality", 
-            inner.margins = c(0.01,0.02,0.02,0.02))
-
-c <- tm_shape(c_bm, unit = "m") + tm_rgb() +
-  tm_shape(ma_tracts_1, unit = "m") + tm_fill(col = "gray88", alpha = 0.8) +
-  tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
-  tm_shape(ma_tracts_1) + tm_borders(col = "#d95f02", lwd = 3) +
-  tm_credits("Block\nGroup", position = c(0.19,0.45)) +
-  tm_credits("Census Tract", position = c(0.38,0.30), 
-             col = "#d95f02", alpha = 0.7) +
-  tm_scale_bar(breaks = c(0,250,500)) +
-  tm_layout(title = "Census Block Group\nwithin Census Tract", 
-            inner.margins = c(0.1,0,0.2,0))
-
-tmap_arrange(a,b,c, ncol = 3) %>% 
-  tmap_save(., filename = "Images/pub/census_geog.png", 
-            width = 6, height = 3, units = "in")
+```{r MAUP, fig.align = "center", fig.cap="Comparison of scales and units of analysis: municiplaity (i.e., Census County Subdivision), Census Tract, and Census Block Group", echo=FALSE, message=FALSE, cache=TRUE}
+# # create a graphic to illustrate relationship of block groups, tracts, and county subdivisions
+# library(tidyverse)
+# library(tigris)
+# library(tmap)
+# library(sf)
+# library(tmaptools)
+# 
+# ma_counties <- counties(state = "MA", cb = TRUE) %>% 
+#   filter(NAME == "Suffolk")
+# ma_cosub <- county_subdivisions(state = "MA", cb = TRUE, county = "025") %>% 
+#   filter(NAME == "Chelsea")
+# ma_tracts <- tracts(state = "MA", cb = TRUE, county = "025")
+# ma_blkgrps <- block_groups(state = "MA", cb = TRUE, county = "025")
+# 
+# 
+# # isolate tracts in Chelsea
+# ma_tracts_chelsea <- ma_tracts %>% 
+#   select(GEOID) %>% 
+#   st_centroid() %>% 
+#   filter(st_intersects(., ma_cosub, sparse = FALSE)) %>% 
+#   as.data.frame() %>% 
+#   right_join(ma_tracts, ., by = "GEOID")
+# 
+# # tm_shape(ma_tracts_chelsea) + tm_borders() + 
+# #   tm_shape(ma_tracts_chelsea) + tm_text(text = "NAME") #25025160101
+# 
+# # isolate tract
+# ma_tracts_1 <- ma_tracts_chelsea %>% 
+#   filter(GEOID == "25025160101")
+# 
+# # isolate blockgroups within tract
+# ma_blkgrp_1 <- ma_blkgrps %>% 
+#   filter(str_starts(GEOID, "25025160101"))
+# 
+# # tm_shape(ma_blkgrp_1) + tm_borders() + 
+# #   tm_shape(ma_blkgrp_1) + tm_text(text = "NAME")
+# 
+# # isolate a single block group within the tract
+# ma_blkgrp_4 <- ma_blkgrp_1 %>% 
+#   filter(NAME == "1")
+# 
+# # create separate maps for each level
+# # tmap_mode("plot")
+# # first, create basemaps for each
+# a_bm <- ma_counties %>% 
+#   st_transform(., crs = 4326) %>% 
+#   st_bbox(.) %>% 
+#   tmaptools::read_osm(., type = "esri")
+# 
+# b_bm <- ma_cosub %>% 
+#   st_transform(., crs = 4326) %>% 
+#   st_bbox(.) %>% 
+#   tmaptools::read_osm(., type = "esri")
+# 
+# c_bm <- ma_tracts_1 %>% 
+#   st_transform(., crs = 4326) %>% 
+#   st_bbox(.) %>% 
+#   tmaptools::read_osm(., type = "esri")
+# 
+# a <- tm_shape(a_bm) + tm_rgb() + 
+#   tm_shape(ma_counties) + tm_fill(col = "gray88", alpha = 0.8) +
+#   tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
+#   # tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
+#   # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
+#   tm_scale_bar(breaks = c(0,5,10), position = c("center","BOTTOM")) +
+#   tm_layout(title = "Municipality (i.e., County\nSubdivision)", 
+#             inner.margins = c(0.03,0.02,0.18,0.02))
+# 
+# b <- tm_shape(b_bm) + tm_rgb() +
+#   tm_shape(ma_cosub, unit = "km") + tm_fill(col = "gray88", alpha = 0.8) +
+#   tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
+#   # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
+#   tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
+#   tm_credits("Tract", position = c(0.49,0.27)) +
+#   tm_credits("Municipality", position = c(0.38,0.55), 
+#              col = "#7570b3", alpha = 0.7) +
+#   tm_scale_bar(breaks = c(0,1,2), position = c("center","BOTTOM")) +
+#   tm_layout(title = "Census Tract within\nMunicipality", 
+#             inner.margins = c(0.01,0.02,0.04,0.02))
+# 
+# c <- tm_shape(c_bm, unit = "m") + tm_rgb() +
+#   tm_shape(ma_tracts_1, unit = "m") + tm_fill(col = "gray88", alpha = 0.8) +
+#   tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
+#   tm_shape(ma_tracts_1) + tm_borders(col = "#d95f02", lwd = 3) +
+#   tm_credits("Block\nGroup", position = c(0.19,0.41)) +
+#   tm_credits("Census Tract", position = c(0.38,0.30), 
+#              col = "#d95f02", alpha = 0.7) +
+#   tm_scale_bar(breaks = c(0,250,500), position = c("center","BOTTOM")) +
+#   tm_layout(title = "Census Block Group\nwithin Census Tract", 
+#             inner.margins = c(0.1,0,0.21,0))
+# 
+# tmap_arrange(a,b,c, ncol = 3) %>% 
+#   tmap_save(., filename = "Images/pub/census_geog.png", 
+#             width = 6, height = 3, units = "in")
 
 knitr::include_graphics("Images/pub/census_geog.png")
 ```
@@ -394,7 +397,7 @@ newton <- county_subdivisions(state = "MA", cb = TRUE) %>%
   st_transform(., crs = 26986) %>% 
   st_centroid(of_largest_polygon = TRUE)
 ```
-In calendar year 2019, there were `r format(nrow(unrepaired2019)+nrow(repaired2019), big.mark = ",")` natural gas leaks in the distribution system reported by seven of the eight investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities. Repairs were reported for `r format(nrow(repaired2019), big.mark = ",")` (`r round(nrow(repaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)`%) of these, leaving `r format(nrow(unrepaired2019), big.mark = ",")` (`r round(nrow(unrepaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)`%) unrepaired leaks across the state as of December 31, 2019 (see \@ref(tab:tabLeaks)). 
+In calendar year 2019, there were `r format(nrow(unrepaired2019)+nrow(repaired2019), big.mark = ",")` natural gas leaks in the distribution system reported by seven of the eight investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities. Repairs were reported for `r format(nrow(repaired2019), big.mark = ",")` (`r round(nrow(repaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) of these, leaving `r format(nrow(unrepaired2019), big.mark = ",")` (`r round(nrow(unrepaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) unrepaired leaks across the state as of December 31, 2019 (see Table  \@ref(tab:tabLeaks)). 
 
 ```{r tabLeaks, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
 # table of leak stats by class and repair status
@@ -573,7 +576,7 @@ tmap_save(m2, filename = "Images/pub/m_tractTotal.png",
 
 knitr::include_graphics("Images/pub/m_tractTotal.png")
 ```
-```{r mapAllLeaksCO, fig.align='center', fig.cap= "Massachusetts gas leaks per square kilometer by municipality (i.e., Census County Subdivision), 2019",cache=TRUE}
+```{r mapAllLeaksCO, fig.align='center', fig.cap= "Massachusetts gas leaks per square kilometer by municipality, 2019",cache=TRUE}
 cosubLeaksAll <- ma_cosub %>% 
   filter(AllLeaks2019_sqkm > 0)
 
@@ -1132,8 +1135,7 @@ ppLeakDensityJoinedU_all2 %>%
         plot.caption = element_text(hjust = 0)) +
   facet_wrap(~ Utility, scales = "free_y") +
   labs(x = NULL, 
-       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
-                            km^2, ")", " to total population-weighted mean by Census Block Group, Tract, and Municipality",sep = "")),
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", km^2, ")", " to total population-weighted mean",sep = "")),
        title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphallscalesUtilityRE.png")
@@ -1223,7 +1225,7 @@ tmap_save(m2b, filename = "Images/pub/m_tractOHU.png",
 knitr::include_graphics("Images/pub/m_tractOHU.png")
 ```
 
-```{r mapOHUco, fig.align='center', fig.cap= "Massachusetts gas leaks per occupied housing unit by municipality (i.e., Census County Subdivision), 2019", cache=TRUE}
+```{r mapOHUco, fig.align='center', fig.cap= "Massachusetts gas leaks per occupied housing unit by municipality, 2019", cache=TRUE}
 # create map of leaks per OHU by Cosub
 cosubsLeaksOHU <- ma_cosub %>% 
   filter(ALLleaks_hu > 0)
@@ -1400,7 +1402,7 @@ ggsave("Images/pub/DotGraphOHUallscalesRE.png")
 
 ### Utility-specific exposure normalized by occupied housing units
 
-When broken out by utility for all leak classes combined, relative exposures are highest for non-White and low income groups in all territories except for Liberty Utilities (see Figure \@ref(fig:figDotOHUUtility)). As with the statewide pattern, however, the pattern of disparate exposure is reinforced for more hazardous leak classes. Figure \@ref(fig:figDotOHUUtilityC2) shows relative exposures per occupied housing unit for class 2 leaks by utility. In the latter case, residents in Limited English environmental justice communities within the Liberty Utilities territory have relative exposures six times that of the general population and exceed the relative exposures all other groups in the state. 
+When broken out by utility for all leak classes combined, relative exposures are highest for non-White and low income groups in all territories except for Liberty Utilities (see Figure \@ref(fig:figDotOHUUtility)). As with the statewide pattern, however, the pattern of disparate exposure is reinforced for more hazardous leak classes. Figure \@ref(fig:figDotOHUUtilityC2) shows relative exposures per occupied housing unit for Class 2 leaks by utility. In the latter case, residents in Limited English environmental justice communities within the Liberty Utilities territory have relative exposures six times that of the general population and exceed the relative exposures of all other groups. Note that Unitil/Fitchburg reported no unrepaired Class 2 gas leaks in 2019.
 
 ```{r figDotOHUUtility, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired gas leaks per occupied housing unit by utility at Census Block Group, Census Tract, and municipality scales"}
 # Set up for dot graph to show all three scales by utility
@@ -1714,7 +1716,7 @@ Another way to evaluate the equity of natural gas leaks is to consider how respo
 
 ### Time to repair
 
-In 2019, repairs were reported for `r format(nrow(repaired2019),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "Total") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of all reported leaks) across the state (see Table \@ref(tab:tabREP) and Figure \@ref(fig:histREP)). Most of the leaks repaired were Class 1 leaks (`r format(repaired2019 %>% filter(Class == "1") %>% nrow(),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "1") %>% select(PctRepaired) %>% pull() %>% round(., 1)`%), which is consistent with state policy which requires these most hazardous leaks to be repaired immediately. Class 2 leaks were `r format(repaired2019 %>% filter(Class == "2") %>% nrow(),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "2") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of leaks repaired, followed distantly by Class 3 leaks, which constituted only `r format(repaired2019 %>% filter(Class == "3") %>% nrow(),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "3") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of all repaired leaks in 2019. Repair time for these leaks was calculated as the duration of time from the date and time the leak was reported to the date and time of its reported repair. Repair times are reported as the number of days between reporting and repair. Time to repair varied dramatically both within and between leak classes and across utilities. While `r round((repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow())/(repaired2019 %>% filter(Class == "1") %>% nrow())*100,1)`% (`r format(repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow(), big.mark=",")`) of Class 1 leaks were repaired in less than one day, `r repaired2019 %>% filter(DaysToRepair > 365 & Class == "1") %>% nrow()` were more than one year old, and at least one leak was over five years old when it was repaired.  
+In 2019, repairs were reported for `r format(nrow(repaired2019),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "Total") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of all reported leaks) across the state (see Table \@ref(tab:tabREP) and Figure \@ref(fig:histREP)). More than half of all leaks repaired were Class 1 leaks (`r format(repaired2019 %>% filter(Class == "1") %>% nrow(),big.mark = ",")` or `r round(total_Sumdf[1,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`%), which is consistent with state policy which requires these most hazardous leaks to be repaired immediately. Class 2 leaks were `r format(repaired2019 %>% filter(Class == "2") %>% nrow(),big.mark = ",")` leaks (`r round(total_Sumdf[2,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`% of leaks repaired), followed distantly by Class 3 leaks, which constituted only `r format(repaired2019 %>% filter(Class == "3") %>% nrow(),big.mark = ",")` leaks (`r round(total_Sumdf[3,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`% of all repaired leaks in 2019). Repair time for leaks was calculated as the duration of time, in days, from the date and time the leak was reported to the date and time of its reported repair. Time to repair varied dramatically both within and between leak classes and across utilities. While `r round((repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow())/(repaired2019 %>% filter(Class == "1") %>% nrow())*100,1)`% (`r format(repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow(), big.mark=",")`) of Class 1 leaks were repaired in less than one day, `r repaired2019 %>% filter(DaysToRepair > 365 & Class == "1") %>% nrow()` were more than one year old, and at least one leak was over five years old when it was repaired.  
 
 ```{r tabREP, fig.align='center'}
 # time to repair by class
@@ -1859,7 +1861,7 @@ tmap_save(m4, filename = "Images/pub/m_tractTime.png",
 knitr::include_graphics("Images/pub/m_tractTime.png")
 ```
 
-```{r mapTimeCO, fig.align='center', fig.cap= "Average repair times for leaks repaired in 2019 across Massachuseetts by municipality (i.e., Census County Subdivision)", cache=TRUE}
+```{r mapTimeCO, fig.align='center', fig.cap= "Average repair times for leaks repaired in 2019 across Massachuseetts by municipality", cache=TRUE}
 # create a map of average repair times by cosub
 cosubLeaksTime <- ma_cosub %>% 
   filter(repaired2019total > 0)
@@ -1898,7 +1900,7 @@ tmap_save(m4, filename = "Images/pub/m_cosubTime.png",
 knitr::include_graphics("Images/pub/m_cosubTime.png")
 ```
 
-For all leak classes combined, People of Color (especially Blacks and Asians) and renters experience the longest repair times; higher relative exposures to population-weighted mean leak repair times compared to the general population (see Figure \@ref(fig:figDotTime)). This pattern holds true for Class 2 and Class 3 leaks. For Class 1 leaks, residents of low income environmental justice communities have the greatest relative exposure. Whites also experience consistently greater population-weighted repair times for Class 1 leaks.  Note however that the differences in repair time between Class 1 leaks average only a few days, while differences in Class 2 and 3 leaks average repair times are more than a year. 
+For all leak classes combined, People of Color (especially Blacks and Asians) and renters experience the longest repair times; higher relative exposures to population-weighted mean leak repair times compared to the general population (see Figure \@ref(fig:figDotTime)). This pattern holds true for Class 2 and Class 3 leaks. For Class 1 leaks, residents of low income environmental justice communities have the greatest relative exposure. Whites also experience consistently greater population-weighted repair times for Class 1 leaks.  Note however that the differences in repair time between Class 1 leaks average only a few days, while differences in average repair times for Class 2 and 3 leaks are more than a year. 
 
 ```{r figDotTime, fig.align='center', fig.cap="Relative exposures to population-weighted mean gas leak repair times in 2019 at Census Block Group, Census Tract, and municipality scales"}
 # dot graph of relative exposure for unrepaired leak density around zero line
@@ -2238,7 +2240,7 @@ unrepaired_Timedf <- unrepaired2019 %>%
   rbind(unrepaired_Timedf, .)
 ```
 
-At the end of calendar year 2019, there were `r format(nrow(unrepaired2019),big.mark = ",")` unrepaired natural gas leaks across the state, representing `r total_Sumdf %>% filter(Class == "Total") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`% of all leaks reported in that year (see Table (\@ref(tab:tabAge)) and Figure \@ref(fig:histAge)). Most of the unrepaired leaks were Class 3 leaks (`r total_Sumdf %>% filter(Class == "3") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`%), the least hazardous leak classification with the most lenient repair protocols. Class 2 leaks were `r total_Sumdf %>% filter(Class == "2") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`% of unrepaired leaks, followed distantly by Class 1 leaks, which constituted only `r total_Sumdf %>% filter(Class == "1") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`% (`r unrepaired2019 %>% filter(Class == "1") %>% nrow()`) of all unrepaired leaks at the end of 2019. The age of these unrepaired leaks was calculated as the duration of time from the date and time the leak was reported to the end of the calendar year – December 31, 2019. 
+At the end of calendar year 2019, there were `r format(nrow(unrepaired2019),big.mark = ",")` unrepaired natural gas leaks across the state, representing `r total_Sumdf %>% filter(Class == "Total") %>% select(PctUnrepaired) %>% pull() %>% round(., 1)`% of all leaks reported in that year (see Table \@ref(tab:tabAge) and Figure \@ref(fig:histAge)). Most of the unrepaired leaks were Class 3 leaks (`r round(total_Sumdf[3,"Unrepaired"]/total_Sumdf[4,"Unrepaired"]*100,0)`%), the least hazardous leak classification with the most lenient repair protocols. Class 2 leaks were `r round(total_Sumdf[2,"Unrepaired"]/total_Sumdf[4,"Unrepaired"]*100,1)`% of unrepaired leaks, followed distantly by Class 1 leaks, which constituted only `r round(total_Sumdf[1,"Unrepaired"]/total_Sumdf[4,"Unrepaired"]*100,2)`% (`r unrepaired2019 %>% filter(Class == "1") %>% nrow()`) of all unrepaired leaks at the end of 2019. The age of these unrepaired leaks was calculated as the duration of time from the date and time the leak was reported to the end of the calendar year – December 31, 2019. 
 
 Leak ages varied dramatically both within and between leak classes and across utilities. The median age of Class 1 leaks was `r unrepaired_Timedf["1","Med"] %>% pull()` days, `r unrepaired_Timedf["2","Med"] %>% pull()` days (`r round(unrepaired_Timedf["2","Med"]/30,1)` months) for Class 2 leaks, and `r format(unrepaired_Timedf["3","Med"] %>% pull(), big.mark = ",")` days (`r round(unrepaired_Timedf["3","Med"]/365,1)` years) for Class 3 leaks.
 
@@ -2387,7 +2389,7 @@ tmap_save(m5, filename = "Images/pub/m_tractAge.png",
 knitr::include_graphics("Images/pub/m_tractAge.png")
 ```
 
-```{r magCOage, fig.align='center', fig.cap= "Average unrepaired leak age in 2019 across Massachuseetts by municipality (i.e., Census County Subdivision)", cache=TRUE}
+```{r magCOage, fig.align='center', fig.cap= "Average unrepaired leak age in 2019 across Massachuseetts by municipality", cache=TRUE}
 # create a map of average leak age by municipality
 cosubLeaksAge <- ma_cosub %>% 
   filter(unrepaired2019total > 0)
@@ -2428,7 +2430,7 @@ knitr::include_graphics("Images/pub/m_cosubAge.png")
 
 For all leak classes combined, People of Color (especially Asians and Blacks), limited English speaking households, and renters live in areas where the population-weighted mean age of these unrepaired leaks is 6% to 19% higher than the general population (see Figure \@ref(fig:figDotAge)). For Class 3 leaks, which constitute the majority of unrepaired leaks (`r round(total_Sumdf[3,"Unrepaired"]/total_Sumdf[4,"Unrepaired"]*100,0)`%), residents in limited English speaking environmental justice communities are exposed to leak ages that are `r round((ppLeakDensity_df_bg %>% filter(Group == "MA_ENGLISH") %>% select(wLeakAgeDaysAvgRRC3) %>% pull()-1)*100,0)`% higher than the general population, while Asians are exposed to leaks ages that are `r round((ppLeakDensity_df_bg %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC3) %>% pull()-1)*100,0)`% (Block Group level) to `r round((ppLeakDensity_df_tr %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC3) %>% pull()-1)*100,0)`% (Tract level) higher. The differences are greater for more hazardous Class 2 leaks, where Asians are exposed to unrepaired Class 2 leak ages that are `r round((ppLeakDensity_df_bg %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC2) %>% pull()-1)*100,0)`% (Block Group level) to `r round((ppLeakDensity_df_co %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC2) %>% pull()-1)*100,0)`% (Municipality level) higher. Class 1 leaks, which constitute a small (0.25%) and generally short-lived fraction of unrepaired leaks, are consistently older for lower income, disabled, and White residents.
 
-```{r figDotAge, fig.align='center'}
+```{r figDotAge, fig.align='center', fig.cap="Relative exposure to population-weighted mean gas leak age of unrepaired leaks in 2019 at Census Block Group, Census Tract, and municipality scales"}
 # dot graph of relative exposure for unrepaired leak age around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 shps <- c(0,2,1)
@@ -2757,16 +2759,16 @@ This analysis stands in contrast to previous work on socioeconomic differences a
 
 Demographic aggregation or disaggregation affect analytic outcomes. Marginalized populations are not a homogenous group and their experiences are not interchangeable. While People of Color are generally the most impacted across the state, this impact varies by specific racial or ethnic group and by geography. Asians, Blacks, and limited English speaking households are most burdened in general. By contrast, Hispanics are not generally among the most burdened for the state as a whole, but they are in at least two utility territories. And while it is widely recognized that People of Color in the U.S. are disproportionately lower income, race or ethnicity and metrics of relative wealth (e.g., low income, renter vs owner) are not substitutable. Indeed, this analysis shows that race, ethnicity, and English language ability are the leading indicators of gas leaks exposure far and above indicators of wealth. Finally, in at least one utility territory, the opposite holds true: education and metrics of wealth are the leading indicators for disproportionate leak exposure, while race, ethnicity, and English language ability are not. In the Berkshire Gas territory, which serves western Massachusetts, it is less educated, lower income White residents who are the most burdened by gas leaks. The lesson here is that while social inequities are very real, pernicious, and nearly ubiquitous, the nature of those inequities may be geographically specific. 
 
-One important caveat to this analysis is that utility-reported leaks are likely to be significant undercounts of actual gas leaks. Work by @PHILLIPS20131 and others has shown empirically and repeatedly that leaking natural gas in the distribution system beneath city streets in Massachusetts are much more frequent than would be apparent from data reported to the state Department of Public Utilities [@Luna_Paulino_2018]. Separate investigations by HEET, as well as state-authorized audit of natural gas utilities, has documented problematic inconsistencies in the way that utilities identify, monitor, and address leaks, as well as in record keeping. If the reported leaks by utilities represent a large sample, rather than the total population of leaks, then the present analysis is likely to be no less significant in revealing an inequitable problem that may be even larger than the available data show.
+One important caveat to this analysis is that utility-reported leaks are likely to be significant undercounts of actual gas leaks. Work by @PHILLIPS20131 and others has shown empirically and repeatedly that leaking natural gas in the distribution system beneath city streets in Massachusetts are much more frequent than would be apparent from data reported to the state Department of Public Utilities [@Luna_Paulino_2018]. Separate investigations by HEET, as well as a state-authorized audit of natural gas utilities, has documented problematic inconsistencies in the way that utilities identify, monitor, and address leaks, as well as in record keeping. If the reported leaks by utilities represent a large sample, rather than the total population of leaks, then the present analysis is likely to be no less significant in revealing an inequitable problem that may be even larger than the available data show.
 
 
 # Conclusion and Policy Implications
 
 *Regulators and gas utilities should regularly evaluate their performance within an environmental justice framework.* Environmental inequities are real, and they are consequential. Along with a national reckoning over social inequality and systemic racism, there is growing expectation at both the state and federal levels to treat environmental justice seriously. The Biden Administration has expressed strong support for environmental justice and has broken new ground with the creation of a program for energy justice within the Department of Energy and the appointment of energy justice scholar and activist Shalanda Baker as its first deputy director [@Clark_2021]. The Chairman of the Federal Energy Regulatory Commission has also called for more aggressive incorporation of equity concerns into decision-making processes around energy infrastructure [@FERC_2021; @LopezNickerson_2021]. Environmental justice is not only increasingly expected by the public, it may also become a part of the regulatory landscape. 
 
-*Regular and detailed public reporting are essential for assessments of equity and for accountability.* Utilities should be required to collect and report accurate and precise performance metrics, such as the type and location of distribution-level gas leaks, at the highest geographical and temporal resolution to allow for meaningful analyses of equity. Moreover, data reporting and record keeping should be standardized to allow for comparisons and auditing. The analysis presented here shows very clear patterns of inequity, but this analysis would not have been possible except for the fact that Massachusetts had implemented regulations requiring regular reporting and public disclosure. However, even here, data reporting still required significant effort and resources by a volunteer-based, non-governmental organization (i.e., HEET) to make the data truly accessible to the public and to these researchers. 
+*Regular and detailed public reporting are essential for assessments of equity and for accountability.* Utilities should be required to collect and report accurate and precise performance metrics, such as the type and location of distribution-level gas leaks, at the highest geographical and temporal resolution to allow for meaningful analyses of equity. Moreover, data reporting and record keeping should be standardized to allow for comparisons and auditing. The analysis presented here shows very clear patterns of inequity, but this analysis would not have been possible had Massachusetts not implemented regulations requiring regular reporting and public disclosure. However, even here, data reporting still required significant effort and resources by a volunteer-based, non-governmental organization (i.e., HEET) to make the data truly accessible to the public and to these researchers. 
 
-*Regulators and utilities need to anticipate and mitigate potentially regressive impacts of the energy transition [@Zhou_Noonan_2019].* Massachusetts has set a statewide goal of carbon neutrality by 2050 and the state Attorney General has directed natural gas utilities to report how they will adapt to these mandates [@Volcovici2021]. In the meantime, there is an aggressive movement across the state to push households to adopt renewable energy sources, to implement energy-saving practices and technologies, and to electrify their water and space heating appliances. The cumulative impact of these efforts will be an accelerating decline in household energy intensity and reliance on natural gas. The transition toward sustainable energy sources is happening most rapidly amongst wealthier households, especially homeowners [@Drehobl_Ross_2020; @Borenstein_2017; @Kwan_2012]. Without intervention, this energy transition may mean that the costs of maintaining the natural gas distribution system increasingly fall on a smaller pool of ratepayers in less wealthy households and communities [@Castigliego_2020]. Already regressive cost burdens and impacts could be worsened. A sustainable and just energy transition requires active monitoring of current equity conditions and planning to prevent exacerbating existing inequities or creating new inequities in the future.
+*Regulators and utilities need to anticipate and mitigate potentially regressive impacts of the energy transition* [@Zhou_Noonan_2019]. Massachusetts has set a statewide goal of carbon neutrality by 2050 and the state Attorney General has directed natural gas utilities to report how they will adapt to these mandates [@Volcovici2021]. In the meantime, there is an aggressive movement across the state to push households to adopt renewable energy sources, to implement energy-saving practices and technologies, and to electrify their water and space heating appliances. The cumulative impact of these efforts will be an accelerating decline in household energy intensity and reliance on natural gas. The transition toward sustainable energy sources is happening most rapidly amongst wealthier households, especially homeowners [@Drehobl_Ross_2020; @Borenstein_2017; @Kwan_2012]. Without intervention, this energy transition may mean that the costs of maintaining the natural gas distribution system increasingly fall on a smaller pool of ratepayers in less wealthy households and communities [@Castigliego_2020]. Already regressive cost burdens and impacts could be worsened. A sustainable and just energy transition requires active monitoring of current equity conditions and planning to prevent exacerbating existing inequities or creating new inequities in the future.
 
 
 # References {-}
@@ -2776,7 +2778,7 @@ One important caveat to this analysis is that utility-reported leaks are likely 
 
 # (APPENDIX) Appendix {-} 
 
-# Tables
+# Appendix - Supplementary Figures and Tables
 
 ```{r tabUnrepairedBG, fig.align='center'}
 # Unrepaired leaks per square kilometer
