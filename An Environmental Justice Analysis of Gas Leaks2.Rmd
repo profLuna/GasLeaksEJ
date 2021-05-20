@@ -152,7 +152,7 @@ Population numbers for this analysis were derived from the ACS 5-year estimates 
 
 A separate but related issue to the uncertainty of sampling and estimation is the Modifiable Areal Unit Problem (MAUP). MAUP refers to the fact that analytical results can be influenced by the geographic size or shape of units of analysis. In other words, different geographic definitions of a study area may result in different outcomes. The MAUP is a long-recognized challenge in geographic analysis [@Openshaw_Taylor_1979], but analysts are often constrained by data availability (e.g., administrative databases, sensor resolution, reporting conventions), as well as by lack of clear guidance or theory on an appropriate geographic unit of analysis [@Dark_Bram_2007]. Varying both the areal size and shape of the units of analysis can show whether results are dependent on choices for the scale and shape of the unit of analysis. Although cumbersome, this is recommended practice in environmental justice analyses [@Cutter_Holm_1996; @Baden_Noonan_Turaga_2007; @Karner2013].To explore the impact of geographic scale and choice of unit of analysis, we replicated our analyses at the Census Block Group level, Census Tract level, and municipality level (i.e., Census County Subdivision) (see Figure \@ref(fig:MAUP)).
 
-```{r MAUP, fig.align = "center", fig.cap="Comparison of scales and units of analysis: municiplaity (i.e., Census County Subdivision), Census Tract, and Census Block Group", echo=FALSE, message=FALSE, cache=TRUE}
+```{r MAUP, fig.align = "center", fig.cap="Comparison of scales and units of analysis: municiplaity (i.e., Census County Subdivision), Census Tract, and Census Block Group", echo=FALSE, message=FALSE}
 # # create a graphic to illustrate relationship of block groups, tracts, and county subdivisions
 # library(tidyverse)
 # library(tigris)
@@ -160,65 +160,97 @@ A separate but related issue to the uncertainty of sampling and estimation is th
 # library(sf)
 # library(tmaptools)
 # 
-# ma_counties <- counties(state = "MA", cb = TRUE) %>% 
+# ma_counties <- counties(state = "MA", cb = TRUE) %>%
 #   filter(NAME == "Suffolk")
-# ma_cosub <- county_subdivisions(state = "MA", cb = TRUE, county = "025") %>% 
+# # ma_cosub <- county_subdivisions(state = "MA", cb = TRUE, county = "025") %>%
+# #   filter(NAME == "Chelsea") # NOT WORKING ALL OF SUDDEN ON 5/13/2021
+# # Download file directly from https://www2.census.gov/geo/tiger/TIGER2019/
+# ma_cosub <- st_read(dsn = "Data/tl_2019_25_cousub", layer = "tl_2019_25_cousub")%>%
 #   filter(NAME == "Chelsea")
 # ma_tracts <- tracts(state = "MA", cb = TRUE, county = "025")
 # ma_blkgrps <- block_groups(state = "MA", cb = TRUE, county = "025")
 # 
 # 
 # # isolate tracts in Chelsea
-# ma_tracts_chelsea <- ma_tracts %>% 
-#   select(GEOID) %>% 
-#   st_centroid() %>% 
-#   filter(st_intersects(., ma_cosub, sparse = FALSE)) %>% 
-#   as.data.frame() %>% 
+# ma_tracts_chelsea <- ma_tracts %>%
+#   select(GEOID) %>%
+#   st_centroid() %>%
+#   filter(st_intersects(., ma_cosub, sparse = FALSE)) %>%
+#   as.data.frame() %>%
 #   right_join(ma_tracts, ., by = "GEOID")
 # 
-# # tm_shape(ma_tracts_chelsea) + tm_borders() + 
+# # tm_shape(ma_tracts_chelsea) + tm_borders() +
 # #   tm_shape(ma_tracts_chelsea) + tm_text(text = "NAME") #25025160101
 # 
 # # isolate tract
-# ma_tracts_1 <- ma_tracts_chelsea %>% 
+# ma_tracts_1 <- ma_tracts_chelsea %>%
 #   filter(GEOID == "25025160101")
 # 
 # # isolate blockgroups within tract
-# ma_blkgrp_1 <- ma_blkgrps %>% 
+# ma_blkgrp_1 <- ma_blkgrps %>%
 #   filter(str_starts(GEOID, "25025160101"))
 # 
-# # tm_shape(ma_blkgrp_1) + tm_borders() + 
+# # tm_shape(ma_blkgrp_1) + tm_borders() +
 # #   tm_shape(ma_blkgrp_1) + tm_text(text = "NAME")
 # 
 # # isolate a single block group within the tract
-# ma_blkgrp_4 <- ma_blkgrp_1 %>% 
+# ma_blkgrp_4 <- ma_blkgrp_1 %>%
 #   filter(NAME == "1")
 # 
 # # create separate maps for each level
 # # tmap_mode("plot")
 # # first, create basemaps for each
-# a_bm <- ma_counties %>% 
-#   st_transform(., crs = 4326) %>% 
-#   st_bbox(.) %>% 
+# a_bm <- ma_counties %>%
+#   st_transform(., crs = 4326) %>%
+#   st_bbox(.) %>%
 #   tmaptools::read_osm(., type = "esri")
 # 
-# b_bm <- ma_cosub %>% 
-#   st_transform(., crs = 4326) %>% 
-#   st_bbox(.) %>% 
+# # create a new bbox so that Chelsea map fills space
+# bbox_new <- st_bbox(ma_cosub)
+# 
+# xrange <- bbox_new$xmax - bbox_new$xmin # range of x values
+# yrange <- bbox_new$ymax - bbox_new$ymin # range of y values
+# 
+# # bbox_new[1] <- bbox_new[1] - (0.5 * xrange) # xmin - left
+# # bbox_new[3] <- bbox_new[3] + (0.5 * xrange) # xmax - right
+# bbox_new[2] <- bbox_new[2] - (0.13 * yrange) # ymin - bottom
+# bbox_new[4] <- bbox_new[4] + (0.1 * yrange) # ymax - top
+# 
+# bbox_new <- bbox_new %>%  # take the bounding box ...
+#   st_as_sfc() # ... and make it a sf polygon
+# 
+# b_bm <- bbox_new %>%
+#   st_transform(., crs = 4326) %>%
+#   st_bbox(.) %>%
 #   tmaptools::read_osm(., type = "esri")
 # 
-# c_bm <- ma_tracts_1 %>% 
-#   st_transform(., crs = 4326) %>% 
-#   st_bbox(.) %>% 
+# # create a new bbox so that Block Group map fills space
+# bbox_new2 <- st_bbox(ma_tracts_1)
+# 
+# xrange <- bbox_new2$xmax - bbox_new2$xmin # range of x values
+# yrange <- bbox_new2$ymax - bbox_new2$ymin # range of y values
+# 
+# bbox_new2[1] <- bbox_new2[1] - (0.06 * xrange) # xmin - left
+# bbox_new2[3] <- bbox_new2[3] + (0.06 * xrange) # xmax - right
+# bbox_new2[2] <- bbox_new2[2] - (0.04 * yrange) # ymin - bottom
+# bbox_new2[4] <- bbox_new2[4] + (0.01 * yrange) # ymax - top
+# 
+# bbox_new2 <- bbox_new2 %>%  # take the bounding box ...
+#   st_as_sfc() # ... and make it a sf polygon
+# 
+# c_bm <- bbox_new2 %>%
+#   st_transform(., crs = 4326) %>%
+#   st_bbox(.) %>%
 #   tmaptools::read_osm(., type = "esri")
 # 
-# a <- tm_shape(a_bm) + tm_rgb() + 
+# # make the maps
+# a <- tm_shape(a_bm) + tm_rgb() +
 #   tm_shape(ma_counties) + tm_fill(col = "gray88", alpha = 0.8) +
 #   tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
 #   # tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
 #   # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
 #   tm_scale_bar(breaks = c(0,5,10), position = c("center","BOTTOM")) +
-#   tm_layout(title = "Municipality (i.e., County\nSubdivision)", 
+#   tm_layout(title = "Municipality (i.e., Census\nCounty Subdivision)",
 #             inner.margins = c(0.03,0.02,0.18,0.02))
 # 
 # b <- tm_shape(b_bm) + tm_rgb() +
@@ -226,26 +258,26 @@ A separate but related issue to the uncertainty of sampling and estimation is th
 #   tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
 #   # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
 #   tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
-#   tm_credits("Tract", position = c(0.49,0.27)) +
-#   tm_credits("Municipality", position = c(0.38,0.55), 
+#   tm_credits("Tract", position = c(0.49,0.22)) +
+#   tm_credits("Municipality", position = c(0.38,0.45),
 #              col = "#7570b3", alpha = 0.7) +
 #   tm_scale_bar(breaks = c(0,1,2), position = c("center","BOTTOM")) +
-#   tm_layout(title = "Census Tract within\nMunicipality", 
-#             inner.margins = c(0.01,0.02,0.04,0.02))
+#   tm_layout(title = "Census Tract within\nMunicipality", title.size = 0.9,
+#             inner.margins = c(0.01,0.02,0.16,0.02))
 # 
-# c <- tm_shape(c_bm, unit = "m") + tm_rgb() +
+# c <- tm_shape(c_bm, unit = "m", bbox = ma_tracts_1) + tm_rgb() +
 #   tm_shape(ma_tracts_1, unit = "m") + tm_fill(col = "gray88", alpha = 0.8) +
 #   tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
 #   tm_shape(ma_tracts_1) + tm_borders(col = "#d95f02", lwd = 3) +
 #   tm_credits("Block\nGroup", position = c(0.19,0.41)) +
-#   tm_credits("Census Tract", position = c(0.38,0.30), 
+#   tm_credits("Census Tract", position = c(0.38,0.30),
 #              col = "#d95f02", alpha = 0.7) +
 #   tm_scale_bar(breaks = c(0,250,500), position = c("center","BOTTOM")) +
-#   tm_layout(title = "Census Block Group\nwithin Census Tract", 
+#   tm_layout(title = "Census Block Group\nwithin Census Tract", title.size = 0.9,
 #             inner.margins = c(0.1,0,0.21,0))
 # 
-# tmap_arrange(a,b,c, ncol = 3) %>% 
-#   tmap_save(., filename = "Images/pub/census_geog.png", 
+# tmap_arrange(a,b,c, ncol = 3) %>%
+#   tmap_save(., filename = "Images/pub/census_geog.png",
 #             width = 6, height = 3, units = "in")
 
 knitr::include_graphics("Images/pub/census_geog.png")
