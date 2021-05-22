@@ -36,14 +36,14 @@ This high resolution, statewide assessment of gas leaks exposure and response ap
 ## Gas service provision in Massachusetts
 
 Natural gas consumption in Massachusetts has grown dramatically in the last three decades – over 200% since the early 1980s – displacing coal, oil, and nuclear power for electricity generation, and wood and fuel oil for home heating [@EIA_2021]. At the end of 2019, approximately two-thirds of electricity generation in the state was fueled by natural gas, with the remainder made up primarily by hydroelectricity, biomass, and various sources of renewable energy [@EIA_2020].  However, households are the single largest consumers of natural gas, representing over 30% of total consumption for the state, most of which is used for hot water and space heating [@EIA_2015; @EIA_2019]. More than half (52%) of all residences in Massachusetts (1.4 million occupied housing units) rely on utility-supplied, piped natural gas as their primary source of home heating, with the remainder reliant on fuel oil (24%) or electricity (17%) [@Census_2019].
-Despite aggressive marketing by utilities and the natural gas trade association about the economic and environmental benefits of natural gas [AGA2021; @Hall_2021; @Leber_2021], its appeal has been undermined by revelations about the extent of gas leaks, high profile disasters, and initiatives by the state and municipalities to dramatically and rapidly reduce greenhouse gas emissions [@Borunda2020; @Roberts_2019; @Volcovici2021. 
+Despite aggressive marketing by utilities and the natural gas trade association about the economic and environmental benefits of natural gas [@AGA2021; @Hall_2021; @Leber_2021], its appeal has been undermined by revelations about the extent of gas leaks, high profile disasters, and initiatives by the state and municipalities to dramatically and rapidly reduce greenhouse gas emissions [@Borunda2020; @Roberts_2019; @Volcovici2021]. 
 
 
 ## Crises of gas leakage
 
 Leakage of natural gas from production through transportation and distribution has long been recognized, but a growing body of research has revealed that the extent of these losses is much greater than reported by the natural gas industry or estimated by regulators. Until 2009, the U.S. Environmental Protection Agency (EPA) relied on a joint EPA-industry assessment from 1996 that estimated about 1.4% of the methane (the primary component of natural gas) in the natural gas system  was lost to the atmosphere, with incremental revisions of upstream emissions estimates in subsequent years [@Howarth_2014]. However, researchers using independent systems of analyses, including life cycle assessment and atmospheric measurements, found that methane emissions from the natural gas system were likely at least two to three times greater than government and industry estimates [@Brandt_Heath_2014; @Howarth2011; @McKain2015; @Plant_Kort_2019; @Inman_Grubert_2020]. Until recently, however, there was very little research or reporting allowing for disaggregation of lost gas or methane emissions at the distribution level [@Weller_Hamburg_2020]. 
 
-In Massachusetts, @PHILLIPS20131 pioneered a portable, street-level method of gas leak detection using a vehicle-mounted cavity ring-down spectrometer. Their results and the maps they released beginning in 2012 showed that Boston was suffused by excessive levels of methane along the 785 miles of road they surveyed [@Daley_2012]. They argued that these concentrations could not be explained by natural sources and must be from leaks in gas mains buried beneath the streets. Their methods were replicated in municipalities across the country, from Washington D.C. [@Jackson_Down_2014] and New York City [@Gallagher_Down_2015] to Los Angeles [@Hopkins_Kort_2016]. These studies confirmed that gas leaks are a ubiquitous problem in the distribution system. Despite the growth in such studies, however, most have continued to focus on methodologies for the detection and quantification of methane from natural gas distribution, with virtually no attention to its environmental health or social implications [@vonFischer_2017; @Cho_Ulrich_2020; @Keyes_Ridge_2020; @Weller_2018]. 
+In Massachusetts, @PHILLIPS20131 pioneered a portable, street-level method of gas leak detection using a vehicle-mounted cavity ring-down spectrometer. The results and the maps they released beginning in 2012 showed that Boston was suffused by excessive levels of methane along the 785 miles of road they surveyed [@Daley_2012]. They argued that these concentrations could not be explained by natural sources and must be from leaks in gas mains buried beneath the streets. Their methods were replicated in municipalities across the country, from Washington D.C. [@Jackson_Down_2014] and New York City [@Gallagher_Down_2015] to Los Angeles [@Hopkins_Kort_2016]. These studies confirmed that gas leaks are a ubiquitous problem in the distribution system. Despite the growth in such studies, however, most have continued to focus on methodologies for the detection and quantification of methane from natural gas distribution, with virtually no attention to its environmental health or social implications [@vonFischer_2017; @Cho_Ulrich_2020; @Keyes_Ridge_2020; @Weller_2018]. 
 
 With over 6,000 miles of aging, leak-prone infrastructure [@DPU_2019], Massachusetts bears a disproportionate share of the country’s leak-prone gas pipelines [@Herdes_Campbell_2020]. This problem has been recognized for decades. Utilities in Massachusetts have been prohibited from installing cast iron pipe to distribute gas since April 1991. In 2009, the Massachusetts Department of Public Utilities (DPU) started approving plans for accelerated replacement of leak-prone infrastructure [@DPU_2019]. However, the pace of replacement was frequently criticized [@Norton2011]. In 2013, Congress released a study commissioned by Massachusetts Senator Edward Markey showing that US natural gas customers had paid \$20 billion over a decade (2000 - 2011) for gas that they had never received; over $1.5 billion in Massachusetts alone [@House_2013]. The report was accompanied by the re-introduction of both federal and state bills to accelerate pipe replacement and leak repair [@Ailworth2013]. In 2014, Massachusetts passed legislation requiring utilities to submit annual plans to repair or replace leak-prone natural gas infrastructure, adopt a consistent system of leak hazard classification with timelines for monitoring and repair, and crucially (for this analysis), to submit publicly-accessible reports of the status and locations of leaks to the DPU [@GasLeakAct].  
 
@@ -77,7 +77,7 @@ Since the mid 1990s, the federal government and most states have issued some for
 
 Natural gas leaks should be evaluated through an environmental justice framework. Gas leaks are environmental problems with global and local impacts, and these impacts are unequal. Methane, the primary constituent of natural gas, is many times more potent than carbon dioxide as a greenhouse gas in the near term. Because lower income communities and People of Color are more vulnerable to the effects of climate change, the consequences of delay or inaction are inherently inequitable. Methane also contributes significantly to the formation of ground-level ozone [@West_Fiore_2006], an air pollutant with serious public health impacts, especially for people with asthma or other respiratory sensitivities. People of Color, particularly children, suffer from asthma at rates two to three times that of their White counterparts [@ALA2021; @Keet_Matsui_2017]. Gas leaks have been shown to damage or kill street trees [@Schollaert_2020]. Urban communities, particularly those with higher proportions of People of Color and low-income residents, tend to have much less tree coverage in comparison to whiter and wealthier communities [@Namin_Xu_2020; @McDonald_Jones_2018]. Tree coverage and other urban vegetation have been connected to improved air quality, reduced runoff, and to attenuated heat [@Ferrini_Fini_2020]. To the extent that gas leaks reduce or weaken already meager tree coverage, they will exacerbate these differential risks. Utilities pass on the costs of lost gas to ratepayers. For lower income households and People of Color who already experience higher energy burdens [@Drehobl_Ross_2020], the added costs of this undelivered gas have a regressive impact. And finally, of course, the presence of gas leaks always carries the risk of explosions, fires, or disruption.
 
-At its core, environmental justice is about the spatial distribution of environmental benefits and burdens [@Lee_2021]. This is because environmental phenomena are inherently geographic, and because where something happens (and the significance of its impact) is often closely related to who lives there. This analysis applies an environmental justice analysis to the phenomenon of natural gas leaks in Massachusetts using a geospatial approach to quantitatively describe and compare the experiences of different population groups with respect to both exposure to gas leaks and to the timeliness of their repair. 
+At its core, environmental justice is about the spatial distribution of environmental benefits and burdens [@Lee_2021]. This is because environmental phenomena are inherently geographic, and because *where* something happens (and the significance of its impact) is often closely related to *who* lives there. This analysis applies an environmental justice analysis to the phenomenon of natural gas leaks in Massachusetts using a geospatial approach to quantitatively describe and compare the experiences of different population groups with respect to both exposure to gas leaks and to the timeliness of their repair. 
 
 
 # Data and methods
@@ -93,7 +93,7 @@ Gas leak data was disaggregated by repaired or unrepaired status through 2019 an
 
 As of 2018, gas utilities are also required to repair environmentally significant grade 3 leaks (SEIs) on an accelerated schedule, within one to two years depending on the leak extent. SEIs are not evaluated separately here due to the current variability in classification accuracy. Classification accuracy is expected to improve over time and should be reevaluated in the future as a separate category. 
 
-All utilities reported in their ASQRs leaks that were in a repaired or unrepaired status at the end of 2019.  Some of the utilities reported that some leaks were in an "eliminated" status, either due to pipeline replacement Gas System Enhancement Programs (GSEPs), or other reasons (for example, resurveys not finding gas at leak locations). These eliminated leaks were not consistently reported by all utilities in their ASQRs and may have been prioritized and repaired differently to the other "repaired" leaks. We chose not to include them in this analysis and recommend further research be focused on GSEPs and prioritization.
+All utilities reported in their ASQRs leaks that were in a "repaired" or "unrepaired" status at the end of 2019.  Some of the utilities reported that some leaks were in an "eliminated" status, either due to pipeline replacement Gas System Enhancement Programs (GSEPs), or other reasons (for example, resurveys not finding gas at leak locations). These eliminated leaks were not consistently reported by all utilities in their ASQRs and may have been prioritized and repaired differently to the other "repaired" leaks. We chose not to include them in this analysis and recommend further research be focused on GSEPs and prioritization.
 
 Population data was derived from the American Community Survey 5-year estimates for 2015-2019 at the Census Block Group level, Census Tract level, and the municipality level (i.e., Census County Subdivisions) via the tidycensus package version 0.11.4 in R (Walker and Herman 2021).   
 
@@ -136,7 +136,7 @@ To assess potential bias from analytic choices, sensitivity analyses were perfor
 This analysis looks at variations in exposure for a variety of demographic groups that environmental justice policy and research have identified as being especially vulnerable to environmental burdens, or deprived of environmental benefits, as a consequence of social or economic disadvantage, physical vulnerability, or historic and persistent discrimination and inequality. These groups include:
 
 * People of Color (i.e., persons who are of Hispanic ethnicity or racially not White, including indigenous populations)
-* In addition to the aggregate category of “People of Color”, non-Hispanic Asians, non-Hispanic Blacks, and Hispanics, and non-Hispanic Whites were analyzed separately as well
+* In addition to the aggregate category of “People of Color”, non-Hispanic Asians, non-Hispanic Blacks, Hispanics, and non-Hispanic Whites were analyzed separately as well
 * Low income persons (i.e., income less than twice the poverty line)
 * Limited-English speaking households (i.e., households where no adult speaks English “very well”)
 * Adults 25 years or older without a high school diploma
@@ -859,10 +859,10 @@ ggsave("Images/pub/LeaksbyUtility.png")
 ## Exposure
 ### Statewide exposure
 
-Exposure to unrepaired leaks demonstrates consistently strong differences both geographically and demographically. White residents and people over 64 consistently experience below average population-weighted leak densities for all classes or grades of unrepaired leaks. This is the most invariant finding and is unaffected by the scale or unit of analysis, and true evert utility territory except Berkshire Gas in western Massachusetts. Conversely, People of Color (particularly Asians and Blacks), as well as limited-English speaking households, consistently experience higher densities of unrepaired leaks. Moreover, race and English-language ability exhibit more consistent leak exposure disparities than income indicators in every utility territory save for Berkshire Gas. 
+Exposure to unrepaired leaks demonstrates consistently strong differences both geographically and demographically. White residents and people over 64 consistently experience below average population-weighted leak densities for all classes or grades of unrepaired leaks. This is the most invariant finding and is unaffected by the scale or unit of analysis, and true in every utility territory except Berkshire Gas in western Massachusetts. Conversely, People of Color (particularly Asians and Blacks), as well as limited-English speaking households, consistently experience higher densities of unrepaired leaks. Moreover, race and English-language ability exhibit more consistent leak exposure disparities than income indicators in every utility territory save for Berkshire Gas. 
 
 Figure \@ref(fig:figDotUnrepaired) shows the relative exposure by leak class for unrepaired leaks for each population group at the Census Block Group (square), Census Tract (triangle), and municipality (circle) levels. For all leak classes, White people experience population-weighted mean relative exposures to unrepaired leaks that range from `r round(1-ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)` at municipality level) to `r round(1-ppLeakDensity_df_bg %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_bg %>% filter(Group == "White") %>% select(wLeaksRR) %>% pull(),2)` at Block Group level) below that of the general population. By contrast, Black people experience relative exposures of `r abs(round(1-ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2)` at municipality level) to `r abs(round(1-ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRR) %>% pull(),2)` at Block Group level) above that of the general population. The differences are starker for potentially more hazardous Class 1 and Class 2 leaks. 
-For Class 1 unrepaired leak densities, Whites have a relative exposure of approximately `r round(1-ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC1) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC1) %>% pull(),2)` below that of the general population at all scales of analysis. By comparison, Blacks have exposures of `r abs(round(1-ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2)` at Block Group level) to `r abs(round(1-ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2))*100`% (`r round(ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2)` at municipality level) above that of the general population. For Class 2 unrepaired leak densities, Whites have a relative exposure of `r round(1-ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)` at municipality level) to `r round(1-ppLeakDensity_df_tr %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)*100`% (`r round(ppLeakDensity_df_tr %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)` at Tract level) below that of the general population. Blacks have exposures of `r abs(round(1-ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2)` at municipality level) to `r abs(round(1-ppLeakDensity_df_tr %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2))*100`% (`r round(ppLeakDensity_df_tr %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2)` at Tract level) above that of the general population. Residents in state-designated, limited English environmental justice communities (MA Limited English HH) exhibit the greatest relative exposures for higher hazard leaks; over `r abs(round(1-ppLeakDensity_df_bg %>% filter(Group == "MA_ENGLISH") %>% select(wLeaksRRC2) %>% pull(),0))*100`% above that of the general population.  
+For Class 1 unrepaired leak densities, Whites have a relative exposure of approximately `r round(1-ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC1) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC1) %>% pull(),2)`) below that of the general population at all scales of analysis. By comparison, Blacks have exposures of `r abs(round(1-ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_bg %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2)` at Block Group level) to `r abs(round(1-ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2))*100`% (`r round(ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC1) %>% pull(),2)` at municipality level) above that of the general population. For Class 2 unrepaired leak densities, Whites have a relative exposure of `r round(1-ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)` at municipality level) to `r round(1-ppLeakDensity_df_tr %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)*100`% (`r round(ppLeakDensity_df_tr %>% filter(Group == "White") %>% select(wLeaksRRC2) %>% pull(),2)` at Tract level) below that of the general population. Blacks have exposures of `r abs(round(1-ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2))*100`% (RE `r round(ppLeakDensity_df_co %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2)` at municipality level) to `r abs(round(1-ppLeakDensity_df_tr %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2))*100`% (`r round(ppLeakDensity_df_tr %>% filter(Group == "Black") %>% select(wLeaksRRC2) %>% pull(),2)` at Tract level) above that of the general population. Residents in state-designated, limited English environmental justice communities (MA Limited English HH) exhibit the greatest relative exposures for higher hazard leaks; over `r abs(round(1-ppLeakDensity_df_bg %>% filter(Group == "MA_ENGLISH") %>% select(wLeaksRRC2) %>% pull(),0))*100`% above that of the general population.  
 
 Differences in relative exposure vary only slightly by the unit or scale of analysis. In general, the differences in relative exposure are most pronounced at the Census Block Group level (smallest geographic unit of analysis) and are lowest at the municipality level (largest geographic unit of analysis). For Class 2 leaks, however, Block Group-level differences fall in between those of the Tract and municipality level analyses. Relative exposures for Class 1 and Class 2 leaks exhibit the largest spread across the scales of analysis. However, Class 3 leaks, which account for the majority of unrepaired leaks, show considerable overlap or agreement between the scales of analysis. 
 
@@ -1753,7 +1753,7 @@ Another way to evaluate the equity of natural gas leaks is to consider how respo
 
 ### Age of repaired leaks
 
-In 2019, repairs were reported for `r format(nrow(repaired2019),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "Total") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of all reported leaks) across the state (see Table \@ref(tab:tabREP) and Figure \@ref(fig:histREP)). More than half of all leaks repaired were Class 1 leaks (`r format(repaired2019 %>% filter(Class == "1") %>% nrow(),big.mark = ",")` or `r round(total_Sumdf[1,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`%), which is consistent with state policy which requires leaks of greatest potential hazard to be repaired immediately. Class 2 leaks were `r format(repaired2019 %>% filter(Class == "2") %>% nrow(),big.mark = ",")` leaks (`r round(total_Sumdf[2,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`% of leaks repaired), followed distantly by Class 3 leaks, which constituted only `r format(repaired2019 %>% filter(Class == "3") %>% nrow(),big.mark = ",")` leaks (`r round(total_Sumdf[3,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`% of all repaired leaks in 2019). Age for repaired leaks calculated as the duration of time, in days, from the date and time the leak was reported to the date and time of its reported repair. Ages of repaired leaks varied dramatically both within and between leak classes and across utilities. While `r round((repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow())/(repaired2019 %>% filter(Class == "1") %>% nrow())*100,1)`% (`r format(repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow(), big.mark=",")`) of Class 1 leaks were repaired in less than one day, `r repaired2019 %>% filter(DaysToRepair > 365 & Class == "1") %>% nrow()` were more than one year old, and at least one leak was over five years old when it was repaired.  
+In 2019, repairs were reported for `r format(nrow(repaired2019),big.mark = ",")` leaks (`r total_Sumdf %>% filter(Class == "Total") %>% select(PctRepaired) %>% pull() %>% round(., 1)`% of all reported leaks) across the state (see Table \@ref(tab:tabREP) and Figure \@ref(fig:histREP)). More than half of all leaks repaired were Class 1 leaks (`r format(repaired2019 %>% filter(Class == "1") %>% nrow(),big.mark = ",")` or `r round(total_Sumdf[1,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`%), which is consistent with state policy which requires leaks of greatest potential hazard to be repaired immediately. Class 2 leaks were `r format(repaired2019 %>% filter(Class == "2") %>% nrow(),big.mark = ",")` leaks (`r round(total_Sumdf[2,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`% of leaks repaired), followed distantly by Class 3 leaks, which constituted only `r format(repaired2019 %>% filter(Class == "3") %>% nrow(),big.mark = ",")` leaks (`r round(total_Sumdf[3,"Repaired"]/total_Sumdf[4,"Repaired"]*100,0)`% of all repaired leaks in 2019). Age for repaired leaks was calculated as the duration of time, in days, from the date the leak was reported to the date of its reported repair. Ages of repaired leaks varied dramatically both within and between leak classes and across utilities. While `r round((repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow())/(repaired2019 %>% filter(Class == "1") %>% nrow())*100,1)`% (`r format(repaired2019 %>% filter(DaysToRepair < 1 & Class == "1") %>% nrow(), big.mark=",")`) of Class 1 leaks were repaired in less than one day, `r repaired2019 %>% filter(DaysToRepair > 365 & Class == "1") %>% nrow()` were more than one year old, and at least one leak was over five years old when it was repaired.  
 
 ```{r tabREP, fig.align='center'}
 # time to repair by class
@@ -1786,7 +1786,7 @@ repaired_Timedf %>% kable(., longtable = T, booktabs = T,
   kable_styling(latex_options = c("repeat_header"))
 ```
 
-```{r histREP, fig.align='center', fig.cap="Histogram of age of leaks repaired in 2019 by leak class"}
+```{r histREP, fig.align='center', fig.cap="Histogram of ages of leaks repaired in 2019 by leak class"}
 # create group medians for histogram
 mu1 <- repaired2019 %>%
   as.data.frame() %>%
@@ -1811,7 +1811,7 @@ repaired2019 %>%
   labs(title = "Repaired Leak Age by Leak Class in 2019",
        x = "Days to Repair",
        y = "Number of Repaired Leaks", fill = "",
-       caption = "Column heights indicate number of leaks for a given time range. Colors correspond to leak class.\nDashed lines indicate median times by leak class. Rug plot at base shows individual repair times.") +
+       caption = "Column heights indicate number of leaks for a given time range. Colors correspond to leak class.\nDashed lines indicate median times by leak class. Rug plot at base shows individual leak ages.") +
   scale_y_continuous(labels = scales::comma) +
   scale_x_continuous(labels = scales::comma) + geom_rug()
 
@@ -1820,7 +1820,7 @@ ggsave("Images/pub/histRepairTime.png")
 
 There is no clear geographic pattern or clustering of areas with older repaired leaks (see Figures \@ref(fig:mapTimeBG) - \@ref(fig:mapTimeCO)). Indeed, communities with the oldest repaired leaks are scattered throughout the state. Notably, these oldest repaired leaks are not concentrated within major urban areas but are instead in outlying suburbs.
 
-```{r mapTimeBG, fig.align='center', fig.cap= "Average age for leaks repaired in 2019 across Massachusetts by Census Block Group", cache=TRUE}
+```{r mapTimeBG, fig.align='center', fig.cap= "Average age of leaks repaired in 2019 across Massachusetts by Census Block Group", cache=TRUE}
 # create a map of average repair times by block group
 blkgrpsLeaksTime <- ma_blkgrps %>% 
   filter(repaired2019total > 0)
@@ -1828,7 +1828,7 @@ blkgrpsLeaksTime <- ma_blkgrps %>%
 m4 <- tm_shape(blkgrpsLeaksTime, bbox = ma_state_sf) + 
   tm_fill(col = "DaysToRepairAvg", style = "fisher",
                                       palette = "YlOrRd", 
-                                      title = "Avg Age (days)\nof Repaired",
+                                      title = "Mean Leak\nAge (days)",
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
@@ -1860,7 +1860,7 @@ tmap_save(m4, filename = "Images/pub/m_blkgrpTime.png",
 knitr::include_graphics("Images/pub/m_blkgrpTime.png")
 ```
 
-```{r mapTimeTR, fig.align='center', fig.cap= "Average age for leaks repaired in 2019 across Massachusetts by Census Tract", cache=TRUE}
+```{r mapTimeTR, fig.align='center', fig.cap= "Average age of leaks repaired in 2019 across Massachusetts by Census Tract", cache=TRUE}
 # create a map of average repair times by tract
 tractsLeaksTime <- ma_tracts %>% 
   filter(repaired2019total > 0)
@@ -1868,7 +1868,7 @@ tractsLeaksTime <- ma_tracts %>%
 m4 <- tm_shape(tractsLeaksTime, bbox = ma_state_sf) + 
   tm_fill(col = "DaysToRepairAvg", style = "fisher",
                                       palette = "YlOrRd", 
-                                      title = "Avg Age (days)\nof Repaired",
+                                      title = "Mean Leak\nAge (days)",
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
@@ -1908,7 +1908,7 @@ cosubLeaksTime <- ma_cosub %>%
 m4 <- tm_shape(cosubLeaksTime, bbox = ma_state_sf) + 
   tm_fill(col = "DaysToRepairAvg", style = "fisher",
                                       palette = "YlOrRd", 
-                                      title = "Avg Age (days)\nof Repaired",
+                                      title = "Mean Leak\nAge (days)",
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
@@ -2343,7 +2343,7 @@ unrepaired2019 %>%
   labs(title = "Unrepaired Leak Age by Leak Class in 2019",
        x = "Age (days)",
        y = "Number of Unrepaired Leaks", fill = "",
-       caption = "Column heights indicate number of leaks for a given age range. Colors correspond to leak class.\nDashed lines indicate median age by leak class. Rug plot at base shows individual ages.") +
+       caption = "Column heights indicate number of leaks for a given age range. Colors correspond to leak class.\nDashed lines indicate median age by leak class. Rug plot at base shows individual leak ages.") +
   scale_y_continuous(labels = scales::comma) +
   scale_x_continuous(labels = scales::comma) + geom_rug()
 
@@ -2352,7 +2352,7 @@ ggsave("Images/pub/histAge.png")
 
 Geographically, areas with the oldest unrepaired leaks radiate outward from Boston and inner core communities, primarily along a southeast to northwest axis (see Figures \@ref(fig:magBGage) - \@ref(fig:magCOage)). Areas with the oldest unrepaired leaks are concentrated in the eastern half of the state, with some outliers in the southeast and south central regions. 
 
-```{r magBGage, fig.align='center', fig.cap= "Average unrepaired leak age in 2019 across Massachusetts by Census Block Group", cache=TRUE}
+```{r magBGage, fig.align='center', fig.cap= "Average age of unrepaired leaks in 2019 across Massachusetts by Census Block Group", cache=TRUE}
 # create a map of average leak age by block group
 blkgrpsLeaksAge <- ma_blkgrps %>% 
   filter(unrepaired2019total > 0)
@@ -2392,7 +2392,7 @@ tmap_save(m5, filename = "Images/pub/m_blkgrpAge.png",
 knitr::include_graphics("Images/pub/m_blkgrpAge.png")
 ```
 
-```{r magTRage, fig.align='center', fig.cap= "Average unrepaired leak age in 2019 across Massachusetts by Census Tract", cache=TRUE}
+```{r magTRage, fig.align='center', fig.cap= "Average age of unrepaired leaks in 2019 across Massachusetts by Census Tract", cache=TRUE}
 # create a map of average leak age by block group
 tractsLeaksAge <- ma_tracts %>% 
   filter(unrepaired2019total > 0)
@@ -2432,7 +2432,7 @@ tmap_save(m5, filename = "Images/pub/m_tractAge.png",
 knitr::include_graphics("Images/pub/m_tractAge.png")
 ```
 
-```{r magCOage, fig.align='center', fig.cap= "Average unrepaired leak age in 2019 across Massachusetts by municipality", cache=TRUE}
+```{r magCOage, fig.align='center', fig.cap= "Average age of unrepaired leaks in 2019 across Massachusetts by municipality", cache=TRUE}
 # create a map of average leak age by municipality
 cosubLeaksAge <- ma_cosub %>% 
   filter(unrepaired2019total > 0)
@@ -2474,7 +2474,7 @@ knitr::include_graphics("Images/pub/m_cosubAge.png")
 
 For all leak classes combined, People of Color (especially Asians and Blacks), limited English speaking households, and renters live in areas where the population-weighted mean age of these unrepaired leaks is 6% to 19% higher than the general population (see Figure \@ref(fig:figDotAge)). For Class 3 leaks, which constitute the majority of unrepaired leaks (`r round(total_Sumdf[3,"Unrepaired"]/total_Sumdf[4,"Unrepaired"]*100,0)`%), residents in limited English speaking environmental justice communities are exposed to leak ages that are `r round((ppLeakDensity_df_bg %>% filter(Group == "MA_ENGLISH") %>% select(wLeakAgeDaysAvgRRC3) %>% pull()-1)*100,0)`% higher than the general population, while Asians are exposed to leaks ages that are `r round((ppLeakDensity_df_bg %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC3) %>% pull()-1)*100,0)`% (Block Group level) to `r round((ppLeakDensity_df_tr %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC3) %>% pull()-1)*100,0)`% (Tract level) higher. The differences are greater for more hazardous Class 2 leaks, where Asians are exposed to unrepaired Class 2 leak ages that are `r round((ppLeakDensity_df_bg %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC2) %>% pull()-1)*100,0)`% (Block Group level) to `r round((ppLeakDensity_df_co %>% filter(Group == "Asian") %>% select(wLeakAgeDaysAvgRRC2) %>% pull()-1)*100,0)`% (Municipality level) higher. Class 1 leaks, which constitute a small (0.25%) and generally short-lived fraction of unrepaired leaks, are consistently older for lower income, disabled, and White residents.
 
-```{r figDotAge, fig.align='center', fig.cap="Relative exposure to population-weighted mean gas leak age of unrepaired leaks in 2019 at Census Block Group, Census Tract, and municipality scales"}
+```{r figDotAge, fig.align='center', fig.cap="Relative exposure to population-weighted mean age of unrepaired gas leaks in 2019 at Census Block Group, Census Tract, and municipality scales"}
 # dot graph of relative exposure for unrepaired leak age around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 shps <- c(0,2,1)
@@ -2603,7 +2603,7 @@ ppLeakDensity_df_all2 %>%
   facet_wrap(~ leakClass, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak age to population mean",
-       title = "Relative Exposure to Mean Leak Age in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Mean Age of Unrepaired Leaks in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphAgeallscalesRE.png")
 ```
@@ -2611,7 +2611,7 @@ ggsave("Images/pub/DotGraphAgeallscalesRE.png")
 
 ### Utility-specific ages of unrepaired leaks
 
-Ages of unrepaired leaks varied significantly by utility (see Figure \@ref(fig:boxAgeU)). Liberty Utilities exhibited the highest median age of unrepaired leaks, while Fitchburg the youngest. National Grid, the largest utility in the state, shows the greatest range in unrepaired leak ages. National Grid, Liberty Utilities, and Columbia Gas show a significant number of outliers for leak age. Across those three utilities, `r format(unrepaired2019 %>% filter(LeakAgeDays>(15*365)) %>% nrow(),big.mark = ",")` unrepaired leaks were over 15 years old (most of which belonged to National Grid).
+Ages of unrepaired leaks varied significantly by utility (see Figure \@ref(fig:boxAgeU)). Liberty Utilities exhibited the highest median age of unrepaired leaks, while Fitchburg had the lowest. National Grid, the largest utility in the state, shows the greatest range in unrepaired leak ages. National Grid, Liberty Utilities, and Columbia Gas show a significant number of outliers for leak age. Across those three utilities, `r format(unrepaired2019 %>% filter(LeakAgeDays>(15*365)) %>% nrow(),big.mark = ",")` unrepaired leaks were over 15 years old (most of which belonged to National Grid).
 
 When broken out by utility, non-White groups and limited English speaking households are consistently more exposed to older unrepaired leaks in four out of six utility territories, including the three largest (see Figure \@ref(fig:figDotAgeU)). Lower income groups and renters are also consistently exposed to older unrepaired leak ages than the general population in the territories of National Grid, Eversource, and Liberty Utilities. Berkshire Gas is the only territory where Whites are consistently the most exposed to older leak ages than any other group. Unitil stands out because of the wide variation in apparent exposure depending on the scale of analysis; no group is consistently (across all scales) more or less exposed. The latter result likely reflects the very small number of unrepaired leaks for that utility (`r unrepaired2019 %>% filter(Utility == "Fitchburg") %>% nrow()`) in 2019. 
 
@@ -2639,7 +2639,7 @@ ggsave(filename = "Images/pub/boxplotLeaksByUtilityAge.png")
 ```
 
 
-```{r figDotAgeU, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired gas leak age in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
+```{r figDotAgeU, fig.align='center', fig.cap="Relative exposures to population-weighted mean age of unrepaired gas leaks in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
 # Set up for dot graph to show all three scales by utility
 ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
   mutate(Group = factor(Group, levels = group_orderBG)) %>% 
@@ -2786,7 +2786,7 @@ ppLeakDensityJoinedU_all2 %>%
   # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak age (days) to general population-weighted mean",
-       title = "Relative Exposure to Average Unrepaired Leak Age in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Mean Age of Unrepaired Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotAgeUtilityRE.png")
 ```
@@ -2811,7 +2811,7 @@ One important caveat to this analysis is that utility-reported leaks are likely 
 
 *Regulators and gas utilities should regularly evaluate their performance within an environmental justice framework.* Environmental inequities are real, and they are consequential. Along with a national reckoning over social inequality and systemic racism, there is growing expectation at both the state and federal levels to treat environmental justice seriously. The Biden Administration has expressed strong support for environmental justice and has broken new ground with the creation of a program for energy justice within the Department of Energy and the appointment of energy justice scholar and activist Shalanda Baker as its first deputy director [@Clark_2021]. The Chairman of the Federal Energy Regulatory Commission has also called for more aggressive incorporation of equity concerns into decision-making processes around energy infrastructure [@FERC_2021; @LopezNickerson_2021]. Environmental justice is not only increasingly expected by the public, it may also become a part of the regulatory landscape. 
 
-*Regular and detailed public reporting are essential for assessments of equity and for accountability.* Massachusetts state policy requires utilities to submit standardized quarterly reports that allow for detailed monitoring and analysis of their performance and handling of gas leaks (220CMR). The analysis presented here shows very clear patterns of inequity, and these patterns would not have been detectable without those reporting and public disclosure requirements. Leak reporting should be improved by the use of GPS-derived coordinates to improve spatial accuracy and precision. We recommend that these policies be mandated by the federal government to apply to utilities nationwide. 
+*Regular and detailed public reporting are essential for assessments of equity and for accountability.* Massachusetts state policy requires utilities to submit standardized quarterly reports that allow for detailed monitoring and analysis of their performance and handling of gas leaks [@220CMR]. The analysis presented here shows very clear patterns of inequity, and these patterns would not have been detectable without those reporting and public disclosure requirements. Leak reporting should be improved by the use of GPS-derived coordinates to improve spatial accuracy and precision. We recommend that these policies be mandated by the federal government to apply to utilities nationwide. 
 
 *Regulators and utilities need to anticipate and mitigate potentially regressive impacts of the energy transition* [@Zhou_Noonan_2019]. Massachusetts has set a statewide goal of carbon neutrality by 2050 and the state Attorney General has directed natural gas utilities to report how they will adapt to these mandates [@Volcovici2021]. In the meantime, there is an aggressive movement across the state to push households to adopt renewable energy sources, to implement energy-saving practices and technologies, and to electrify their water and space heating appliances. The cumulative impact of these efforts will be an accelerating decline in household energy intensity and reliance on natural gas. The transition toward sustainable energy sources is happening most rapidly amongst wealthier households, especially homeowners [@Drehobl_Ross_2020; @Borenstein_2017; @Kwan_2012]. Without intervention, this energy transition may mean that the costs of maintaining the natural gas distribution system increasingly fall on a smaller pool of ratepayers in less wealthy households and communities [@Castigliego_2020]. Already regressive cost burdens and impacts could be worsened. A sustainable and just energy transition requires active monitoring of current equity conditions, and it requires planning to prevent exacerbating existing inequities or creating new inequities in the future.
 
@@ -2821,11 +2821,14 @@ One important caveat to this analysis is that utility-reported leaks are likely 
 <div id="refs"></div>
 
 
+
+```{r tabUnrepairedBG, fig.align='center', include=FALSE}
 # (APPENDIX) Appendix {-} 
 
 # Appendix - Supplementary Figures and Tables
 
-```{r tabUnrepairedBG, fig.align='center'}
+
+
 # Unrepaired leaks per square kilometer
 ppLeakDensity_df_bg %>% 
   select(Group, wLeaksPerSqKm, wLeaksRR, wLeaksPerSqKmC1, wLeaksRRC1, wLeaksPerSqKmC2, wLeaksRRC2, wLeaksPerSqKmC3, wLeaksRRC3) %>% 
