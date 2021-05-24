@@ -1,12 +1,12 @@
 ---
 title: "An Environmental Justice Analysis of Distribution-Level Natural Gas Leaks in Massachusetts, USA"
-author: "Marcos Luna and Dominic Nicholas"
-date: "`r Sys.Date()`"
+author:
+date:
 output: 
   bookdown::pdf_document2:
     latex_engine: xelatex
     keep_tex: yes
-    toc: true
+    toc: false
     number_sections: true
     fig_caption: yes        
     includes:  
@@ -19,8 +19,19 @@ csl: chicago-author-date.csl
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
 ```
+**Authors**
+Marcos Luna[^a][^*]
+Dominic Nicholas[^b]
+
+[^a]: Geography and Sustainability Department, Salem State University, 352 Lafayette Street, Salem, Massachusetts, USA 01970. mluna@salemstate.edu. 
+[^b]: HEET (Home Energy Efficiency Team), 21 Acorn Street, Cambridge, Massachusetts, USA 02139. dominic.nicholas@heet.org.
+[^*]: Corresponding author.
+
+
 # Abstract {-}
 A growing body of research shows that natural gas leaks at the distribution level are much more common and extensive than previously thought. Although scholars and advocates have raised alarms about the climate change and economic significance of these leaks, there has been little consideration of the problem from an environmental justice perspective. Using recently available high resolution leak data, this analysis of natural gas leaks across the state of Massachusetts shows that People of Color, limited English speaking households, and renters are disproportionately exposed to natural gas leaks, as compared to White residents and to homeowners. This pattern is evident for all leaks in the state, for leaks disaggregated by leak class or grade, and for leaks disaggregated by utility. This analysis shows that natural gas leaks are an environmental justice issue warranting further study and policy attention.
+
+keywords: natural gas distribution, utilities, leaks, environmental justice, equity, race
 
 \pagebreak
 # Introduction
@@ -2815,6 +2826,8 @@ One important caveat to this analysis is that utility-reported leaks are likely 
 
 *Regulators and utilities need to anticipate and mitigate potentially regressive impacts of the energy transition* [@Zhou_Noonan_2019]. Massachusetts has set a statewide goal of carbon neutrality by 2050 and the state Attorney General has directed natural gas utilities to report how they will adapt to these mandates [@Volcovici2021]. In the meantime, there is an aggressive movement across the state to push households to adopt renewable energy sources, to implement energy-saving practices and technologies, and to electrify their water and space heating appliances. The cumulative impact of these efforts will be an accelerating decline in household energy intensity and reliance on natural gas. The transition toward sustainable energy sources is happening most rapidly amongst wealthier households, especially homeowners [@Drehobl_Ross_2020; @Borenstein_2017; @Kwan_2012]. Without intervention, this energy transition may mean that the costs of maintaining the natural gas distribution system increasingly fall on a smaller pool of ratepayers in less wealthy households and communities [@Castigliego_2020]. Already regressive cost burdens and impacts could be worsened. A sustainable and just energy transition requires active monitoring of current equity conditions, and it requires planning to prevent exacerbating existing inequities or creating new inequities in the future.
 
+## Funding {-}
+This research did not receive any specific grant from funding agencies in the public, commercial, or not-for-profit sectors.
 
 # References {-}
 
