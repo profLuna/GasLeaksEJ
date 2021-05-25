@@ -405,11 +405,17 @@ ma_state_sf <- states(cb = TRUE) %>%
   filter(STUSPS == "MA")
 
 # grab municipal boundaries
-ma_towns_sf <- county_subdivisions(state = "MA", cb = TRUE) %>% 
+# ma_towns_sf <- county_subdivisions(state = "MA", cb = TRUE) %>% 
+#   st_transform(., crs = 26986) # breaking periodically
+
+# Download file directly from https://www2.census.gov/geo/tiger/TIGER2019/
+ma_towns_sf <- st_read(dsn = "Data/tl_2019_25_cousub", 
+                       layer = "tl_2019_25_cousub") %>% 
   st_transform(., crs = 26986)
 
 # create point layer of towns for context
-ma_towns_sf_pts <- county_subdivisions(state = "MA", cb = TRUE) %>% 
+ma_towns_sf_pts <- ma_towns_sf %>% 
+  # county_subdivisions(state = "MA", cb = TRUE) %>% 
   filter(NAME %in% c("Boston",
                      "Lawrence",
                      "Lowell",
@@ -434,13 +440,15 @@ ma_towns_sf_pts <- county_subdivisions(state = "MA", cb = TRUE) %>%
   st_centroid(of_largest_polygon = TRUE)
 
 # create a separate point for Newton so that it can be repositioned
-newton <- county_subdivisions(state = "MA", cb = TRUE) %>% 
+newton <- ma_towns_sf %>% 
+  # county_subdivisions(state = "MA", cb = TRUE) %>%  
   filter(NAME %in% c("Fitchburg","Newton","Edgartown","New Bedford")) %>% 
   st_transform(., crs = 26986) %>% 
   st_centroid(of_largest_polygon = TRUE)
 ```
-In calendar year 2019, there were `r format(nrow(unrepaired2019)+nrow(repaired2019), big.mark = ",")` natural gas leaks in the distribution system reported by six of the seven investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities, which represent 99% of natural gas customers in the state [@AGA].[^fn] Repairs were reported for `r format(nrow(repaired2019), big.mark = ",")` (`r round(nrow(repaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) of these, leaving `r format(nrow(unrepaired2019), big.mark = ",")` (`r round(nrow(unrepaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) unrepaired leaks across the state as of December 31, 2019 (see Table  \@ref(tab:tabLeaks)). 
-[^fn]: No gas leak data was reported by Blackstone Gas Company.
+In calendar year 2019, there were `r format(nrow(unrepaired2019)+nrow(repaired2019), big.mark = ",")` natural gas leaks in the distribution system reported by six of the seven investor-owned utilities in Massachusetts that filed leak reports with the state Department of Public Utilities, which represent 98% of natural gas customers in the state [@AGA].[^d] Repairs were reported for `r format(nrow(repaired2019), big.mark = ",")` (`r round(nrow(repaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) of these, leaving `r format(nrow(unrepaired2019), big.mark = ",")` (`r round(nrow(unrepaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) unrepaired leaks across the state as of December 31, 2019 (see Table  \@ref(tab:tabLeaks)). 
+
+[^d]: No gas leak data was reported by Blackstone Gas Company.
 
 ```{r tabLeaks, echo=FALSE, message=FALSE, warning=FALSE, fig.align='center'}
 # table of leak stats by class and repair status
@@ -519,7 +527,8 @@ m_gridTotal <- tm_shape(gridCntT, unit = "km", bbox = ma_state_sf) +
           legend.format = list(digits = 0),
           title = "Number\nof leaks") +
   tm_shape(ng_nogas_muni, bbox = ma_state_sf) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") +
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
   tm_text("ID", size = 0.6, col = "gray") +
@@ -534,15 +543,34 @@ m_gridTotal <- tm_shape(gridCntT, unit = "km", bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.055,0.1),
             title = "Massachusetts Gas Leaks and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)
-            ) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  ) +
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m_gridTotal, filename = "Images/pub/m_gridTotalUtil.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_gridTotalUtil.png")
 ```
@@ -555,7 +583,8 @@ m1 <- tm_shape(blkgrpsLeaksAll, bbox = ma_state_sf) +
   tm_fill(col = "AllLeaks2019_sqkm", style = "fisher", palette = "YlOrRd", 
           title = "Leaks per SqKm", legend.format = list(digits = 2)) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + 
   tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
@@ -572,14 +601,33 @@ m1 <- tm_shape(blkgrpsLeaksAll, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.15),
             title = "Massachusetts Gas Leak Density by Census Block Group and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m1, filename = "Images/pub/m_blkgrpTotal.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_blkgrpTotal.png")
 ```
@@ -594,7 +642,8 @@ m2 <- tm_shape(tractsLeaksAll, bbox = ma_state_sf) +
           title = "Leaks per SqKm",
           legend.format = list(digits = 2)) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -610,14 +659,33 @@ m2 <- tm_shape(tractsLeaksAll, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.15),
             title = "Massachusetts Gas Leak Density by Census Tract and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m2, filename = "Images/pub/m_tractTotal.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_tractTotal.png")
 ```
@@ -629,7 +697,8 @@ m3 <- tm_shape(cosubLeaksAll, bbox = ma_state_sf) +
   tm_fill(col = "AllLeaks2019_sqkm", style = "fisher", palette = "YlOrRd", 
           title = "Leaks per SqKm",legend.format = list(digits = 2)) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -645,14 +714,33 @@ m3 <- tm_shape(cosubLeaksAll, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.15),
             title = "Massachusetts Gas Leak Density by Municipality and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
 
-tmap_save(m3, filename = "Images/pub/m_cosubTotal.png", dpi = 600, height = 4, 
-          width = 8, units = "in")
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+
+tmap_save(m3, filename = "Images/pub/m_cosubTotal.png", 
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_cosubTotal.png")
 ```
@@ -1205,7 +1293,8 @@ m1b <- tm_shape(blkgrpsLeaksOHU, bbox = ma_state_sf) +
           palette = "YlOrRd", title = "Leaks per Occupied\nHousing Unit",
           legend.format = list(digits = 2)) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -1221,14 +1310,33 @@ m1b <- tm_shape(blkgrpsLeaksOHU, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.1),
             title = "Massachusetts Gas Leaks per Occupied Housing Unit by Census Block Group, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m1b, filename = "Images/pub/m_blkgrpOHU.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_blkgrpOHU.png")
 ```
@@ -1244,7 +1352,8 @@ m2b <- tm_shape(tractsLeaksOHU, bbox = ma_state_sf) +
                                       title = "Leaks per Occupied\nHousing Unit",
                                       legend.format = list(digits = 2)) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -1260,14 +1369,33 @@ m2b <- tm_shape(tractsLeaksOHU, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.10),
             title = "Massachusetts Gas Leaks per Occupied Housing Unit by Census Tract, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m2b, filename = "Images/pub/m_tractOHU.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_tractOHU.png")
 ```
@@ -1283,7 +1411,8 @@ m2b <- tm_shape(cosubsLeaksOHU, bbox = ma_state_sf) +
                                       title = "Leaks per Occupied\nHousing Unit",
                                       legend.format = list(digits = 2)) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -1299,14 +1428,33 @@ m2b <- tm_shape(cosubsLeaksOHU, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.10),
             title = "Massachusetts Gas Leaks per Occupied Housing Unit by Municipality, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m2b, filename = "Images/pub/m_cosubOHU.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_cosubOHU.png")
 ```
@@ -1845,7 +1993,8 @@ m4 <- tm_shape(blkgrpsLeaksTime, bbox = ma_state_sf) +
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -1861,14 +2010,32 @@ m4 <- tm_shape(blkgrpsLeaksTime, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.1),
             title = "Massachusetts Mean Age of Repaired Leaks by Census Block Group and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m4, filename = "Images/pub/m_blkgrpTime.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_blkgrpTime.png")
 ```
@@ -1885,7 +2052,8 @@ m4 <- tm_shape(tractsLeaksTime, bbox = ma_state_sf) +
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -1901,14 +2069,33 @@ m4 <- tm_shape(tractsLeaksTime, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.10),
             title = "Massachusetts Mean Age of Repaired Leaks by Census Tract and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m4, filename = "Images/pub/m_tractTime.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_tractTime.png")
 ```
@@ -1925,7 +2112,8 @@ m4 <- tm_shape(cosubLeaksTime, bbox = ma_state_sf) +
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -1941,14 +2129,33 @@ m4 <- tm_shape(cosubLeaksTime, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.10),
             title = "Massachusetts Mean Age of Repaired Leaks by Municipality and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m4, filename = "Images/pub/m_cosubTime.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_cosubTime.png")
 ```
@@ -2377,7 +2584,8 @@ m5 <- tm_shape(blkgrpsLeaksAge, bbox = ma_state_sf) +
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_blkgrps) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -2393,14 +2601,33 @@ m5 <- tm_shape(blkgrpsLeaksAge, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.10),
             title = "Massachusetts Mean Age of Unrepaired Leaks by Census Block Group and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m5, filename = "Images/pub/m_blkgrpAge.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_blkgrpAge.png")
 ```
@@ -2417,7 +2644,8 @@ m5 <- tm_shape(tractsLeaksAge, bbox = ma_state_sf) +
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_tracts) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -2433,14 +2661,33 @@ m5 <- tm_shape(tractsLeaksAge, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.10),
             title = "Massachusetts Mean Age of Unrepaired Leaks by Census Tract and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m5, filename = "Images/pub/m_tractAge.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_tractAge.png")
 ```
@@ -2457,7 +2704,8 @@ m5 <- tm_shape(cosubLeaksAge, bbox = ma_state_sf) +
                                       legend.format = list(digits = 0),
                                       colorNA = NULL) +
   tm_shape(ng_nogas_muni) + 
-  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "") + 
+  tm_fill(col = "GAS_LABEL", palette = c("ivory2","gray88"), title = "", 
+          legend.show = FALSE) + 
   tm_shape(ma_cosub) + tm_borders(lwd = 0.01, alpha = 0.8) +
   tm_shape(ng_service_areas2) + tm_borders(lwd = 0.8, col = "grey68", alpha = 0.7) +
   tm_shape(ng_service_labels) + 
@@ -2473,14 +2721,33 @@ m5 <- tm_shape(cosubLeaksAge, bbox = ma_state_sf) +
   tm_shape(newton) + tm_dots() +
   tm_text("NAME", size = 0.4, col = "black",
           xmod = -0.7, ymod = 0.2, shadow = TRUE) +
-  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
-  tm_layout(legend.position = c("left","bottom"),
+  tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
+  tm_layout(legend.position = c(0.050,0.10),
             title = "Massachusetts Mean Age of Unrepaired Leaks by Municipality and Utility Territories, 2019",
             inner.margins = c(0.02,0.02,0.09,0.02)) +
-  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.08), col = "gray47", size = 0.7)
+  tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
+
+# create insets with dummy layers to create separate legend items
+d_inset <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "ivory2", labels = "Municipal Utility", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.06), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+d_inset2 <- tm_shape(ng_nogas_muni) + tm_fill(alpha = 0) +
+  tm_add_legend(type = "fill", col = "gray88", labels = "No Natural Gas Service", 
+                border.col = "white") +
+  tm_layout(legend.position = c(0.33,0.025), bg.color = NA, frame = FALSE, 
+            legend.text.color = "gray47")
+
+# create viewports to specify dimensions of insets
+vp_inset <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
+vp_inset2 <- grid::viewport(x = 0.5, y = 0.5, width = 3, height = 1)
 
 tmap_save(m5, filename = "Images/pub/m_cosubAge.png", 
-          dpi = 600, height = 4, width = 8, units = "in")
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = list(d_inset,d_inset2),
+          insets_vp = list(vp_inset,vp_inset2))
 
 knitr::include_graphics("Images/pub/m_cosubAge.png")
 ```
