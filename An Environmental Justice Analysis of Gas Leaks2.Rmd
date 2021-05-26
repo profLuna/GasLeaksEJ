@@ -547,6 +547,7 @@ m_gridTotal <- tm_shape(gridCntT, unit = "km", bbox = ma_state_sf) +
   tm_scale_bar(breaks = c(0,25,50), position = c("left","BOTTOM")) +
   tm_layout(legend.position = c(0.055,0.1),
             title = "Massachusetts Gas Leaks and Utility Territories, 2019",
+            title.size = 0.9,
             inner.margins = c(0.02,0.02,0.09,0.02)
   ) +
   tm_credits("BG = Berkshire Gas\nBGC = Blackstone Gas Co.\nCG = Columbia Gas\nEV = Eversource Energy\nLU = Liberty Utilities\nNG = National Grid\nUN = Unitil/Fitchburg Gas", position = c(.3,.11), col = "gray47", size = 0.7)
@@ -1136,12 +1137,12 @@ ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>%
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
                         "MA_MINORITY21" = "MA Minority",
                         "MA_INCOME21" = "MA Low Income"),
-         Utility = recode(Utility, "wLeaksRRBG" = "Berkshire Gas",
-                          "wLeaksRRCG" = "Columbia Gas",
-                          "wLeaksRREV" = "Eversource Energy",
-                          "wLeaksRRLU" = "Liberty Utilities",
-                          "wLeaksRRNG" = "National Grid",
-                          "wLeaksRRFG" = "Unitil/Fitchburg Gas"),
+         Utility = recode(Utility, "wLeaksRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeaksRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeaksRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeaksRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeaksRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeaksRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityBG, Utility),
          Status = case_when(
            leakDensityBG == 1 ~ "Pop Mean",
@@ -1173,12 +1174,12 @@ ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityTR) %>%
-  mutate(Utility = recode(Utility, "wLeaksRRBG" = "Berkshire Gas",
-                          "wLeaksRRCG" = "Columbia Gas",
-                          "wLeaksRREV" = "Eversource Energy",
-                          "wLeaksRRLU" = "Liberty Utilities",
-                          "wLeaksRRNG" = "National Grid",
-                          "wLeaksRRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeaksRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeaksRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeaksRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeaksRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeaksRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeaksRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityTR, Utility),
          Status = case_when(
            leakDensityTR == 1 ~ "Pop Mean",
@@ -1198,12 +1199,12 @@ ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityCO) %>%
-  mutate(Utility = recode(Utility, "wLeaksRRBG" = "Berkshire Gas",
-                          "wLeaksRRCG" = "Columbia Gas",
-                          "wLeaksRREV" = "Eversource Energy",
-                          "wLeaksRRLU" = "Liberty Utilities",
-                          "wLeaksRRNG" = "National Grid",
-                          "wLeaksRRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeaksRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeaksRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeaksRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeaksRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeaksRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeaksRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityCO, Utility),
          Status = case_when(
            leakDensityCO == 1 ~ "Pop Mean",
@@ -1613,12 +1614,12 @@ ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>%
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
                         "MA_MINORITY21" = "MA Minority",
                         "MA_INCOME21" = "MA Low Income"),
-         Utility = recode(Utility, "wLeaksPerHURRBG" = "Berkshire Gas",
-                          "wLeaksPerHURRCG" = "Columbia Gas",
-                          "wLeaksPerHURREV" = "Eversource Energy",
-                          "wLeaksPerHURRLU" = "Liberty Utilities",
-                          "wLeaksPerHURRNG" = "National Grid",
-                          "wLeaksPerHURRFG" = "Unitil/Fitchburg Gas"),
+         Utility = recode(Utility, "wLeaksPerHURRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeaksPerHURRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeaksPerHURREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeaksPerHURRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeaksPerHURRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeaksPerHURRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityBG, Utility),
          Status = case_when(
            leakDensityBG == 1 ~ "Pop Mean",
@@ -1650,12 +1651,12 @@ ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityTR) %>%
-  mutate(Utility = recode(Utility, "wLeaksPerHURRBG" = "Berkshire Gas",
-                          "wLeaksPerHURRCG" = "Columbia Gas",
-                          "wLeaksPerHURREV" = "Eversource Energy",
-                          "wLeaksPerHURRLU" = "Liberty Utilities",
-                          "wLeaksPerHURRNG" = "National Grid",
-                          "wLeaksPerHURRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeaksPerHURRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeaksPerHURREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeaksPerHURRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeaksPerHURRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeaksPerHURRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityTR, Utility),
          Status = case_when(
            leakDensityTR == 1 ~ "Pop Mean",
@@ -1675,12 +1676,12 @@ ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityCO) %>%
-  mutate(Utility = recode(Utility, "wLeaksPerHURRBG" = "Berkshire Gas",
-                          "wLeaksPerHURRCG" = "Columbia Gas",
-                          "wLeaksPerHURREV" = "Eversource Energy",
-                          "wLeaksPerHURRLU" = "Liberty Utilities",
-                          "wLeaksPerHURRNG" = "National Grid",
-                          "wLeaksPerHURRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeaksPerHURRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeaksPerHURREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeaksPerHURRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeaksPerHURRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeaksPerHURRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityCO, Utility),
          Status = case_when(
            leakDensityCO == 1 ~ "Pop Mean",
@@ -1765,12 +1766,12 @@ ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>%
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
                         "MA_MINORITY21" = "MA Minority",
                         "MA_INCOME21" = "MA Low Income"),
-         Utility = recode(Utility, "wLeaksPerHURRBGC2" = "Berkshire Gas",
-                          "wLeaksPerHURRCGC2" = "Columbia Gas",
-                          "wLeaksPerHURREVC2" = "Eversource Energy",
-                          "wLeaksPerHURRLUC2" = "Liberty Utilities",
-                          "wLeaksPerHURRNGC2" = "National Grid",
-                          "wLeaksPerHURRFGC2" = "Unitil/Fitchburg Gas"),
+         Utility = recode(Utility, "wLeaksPerHURRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityBG, Utility),
          Status = case_when(
            leakDensityBG == 1 ~ "Pop Mean",
@@ -1802,12 +1803,12 @@ ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityTR) %>%
-  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = "Berkshire Gas",
-                          "wLeaksPerHURRCGC2" = "Columbia Gas",
-                          "wLeaksPerHURREVC2" = "Eversource Energy",
-                          "wLeaksPerHURRLUC2" = "Liberty Utilities",
-                          "wLeaksPerHURRNGC2" = "National Grid",
-                          "wLeaksPerHURRFGC2" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityTR, Utility),
          Status = case_when(
            leakDensityTR == 1 ~ "Pop Mean",
@@ -1827,12 +1828,12 @@ ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityCO) %>%
-  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = "Berkshire Gas",
-                          "wLeaksPerHURRCGC2" = "Columbia Gas",
-                          "wLeaksPerHURREVC2" = "Eversource Energy",
-                          "wLeaksPerHURRLUC2" = "Liberty Utilities",
-                          "wLeaksPerHURRNGC2" = "National Grid",
-                          "wLeaksPerHURRFGC2" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityCO, Utility),
          Status = case_when(
            leakDensityCO == 1 ~ "Pop Mean",
@@ -2340,12 +2341,12 @@ ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>%
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
                         "MA_MINORITY21" = "MA Minority",
                         "MA_INCOME21" = "MA Low Income"),
-         Utility = recode(Utility, "wDaysToRepairAvgRRBG" = "Berkshire Gas",
-                          "wDaysToRepairAvgRRCG" = "Columbia Gas",
-                          "wDaysToRepairAvgRREV" = "Eversource Energy",
-                          "wDaysToRepairAvgRRLU" = "Liberty Utilities",
-                          "wDaysToRepairAvgRRNG" = "National Grid",
-                          "wDaysToRepairAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Utility = recode(Utility, "wDaysToRepairAvgRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityBG, Utility),
          Status = case_when(
            leakDensityBG == 1 ~ "Pop Mean",
@@ -2377,12 +2378,12 @@ ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityTR) %>%
-  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBG" = "Berkshire Gas",
-                          "wDaysToRepairAvgRRCG" = "Columbia Gas",
-                          "wDaysToRepairAvgRREV" = "Eversource Energy",
-                          "wDaysToRepairAvgRRLU" = "Liberty Utilities",
-                          "wDaysToRepairAvgRRNG" = "National Grid",
-                          "wDaysToRepairAvgRRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityTR, Utility),
          Status = case_when(
            leakDensityTR == 1 ~ "Pop Mean",
@@ -2402,12 +2403,12 @@ ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityCO) %>%
-  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBG" = "Berkshire Gas",
-                          "wDaysToRepairAvgRRCG" = "Columbia Gas",
-                          "wDaysToRepairAvgRREV" = "Eversource Energy",
-                          "wDaysToRepairAvgRRLU" = "Liberty Utilities",
-                          "wDaysToRepairAvgRRNG" = "National Grid",
-                          "wDaysToRepairAvgRRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityCO, Utility),
          Status = case_when(
            leakDensityCO == 1 ~ "Pop Mean",
@@ -2900,7 +2901,8 @@ When broken out by utility, non-White groups and limited English speaking househ
 unrepaired2019 %>% 
   as.data.frame() %>% 
   mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
-                          "National Grid - Colonial Gas" = "National Grid")) %>% 
+                          "National Grid - Colonial Gas" = "National Grid",
+                          "Fitchburg" = "Unitil/Fitchburg")) %>% 
   ggplot(aes(x = reorder(Utility, LeakAgeDays, FUN = median, na.rm = TRUE), 
              y = LeakAgeDays, fill = Utility)) +
   # geom_violin(width=1.4) +
@@ -2933,12 +2935,12 @@ ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>%
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
                         "MA_MINORITY21" = "MA Minority",
                         "MA_INCOME21" = "MA Low Income"),
-         Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = "Berkshire Gas",
-                          "wLeakAgeDaysAvgRRCG" = "Columbia Gas",
-                          "wLeakAgeDaysAvgRREV" = "Eversource Energy",
-                          "wLeakAgeDaysAvgRRLU" = "Liberty Utilities",
-                          "wLeakAgeDaysAvgRRNG" = "National Grid",
-                          "wLeakAgeDaysAvgRRFG" = "Unitil/Fitchburg Gas"),
+         Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityBG, Utility),
          Status = case_when(
            leakDensityBG == 1 ~ "Pop Mean",
@@ -2970,12 +2972,12 @@ ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityTR) %>%
-  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = "Berkshire Gas",
-                          "wLeakAgeDaysAvgRRCG" = "Columbia Gas",
-                          "wLeakAgeDaysAvgRREV" = "Eversource Energy",
-                          "wLeakAgeDaysAvgRRLU" = "Liberty Utilities",
-                          "wLeakAgeDaysAvgRRNG" = "National Grid",
-                          "wLeakAgeDaysAvgRRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityTR, Utility),
          Status = case_when(
            leakDensityTR == 1 ~ "Pop Mean",
@@ -2995,12 +2997,12 @@ ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>%
   filter(!Group %in% c("Native American", "Other race", 
                        "Native Pacific Islander", "Two or more races")) %>% 
   drop_na(leakDensityCO) %>%
-  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = "Berkshire Gas",
-                          "wLeakAgeDaysAvgRRCG" = "Columbia Gas",
-                          "wLeakAgeDaysAvgRREV" = "Eversource Energy",
-                          "wLeakAgeDaysAvgRRLU" = "Liberty Utilities",
-                          "wLeakAgeDaysAvgRRNG" = "National Grid",
-                          "wLeakAgeDaysAvgRRFG" = "Unitil/Fitchburg Gas"),
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBG" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCG" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREV" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLU" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNG" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRFG" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg")),big.mark = ","),")")),
          # Group = reorder_within(Group, leakDensityCO, Utility),
          Status = case_when(
            leakDensityCO == 1 ~ "Pop Mean",
