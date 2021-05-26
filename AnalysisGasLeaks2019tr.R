@@ -1070,6 +1070,7 @@ ppLeakDensityNG <- ma_tracts %>%
                         "lthsE" = "No HS Diploma",
                         "total_occ_unitsE" = "Total Occupied HU",
                         "renter_occ_unitsE" = "Renter Occupied HU",
+                        "disabledOver18E" = "Disabled Adults",
                         "house_burdened_E" = "Housing Burdened"))
 
 # create a table with exposure values and relative risks, and separating out HH and HU groups
@@ -1350,6 +1351,7 @@ ppLeakDensityEV <- ma_tracts %>%
                         "lthsE" = "No HS Diploma",
                         "total_occ_unitsE" = "Total Occupied HU",
                         "renter_occ_unitsE" = "Renter Occupied HU",
+                        "disabledOver18E" = "Disabled Adults",
                         "house_burdened_E" = "Housing Burdened"))
 
 # create a table with exposure values and relative risks, and separating out HH and HU groups
@@ -1631,6 +1633,7 @@ ppLeakDensityCG <- ma_tracts %>%
                         "lthsE" = "No HS Diploma",
                         "total_occ_unitsE" = "Total Occupied HU",
                         "renter_occ_unitsE" = "Renter Occupied HU",
+                        "disabledOver18E" = "Disabled Adults",
                         "house_burdened_E" = "Housing Burdened"))
 
 # create a table with exposure values and relative risks, and separating out HH and HU groups
@@ -2210,6 +2213,7 @@ ppLeakDensityLU <- ma_tracts %>%
                         "lthsE" = "No HS Diploma",
                         "total_occ_unitsE" = "Total Occupied HU",
                         "renter_occ_unitsE" = "Renter Occupied HU",
+                        "disabledOver18E" = "Disabled Adults",
                         "house_burdened_E" = "Housing Burdened"))
 
 # create a table with exposure values and relative risks, and separating out HH and HU groups
@@ -2491,6 +2495,7 @@ ppLeakDensityBG <- ma_tracts %>%
                         "lthsE" = "No HS Diploma",
                         "total_occ_unitsE" = "Total Occupied HU",
                         "renter_occ_unitsE" = "Renter Occupied HU",
+                        "disabledOver18E" = "Disabled Adults",
                         "house_burdened_E" = "Housing Burdened"))
 
 # create a table with exposure values and relative risks, and separating out HH and HU groups
