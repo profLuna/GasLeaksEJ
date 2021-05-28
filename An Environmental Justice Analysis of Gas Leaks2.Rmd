@@ -1111,7 +1111,7 @@ ppLeakDensity_df_all2 %>%
   labs(x = NULL, 
        y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", 
                             km^2, ")", " to total population-weighted mean",sep = "")),
-       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphallscalesRE.png")
 ```
@@ -1268,7 +1268,7 @@ ppLeakDensityJoinedU_all2 %>%
   # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
   labs(x = NULL, 
        y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", km^2, ")", " to total population-weighted mean",sep = "")),
-       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphallscalesUtilityRE.png")
 ```
@@ -1588,7 +1588,7 @@ ppLeakDensity_df_all2 %>%
   facet_wrap(~ leakClass, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
-       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphOHUallscalesRE.png")
 ```
@@ -1745,7 +1745,7 @@ ppLeakDensityJoinedU_all2 %>%
   # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
-       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphOHUallscalesUtilityRE.png")
 ```
@@ -1897,7 +1897,7 @@ ppLeakDensityJoinedU_all2 %>%
   # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
-       title = "Relative Exposure to Unrepaired Class 2 Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Unrepaired Class 2 Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphOHUallscalesC2UtilityRE.png")
 ```
@@ -2289,7 +2289,7 @@ ppLeakDensity_df_all2 %>%
   facet_wrap(~ leakClass, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak repair time to population mean",
-       title = "Relative Exposure to Mean Age of Leaks Repaired in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Mean Age of Leaks Repaired in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphTimeallscalesRE.png")
 ```
@@ -2471,7 +2471,7 @@ ppLeakDensityJoinedU_all2 %>%
   # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak repair time(days) to general population-weighted mean",
-       title = "Relative Exposure to Average Age of Leaks Repaired in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Average Age of Leaks Repaired in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotTimeUtilityRE.png")
 ```
@@ -2882,7 +2882,7 @@ ppLeakDensity_df_all2 %>%
   facet_wrap(~ leakClass, scales = "free_y") +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak age to population mean",
-       title = "Relative Exposure to Mean Age of Unrepaired Leaks in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Mean Age of Unrepaired Leaks in 2019 across Massachusetts", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotGraphAgeallscalesRE.png")
 ```
@@ -3066,7 +3066,7 @@ ppLeakDensityJoinedU_all2 %>%
   # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
   labs(x = NULL, 
        y = "Ratio of group population-weighted mean leak age (days) to general population-weighted mean",
-       title = "Relative Exposure to Mean Age of Unrepaired Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated\nat Block Group scale. Disabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+       title = "Relative Exposure to Mean Age of Unrepaired Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
 
 ggsave("Images/pub/DotAgeUtilityRE.png")
 ```
