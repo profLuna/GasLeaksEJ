@@ -974,7 +974,7 @@ ppLeakDensityNG <- ma_cosub %>%
          LeakAgeDaysAvgNGC1 = `National Grid_19unrepairedDaysAvgC1`,
          LeakAgeDaysAvgNGC2 = `National Grid_19unrepairedDaysAvgC2`,
          LeakAgeDaysAvgNGC3 = `National Grid_19unrepairedDaysAvgC3`) %>% 
-  select(ends_with("_E"), eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+  select(ends_with("_E"), eng_hhE, under5E, disabledOver18E, over64E, eng_limitE, num2povE, lthsE, 
          ends_with("unitsE"), (starts_with("leaks_") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))), 
          (starts_with("AllLeaks") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))), 
          (starts_with("LeakAgeDaysAvg") & (ends_with("NG") | ends_with("NGC1") | ends_with("NGC2") | ends_with("NGC3"))),
@@ -1255,7 +1255,7 @@ ppLeakDensityEV <- ma_cosub %>%
          LeakAgeDaysAvgEVC1 = NA,
          LeakAgeDaysAvgEVC2 = `Eversource_19unrepairedDaysAvgC2`,
          LeakAgeDaysAvgEVC3 = `Eversource_19unrepairedDaysAvgC3`) %>% 
-  select(ends_with("_E"), eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+  select(ends_with("_E"), eng_hhE, under5E, disabledOver18E, over64E, eng_limitE, num2povE, lthsE, 
          ends_with("unitsE"), (starts_with("leaks_") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))), 
          (starts_with("AllLeaks") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))), 
          (starts_with("LeakAgeDaysAvg") & (ends_with("EV") | ends_with("EVC1") | ends_with("EVC2") | ends_with("EVC3"))),
@@ -1537,7 +1537,7 @@ ppLeakDensityCG <- ma_cosub %>%
          # LeakAgeDaysAvgCGC1 = NA,
          LeakAgeDaysAvgCGC2 = `Columbia Gas_19unrepairedDaysAvgC2`,
          LeakAgeDaysAvgCGC3 = `Columbia Gas_19unrepairedDaysAvgC3`) %>% 
-  select(ends_with("_E"), eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+  select(ends_with("_E"), eng_hhE, under5E, disabledOver18E, over64E, eng_limitE, num2povE, lthsE, 
          ends_with("unitsE"), (starts_with("leaks_") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))), 
          (starts_with("AllLeaks") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))), 
          (starts_with("LeakAgeDaysAvg") & (ends_with("CG") | ends_with("CGC1") | ends_with("CGC2") | ends_with("CGC3"))),
@@ -1826,7 +1826,7 @@ ppLeakDensityFG <- ma_cosub %>%
          # LeakAgeDaysAvgFGC1 = NA,
          # LeakAgeDaysAvgFGC2 = `Fitchburg_19unrepairedDaysAvgC2`,
          LeakAgeDaysAvgFGC3 = `Fitchburg_19unrepairedDaysAvgC3`) %>% 
-  select(ends_with("_E"), eng_hhE, under5E, over64E, eng_limitE, 
+  select(ends_with("_E"), eng_hhE, under5E, disabledOver18E, over64E, eng_limitE, 
          num2povE, lthsE, 
          ends_with("unitsE"), (starts_with("leaks_") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))), 
          (starts_with("AllLeaks") & (ends_with("FG") | ends_with("FGC1") | ends_with("FGC2") | ends_with("FGC3"))), 
@@ -2117,7 +2117,7 @@ ppLeakDensityLU <- ma_cosub %>%
          LeakAgeDaysAvgLUC1 = NA,
          LeakAgeDaysAvgLUC2 = `Liberty Utilities_19unrepairedDaysAvgC2`,
          LeakAgeDaysAvgLUC3 = `Liberty Utilities_19unrepairedDaysAvgC3`) %>% 
-  select(ends_with("_E"), eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+  select(ends_with("_E"), eng_hhE, under5E, disabledOver18E, over64E, eng_limitE, num2povE, lthsE, 
          ends_with("unitsE"), (starts_with("leaks_") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))), 
          (starts_with("AllLeaks") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))), 
          (starts_with("LeakAgeDaysAvg") & (ends_with("LU") | ends_with("LUC1") | ends_with("LUC2") | ends_with("LUC3"))),
@@ -2399,7 +2399,7 @@ ppLeakDensityBG <- ma_cosub %>%
          LeakAgeDaysAvgBGC1 = NA,
          LeakAgeDaysAvgBGC2 = `Berkshire Gas_19unrepairedDaysAvgC2`,
          LeakAgeDaysAvgBGC3 = `Berkshire Gas_19unrepairedDaysAvgC3`) %>% 
-  select(ends_with("_E"), eng_hhE, under5E, over64E, eng_limitE, num2povE, lthsE, 
+  select(ends_with("_E"), eng_hhE, under5E, disabledOver18E, over64E, eng_limitE, num2povE, lthsE, 
          ends_with("unitsE"), (starts_with("leaks_") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))), 
          (starts_with("AllLeaks") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))), 
          (starts_with("LeakAgeDaysAvg") & (ends_with("BG") | ends_with("BGC1") | ends_with("BGC2") | ends_with("BGC3"))),
