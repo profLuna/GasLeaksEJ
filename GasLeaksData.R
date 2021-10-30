@@ -203,14 +203,16 @@ repaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>%
   }) %>% 
   do.call(rbind, .)
 
-# Standardize leak grades and fix wayward report date year
+# Standardize leak grades and filter out anything after 2019
 repaired2019 <- repaired2019 %>% 
   mutate(Class = recode(Class, "Grade 1" = "1",
                         "Grade 2" = "2",
                         "Grade 3" = "3",
-                        "2A" = "2"),
-         RptDate = if_else(year(RptDate) > 2019, 
-                           `year<-`(RptDate, 2019), RptDate))
+                        "2A" = "2")) %>% 
+  filter(RepairDate < "2020-01-01" & RptDate < "2020-01-01")
+         
+# RptDate = if_else(year(RptDate) > 2019, 
+#                            `year<-`(RptDate, 2019), RptDate))
 
 # Process unrepaired leaks
 # desired variable names
@@ -250,13 +252,16 @@ unrepaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>%
   }) %>% 
   do.call(rbind, .)
 
-# Standardize leak grades and assign utility name
+# Standardize leak grades, assign utility name, filter out after 2019
 unrepaired2019 <- unrepaired2019 %>% 
   mutate(Class = recode(Class, "Grade 1" = "1",
                         "Grade 2" = "2",
                         "Grade 3" = "3",
                         "2A" = "2"),
-         Utility = recode(Utility, "character(0)" = "National Grid"))
+         Utility = recode(Utility, 
+                          "character(0)" = "National Grid")) %>% 
+  filter(RptDate < "2020-01-01")
+  
 
 # convert to sf
 repaired2019 <- repaired2019 %>% 
