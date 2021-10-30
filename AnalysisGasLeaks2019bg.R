@@ -2688,7 +2688,7 @@ ppLeakDensityJoinedU <- readRDS("Data/ppLeakDensityJoinedU_BG2019.Rds")
 # faceted dot graph of RR for unrepaired leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wLeaksRR:wLeaksRRC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2724,7 +2724,7 @@ ggsave("Images/LeaksPPbyClassRR_blkgrp2019.png")
 # faceted dot graph of RR for repaired leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wLeaksRRrepair:wLeaksRRrepairC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2760,7 +2760,7 @@ ggsave("Images/LeaksPPbyClassREPRR_blkgrp2019.png")
 # faceted dot graph of RR for repaired leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wLeaksRRtotal:wLeaksRRtotalC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2796,7 +2796,7 @@ ggsave("Images/LeaksPPbyClassAllRR_blkgrp2019.png")
 # faceted dot graph of RR for unrepaired per HU around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wLeaksPerHURR:wLeaksPerHURRC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2831,7 +2831,7 @@ ggsave("Images/LeaksPPbyClass_HU_RR_blkgrp2019.png")
 # faceted dot graph of RR for repaired per HU around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wREPLeaksPerHURR:wREPLeaksPerHURRC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2866,7 +2866,7 @@ ggsave("Images/LeaksPPbyClassREP_HU_RR_blkgrp2019.png")
 # faceted dot graph of RR for total per HU around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wALLLeaksPerHURR:wALLLeaksPerHURRC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2901,7 +2901,7 @@ ggsave("Images/LeaksPPbyClassAll_HU_RR_blkgrp2019.png")
 # faceted dot graph of RR for leak repair time around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wDaysToRepairAvgRR:wDaysToRepairAvgRRC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2936,7 +2936,7 @@ ggsave("Images/LeaksPPbyClassTime_RR_blkgrp2019.png")
 # faceted dot graph of RR for leak age around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensity_df_bg %>% 
+ppLeakDensity_df %>% 
   pivot_longer(wLeakAgeDaysAvgRR:wLeakAgeDaysAvgRRC3, 
                names_to = "leakClass", values_to = "leakDensity") %>% 
   mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
@@ -2971,7 +2971,7 @@ ggsave("Images/LeaksPPbyClassAge_RR_blkgrp2019.png")
 # faceted dot graph of RR for unrepaired leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wLeaksRRBG, wLeaksRRCG, wLeaksRREV, 
                  wLeaksRRFG, wLeaksRRLU, wLeaksRRNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
@@ -3014,7 +3014,7 @@ ggsave("Images/LeaksPPbyUtilityRR_blkgrp2019.png")
 # faceted dot graph of RR for unrepaired leaks per occupied housing unit around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wLeaksPerHURRBG, wLeaksPerHURRCG, wLeaksPerHURREV, 
                  wLeaksPerHURRFG, wLeaksPerHURRLU, wLeaksPerHURRNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
@@ -3057,7 +3057,7 @@ ggsave("Images/LeaksPPbyUtility_HU_RR_blkgrp2019.png")
 # faceted dot graph of RR for repaired leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wLeaksRRrepairBG, wLeaksRRrepairCG, wLeaksRRrepairEV, 
                  wLeaksRRrepairFG, wLeaksRRrepairLU, wLeaksRRrepairNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
@@ -3100,7 +3100,7 @@ ggsave("Images/LeaksPPbyUtilityREP_RR_blkgrp2019.png")
 # faceted dot graph of RR for repaired leaks per occupied housing unit around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wREPLeaksPerHURRBG, wREPLeaksPerHURRCG, wREPLeaksPerHURREV, 
                  wREPLeaksPerHURRFG, wREPLeaksPerHURRLU, wREPLeaksPerHURRNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
@@ -3143,7 +3143,7 @@ ggsave("Images/LeaksPPbyUtilityREP_HU_RR_blkgrp2019.png")
 # faceted dot graph of RR for total leak density around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wLeaksRRtotalBG, wLeaksRRtotalCG, wLeaksRRtotalEV, 
                  wLeaksRRtotalFG, wLeaksRRtotalLU, wLeaksRRtotalNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
@@ -3186,7 +3186,7 @@ ggsave("Images/LeaksPPbyUtilityAll_RR_blkgrp2019.png")
 # faceted dot graph of RR for total leaks per occupied housing unit around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wALLLeaksPerHURRBG, wALLLeaksPerHURRCG, wALLLeaksPerHURREV, 
                  wALLLeaksPerHURRFG, wALLLeaksPerHURRLU, wALLLeaksPerHURRNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
@@ -3229,7 +3229,7 @@ ggsave("Images/LeaksPPbyUtilityAll_HU_RR_blkgrp2019.png")
 # faceted dot graph of RR for age of unrepaired leaks around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wLeakAgeDaysAvgRRBG, wLeakAgeDaysAvgRRCG, wLeakAgeDaysAvgRREV, 
                  wLeakAgeDaysAvgRRFG, wLeakAgeDaysAvgRRLU, wLeakAgeDaysAvgRRNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
@@ -3271,7 +3271,7 @@ ggsave("Images/LeaksPPbyUtilityAge_RR_blkgrp2019.png")
 # faceted dot graph of RR for leak repair time around zero line
 cols <- c("#F7A35C", "#7CB5EC", "gray30")
 
-ppLeakDensityJoinedU_bg %>% 
+ppLeakDensityJoinedU %>% 
   pivot_longer(c(wDaysToRepairAvgRRBG, wDaysToRepairAvgRRCG, wDaysToRepairAvgRREV, 
                  wDaysToRepairAvgRRFG, wDaysToRepairAvgRRLU, wDaysToRepairAvgRRNG), 
                names_to = "Utility", values_to = "leakDensity") %>% 
