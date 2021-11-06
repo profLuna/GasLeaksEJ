@@ -1,0 +1,1887 @@
+---
+title: "Supplementary Figures of Gas Leaks by Utility and Leak Class, 2019"
+author:
+date:
+output: 
+  bookdown::pdf_document2:
+    latex_engine: xelatex
+    keep_tex: yes
+    toc: true
+    number_sections: true
+    fig_caption: yes        
+    includes:  
+      in_header: my_header.tex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo=FALSE, message=FALSE, warning=FALSE)
+```
+**Authors:**
+Marcos Luna[^a][^*] and Dominic Nicholas[^b]
+
+[^a]: Geography and Sustainability Department, Salem State University, 352 Lafayette Street, Salem, Massachusetts, USA 01970. mluna@salemstate.edu. 
+[^b]: HEET (Home Energy Efficiency Team), 21 Acorn Street, Cambridge, Massachusetts, USA 02139. dominic.nicholas@heet.org.
+[^*]: Corresponding author.
+```{r loadData}
+# load necessary libraries and files
+# load packages and data
+library(tidyverse)
+library(sf)
+library(tigris)
+library(tmap)
+library(tmaptools)
+library(ggplot2)
+library(foreign) # for reading in dbf
+# library(tidytext) # for reorder_within and scale_x_reorder in ggplot2 facets
+library(kableExtra)
+# library(sp)
+# library(spdep)
+# library(bibtex)
+
+# Load demographic and gas leaks data
+load("Data/Demographics.rds")
+load("Data/HEET2019Leaksv2.rds")
+ma_blkgrps <- readRDS("Data/ma_blkgrps2019.Rds")
+ma_tracts <- readRDS("Data/ma_tracts2019.Rds")
+ma_cosub <- readRDS("Data/ma_cosub2019.Rds")
+
+ppLeakDensity_df_bg <- readRDS("Data/ppLeakDensity_df_blkgrps2019.Rds")
+ppLeakDensity_df_tr <- readRDS("Data/ppLeakDensity_df_tracts2019.Rds")
+ppLeakDensity_df_co <- readRDS("Data/ppLeakDensity_df_cosubs2019.Rds")
+
+ppLeakDensityJoinedU_bg <- readRDS("Data/ppLeakDensityJoinedU_BG2019.Rds")
+ppLeakDensityJoinedU_tr <- readRDS("Data/ppLeakDensityJoinedU_TR2019.Rds")
+ppLeakDensityJoinedU_co <- readRDS("Data/ppLeakDensityJoinedU_CO2019.Rds")
+
+# set common CRS
+unrepaired2019 <- st_transform(unrepaired2019, crs = st_crs(ma_blkgrps))
+repaired2019 <- st_transform(repaired2019, crs = st_crs(ma_blkgrps))
+
+# set up common color scheme for graphs
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+# create a consistent factor order to keep groups in a consistent order across all graphs
+group_orderBG <- ppLeakDensity_df_bg %>% 
+  arrange(desc(wLeaksRR)) %>% 
+  select(Group) %>% 
+  pull()
+
+group_orderTR <- ppLeakDensity_df_tr %>% 
+  arrange(wLeaksRR) %>% 
+  select(Group) %>% 
+  pull()
+
+group_orderCO <- ppLeakDensity_df_co %>% 
+  arrange(wLeaksRR) %>% 
+  select(Group) %>% 
+  pull()
+```
+
+This document provides supplementary figures for the manuscript "An Environmental Justice Analysis of Distribution-Level Natural Gas Leaks in Massachusetts, USA." The following figures provide relative exposures to various measures of leak activity by utility and leak class or grade.  
+
+# Relative Exposures To Unrepaired Leaks By Utility By Class
+
+```{r figDotUnrepairedUtilityC1, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired class 1 gas leak density by utility at Census Block Group, Census Tract, and municipality scales"}
+
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wLeaksRRBGC1, wLeaksRRCGC1, wLeaksRREVC1, 
+                wLeaksRRLUC1, wLeaksRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>% 
+  pivot_longer(c(wLeaksRRBGC1, wLeaksRRCGC1, wLeaksRREVC1, 
+                  wLeaksRRLUC1, wLeaksRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeaksRRBGC1, wLeaksRRCGC1, wLeaksRREVC1, 
+                 wLeaksRRLUC1, wLeaksRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2,
+                                 ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", km^2, ")", " to total population-weighted mean",sep = "")),
+       title = "Relative Exposure to Class 1 Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotGraphallscalesUtilityREclass1.png")
+```
+
+```{r figDotUnrepairedUtilityC2, fig.align='center', fig.cap="Relative exposures to population-weighted mean Class 2 unrepaired gas leak density by utility at Census Block Group, Census Tract, and municipality scales"}
+
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wLeaksRRBGC2, wLeaksRRCGC2, wLeaksRREVC2, 
+                 wLeaksRRFGC2, wLeaksRRLUC2, wLeaksRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>% 
+  pivot_longer(c(wLeaksRRBGC2, wLeaksRRCGC2, wLeaksRREVC2, 
+                 wLeaksRRFGC2, wLeaksRRLUC2, wLeaksRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeaksRRBGC2, wLeaksRRCGC2, wLeaksRREVC2, 
+                 wLeaksRRFGC2, wLeaksRRLUC2, wLeaksRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksRRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2,
+                                 ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", km^2, ")", " to total population-weighted mean",sep = "")),
+       title = "Relative Exposure to Class 2 Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotGraphallscalesUtilityRE.png")
+```
+
+```{r figDotUnrepairedUtilityC3, fig.align='center', fig.cap="Relative exposures to population-weighted mean Class 3 unrepaired gas leak density by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wLeaksRRBGC3, wLeaksRRCGC3, wLeaksRREVC3, 
+                 wLeaksRRFGC3, wLeaksRRLUC3, wLeaksRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>% 
+  pivot_longer(c(wLeaksRRBGC3, wLeaksRRCGC3, wLeaksRREVC3, 
+                 wLeaksRRFGC3, wLeaksRRLUC3, wLeaksRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeaksRRBGC3, wLeaksRRCGC3, wLeaksRREVC3, 
+                 wLeaksRRFGC3, wLeaksRRLUC3, wLeaksRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2,
+                                 ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = expression(paste("Ratio of group population-weighted mean leak density (leaks/", km^2, ")", " to total population-weighted mean",sep = "")),
+       title = "Relative Exposure to Class 3 Unrepaired Gas Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+```
+
+
+# Relative Exposures To Unrepaired Leaks Per Occupied Housing Unit By Utility By Class
+
+```{r figDotOHUUtilityC1, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired class 1 gas leaks per occupied housing unit by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC1, wLeaksPerHURRCGC1, wLeaksPerHURREVC1, 
+                 wLeaksPerHURRLUC1, wLeaksPerHURRNGC1), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksPerHURRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>% 
+  pivot_longer(c(wLeaksPerHURRBGC1, wLeaksPerHURRCGC1, wLeaksPerHURREVC1, 
+                 wLeaksPerHURRLUC1, wLeaksPerHURRNGC1), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC1, wLeaksPerHURRCGC1, wLeaksPerHURREVC1, 
+                 wLeaksPerHURRLUC1, wLeaksPerHURRNGC1), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2,
+                                 ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
+       title = "Relative Exposure to Unrepaired Class 1 Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotGraphOHUallscalesC1UtilityRE.png")
+```
+
+```{r figDotOHUUtilityC2, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired class 2 gas leaks per occupied housing unit by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC2, wLeaksPerHURRCGC2, wLeaksPerHURREVC2, 
+                 wLeaksPerHURRFGC2, wLeaksPerHURRLUC2, wLeaksPerHURRNGC2), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksPerHURRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>% 
+  pivot_longer(c(wLeaksPerHURRBGC2, wLeaksPerHURRCGC2, wLeaksPerHURREVC2, 
+                 wLeaksPerHURRFGC2, wLeaksPerHURRLUC2, wLeaksPerHURRNGC2), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC2, wLeaksPerHURRCGC2, wLeaksPerHURREVC2, 
+                 wLeaksPerHURRFGC2, wLeaksPerHURRLUC2, wLeaksPerHURRNGC2), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2,
+                                 ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
+       title = "Relative Exposure to Unrepaired Class 2 Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotGraphOHUallscalesC2UtilityRE.png")
+```
+
+```{r figDotOHUUtilityC3, fig.align='center', fig.cap="Relative exposures to population-weighted mean unrepaired class 3 gas leaks per occupied housing unit by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC3, wLeaksPerHURRCGC3, wLeaksPerHURREVC3, 
+                 wLeaksPerHURRFGC3, wLeaksPerHURRLUC3, wLeaksPerHURRNGC3), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeaksPerHURRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>% 
+  pivot_longer(c(wLeaksPerHURRBGC3, wLeaksPerHURRCGC3, wLeaksPerHURREVC3, 
+                 wLeaksPerHURRFGC3, wLeaksPerHURRLUC3, wLeaksPerHURRNGC3), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeaksPerHURRBGC3, wLeaksPerHURRCGC3, wLeaksPerHURREVC3, 
+                 wLeaksPerHURRFGC3, wLeaksPerHURRLUC3, wLeaksPerHURRNGC3), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeaksPerHURRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeaksPerHURRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2,
+                                 ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>% 
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leaks per occupied housing unit to population mean",
+       title = "Relative Exposure to Unrepaired Class 3 Leaks Per Occupied Housing Unit in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotGraphOHUallscalesC3UtilityRE.png")
+```
+
+
+# Relative Exposures To Average Age Of Leaks Repaired In 2019 By Utility By Class
+
+```{r figDotTimeUC1, fig.align='center', fig.cap="Relative exposures to population-weighted mean age of class 1 leaks repaired in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wDaysToRepairAvgRRBGC1, wDaysToRepairAvgRRCGC1, wDaysToRepairAvgRREVC1, wDaysToRepairAvgRRLUC1, wDaysToRepairAvgRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wDaysToRepairAvgRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>%
+  pivot_longer(c(wDaysToRepairAvgRRBGC1, wDaysToRepairAvgRRCGC1, wDaysToRepairAvgRREVC1, wDaysToRepairAvgRRLUC1, wDaysToRepairAvgRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wDaysToRepairAvgRRBGC1, wDaysToRepairAvgRRCGC1, wDaysToRepairAvgRREVC1, wDaysToRepairAvgRRLUC1, wDaysToRepairAvgRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>%  
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak repair time(days) to general population-weighted mean",
+       title = "Relative Exposure to Average Age of Class 1 Leaks Repaired in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotTimeUtilityREclass1.png")
+```
+
+```{r figDotTimeUC2, fig.align='center', fig.cap="Relative exposures to population-weighted mean age of class 2 leaks repaired in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wDaysToRepairAvgRRBGC2, wDaysToRepairAvgRRCGC2, wDaysToRepairAvgRREVC2, 
+                 wDaysToRepairAvgRRFGC2, wDaysToRepairAvgRRLUC2, wDaysToRepairAvgRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wDaysToRepairAvgRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>%
+  pivot_longer(c(wDaysToRepairAvgRRBGC2, wDaysToRepairAvgRRCGC2, wDaysToRepairAvgRREVC2, 
+                 wDaysToRepairAvgRRFGC2, wDaysToRepairAvgRRLUC2, wDaysToRepairAvgRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wDaysToRepairAvgRRBGC2, wDaysToRepairAvgRRCGC2, wDaysToRepairAvgRREVC2, 
+                 wDaysToRepairAvgRRFGC2, wDaysToRepairAvgRRLUC2, wDaysToRepairAvgRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFGC2" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>%  
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak repair time(days) to general population-weighted mean",
+       title = "Relative Exposure to Average Age of Class 2 Leaks Repaired in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotTimeUtilityREclass2.png")
+```
+
+```{r figDotTimeUC3, fig.align='center', fig.cap="Relative exposures to population-weighted mean age of class 3 leaks repaired in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wDaysToRepairAvgRRBGC3, wDaysToRepairAvgRRCGC3, wDaysToRepairAvgRREVC3, 
+                 wDaysToRepairAvgRRFGC3, wDaysToRepairAvgRRLUC3, wDaysToRepairAvgRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wDaysToRepairAvgRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>%
+  pivot_longer(c(wDaysToRepairAvgRRBGC3, wDaysToRepairAvgRRCGC3, wDaysToRepairAvgRREVC3, 
+                 wDaysToRepairAvgRRFGC3, wDaysToRepairAvgRRLUC3, wDaysToRepairAvgRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wDaysToRepairAvgRRBGC3, wDaysToRepairAvgRRCGC3, wDaysToRepairAvgRREVC3, 
+                 wDaysToRepairAvgRRFGC3, wDaysToRepairAvgRRLUC3, wDaysToRepairAvgRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wDaysToRepairAvgRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(repaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wDaysToRepairAvgRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(repaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>%  
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak repair time(days) to general population-weighted mean",
+       title = "Relative Exposure to Average Age of Class 3 Leaks Repaired in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotTimeUtilityREclass3.png")
+```
+
+
+# Relative Exposures To Mean Age Of Unrepaired Leaks In 2019 By Utility By Class
+
+```{r figDotAgeUC1, fig.align='center', fig.cap="Relative exposures to population-weighted mean age of class 1 unrepaired gas leaks in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC1, wLeakAgeDaysAvgRRCGC1, wLeakAgeDaysAvgRREVC1, wLeakAgeDaysAvgRRLUC1, wLeakAgeDaysAvgRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>%
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC1, wLeakAgeDaysAvgRRCGC1, wLeakAgeDaysAvgRREVC1, wLeakAgeDaysAvgRRLUC1, wLeakAgeDaysAvgRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC1, wLeakAgeDaysAvgRRCGC1, wLeakAgeDaysAvgRREVC1, wLeakAgeDaysAvgRRLUC1, wLeakAgeDaysAvgRRNGC1), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC1" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC1" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC1" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC1" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "1")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC1" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "1")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>%  
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak age (days) to general population-weighted mean",
+       title = "Relative Exposure to Mean Age of Class 1 Unrepaired Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotAgeUtilityREclass1.png")
+```
+Note that the since there was only one unrepaired Class 1 leak for Columbia Gas in 2019, the calculation for the weighted mean cancels out the weight, resulting in a value of 1 for all weighted relative risks. This result is misleading in this particular case because this specific leak is located within a Block Group in Brockton, Massachusetts which is 80% People of Color and low income. 
+
+```{r figDotAgeUC2, fig.align='center', fig.cap="Relative exposures to population-weighted mean age of class 2 unrepaired gas leaks in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC2, wLeakAgeDaysAvgRRCGC2, wLeakAgeDaysAvgRREVC2, wLeakAgeDaysAvgRRLUC2, wLeakAgeDaysAvgRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>%
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC2, wLeakAgeDaysAvgRRCGC2, wLeakAgeDaysAvgRREVC2, wLeakAgeDaysAvgRRLUC2, wLeakAgeDaysAvgRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC2, wLeakAgeDaysAvgRRCGC2, wLeakAgeDaysAvgRREVC2, wLeakAgeDaysAvgRRLUC2, wLeakAgeDaysAvgRRNGC2), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC2" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC2" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC2" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC2" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "2")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC2" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "2")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>%  
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak age (days) to general population-weighted mean",
+       title = "Relative Exposure to Mean Age of Class 2 Unrepaired Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotAgeUtilityREclass2.png")
+```
+
+```{r figDotAgeUC3, fig.align='center', fig.cap="Relative exposures to population-weighted mean age of class 3 unrepaired gas leaks in 2019 by utility at Census Block Group, Census Tract, and municipality scales"}
+# Set up for dot graph to show all three scales by utility
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_bg %>% 
+  mutate(Group = factor(Group, levels = group_orderBG)) %>% 
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC3, wLeakAgeDaysAvgRRCGC3, wLeakAgeDaysAvgRREVC3, 
+                 wLeakAgeDaysAvgRRFGC3, wLeakAgeDaysAvgRRLUC3, wLeakAgeDaysAvgRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityBG") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races",
+                       "MA_MINORITY17", "MA_INCOME17")) %>% 
+  drop_na(leakDensityBG) %>%
+  mutate(Group = recode(Group, "MA_ENGLISH" = "MA Limited English HH",
+                        "MA_MINORITY21" = "MA Minority",
+                        "MA_INCOME21" = "MA Low Income"),
+         Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityBG, Utility),
+         Status = case_when(
+           leakDensityBG == 1 ~ "Pop Mean",
+           leakDensityBG > 1 ~ "Greater Exposure",
+           leakDensityBG < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Block Group") %>% 
+  select(Group, leakDensityBG, Utility, Status, Scale)
+
+# Extract rows with EJ groups to rbind with other dfs
+EJrowsTR <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Tract") %>% 
+  rename(leakDensityTR = leakDensityBG)
+
+EJrowsCO <- ppLeakDensityJoinedU_bg2 %>% 
+  filter(str_detect(Group, "MA ")) %>% 
+  mutate(leakDensityBG = NA,
+         Scale = "Municipality") %>% 
+  rename(leakDensityCO = leakDensityBG)
+
+# repeat for tracts
+ppLeakDensityJoinedU_tr2 <- ppLeakDensityJoinedU_tr %>% 
+  mutate(Group = factor(Group, levels = group_orderTR)) %>%
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC3, wLeakAgeDaysAvgRRCGC3, wLeakAgeDaysAvgRREVC3, 
+                 wLeakAgeDaysAvgRRFGC3, wLeakAgeDaysAvgRRLUC3, wLeakAgeDaysAvgRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityTR") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityTR) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityTR, Utility),
+         Status = case_when(
+           leakDensityTR == 1 ~ "Pop Mean",
+           leakDensityTR > 1 ~ "Greater Exposure",
+           leakDensityTR < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Tract") %>% 
+  select(Group, leakDensityTR, Utility, Status, Scale) %>% 
+  rbind(EJrowsTR)
+
+# repeat for cosubs
+ppLeakDensityJoinedU_co2 <- ppLeakDensityJoinedU_co %>% 
+  mutate(Group = factor(Group, levels = group_orderCO)) %>%
+  pivot_longer(c(wLeakAgeDaysAvgRRBGC3, wLeakAgeDaysAvgRRCGC3, wLeakAgeDaysAvgRREVC3, 
+                 wLeakAgeDaysAvgRRFGC3, wLeakAgeDaysAvgRRLUC3, wLeakAgeDaysAvgRRNGC3), 
+               names_to = "Utility", values_to = "leakDensityCO") %>% 
+  filter(!Group %in% c("Native American", "Other race", 
+                       "Native Pacific Islander", "Two or more races")) %>% 
+  drop_na(leakDensityCO) %>%
+  mutate(Utility = recode(Utility, "wLeakAgeDaysAvgRRBGC3" = paste0("Berkshire Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Berkshire Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRCGC3" = paste0("Columbia Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Columbia Gas" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRREVC3" = paste0("Eversource Energy"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Eversource" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRLUC3" = paste0("Liberty Utilities"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Liberty Utilities" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRNGC3" = paste0("National Grid"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "National Grid" & Class == "3")),big.mark = ","),")"),
+                          "wLeakAgeDaysAvgRRFGC3" = paste0("Unitil/Fitchburg Gas"," (n = ",formatC(nrow(filter(unrepaired2019,Utility == "Fitchburg" & Class == "3")),big.mark = ","),")")),
+         # Group = reorder_within(Group, leakDensityCO, Utility),
+         Status = case_when(
+           leakDensityCO == 1 ~ "Pop Mean",
+           leakDensityCO > 1 ~ "Greater Exposure",
+           leakDensityCO < 1 ~ "Lower Exposure"
+         ),
+         Scale = "Municipality") %>% 
+  select(Group, leakDensityCO, Utility, Status, Scale) %>% 
+  rbind(EJrowsCO)
+
+# Extract rows with Disabled and HBurdened to rbind with BG df
+ppLeakDensityJoinedU_bg2 <- ppLeakDensityJoinedU_co2 %>% 
+  filter(str_detect(Group, "Disabled|Housing")) %>% 
+  mutate(leakDensityCO = NA,
+         Scale = "Block Group") %>% 
+  rename(leakDensityBG = leakDensityCO) %>% 
+  rbind(ppLeakDensityJoinedU_bg2,.)
+
+# join them all together
+ppLeakDensityJoinedU_all <- list(ppLeakDensityJoinedU_tr2, ppLeakDensityJoinedU_bg2,
+                                 ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) mutate(x, UtilityGroup = paste(Utility,Group))) %>%
+  reduce(., full_join, by = "UtilityGroup") %>%  
+  rowwise() %>% 
+  mutate(min = min(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         med = median(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         max = max(leakDensityBG, leakDensityTR, leakDensityCO, na.rm = T),
+         Status = case_when(
+           min > 1 & max > 1 ~ "Greater Exposure",
+           min < 1 & max < 1 ~ "Lower Exposure",
+           min < 1 & max > 1 ~ "Pop Mean",
+           min > 1 & max < 1 ~ "Pop Mean")) %>% 
+  select(-(ends_with(".x")|ends_with(".y")))
+
+# create an alternate df_all with rbind so that we can map aesthetic to shape
+ppLeakDensityJoinedU_all2 <- list(ppLeakDensityJoinedU_tr2,
+                                  ppLeakDensityJoinedU_bg2,
+                                  ppLeakDensityJoinedU_co2) %>% 
+  lapply(., function(x) rename(x,leakDensity = starts_with("leakDensity"))) %>% 
+  reduce(., rbind)
+
+# create the figure with shapes for each scale
+cols <- c("#F7A35C", "#7CB5EC", "gray30")
+shps <- c(0,2,1)
+
+ppLeakDensityJoinedU_all2 %>% 
+  mutate(Scale = factor(Scale, levels = c("Block Group", "Tract", 
+                                          "Municipality"))) %>% 
+  ggplot(aes(x = Group, y = leakDensity, color = Status, shape = Scale)) +
+  geom_point() +
+  geom_hline(yintercept = 1, color = "gray30") +
+  scale_color_manual(values = cols, guide = "legend") +
+  scale_shape_manual(values = shps, guide = "legend") +
+  geom_linerange(data = ppLeakDensityJoinedU_all,
+                 aes(x = Group, y = med, ymin = min, ymax = max), size = 0.3) +
+  coord_flip() + 
+  # scale_x_reordered() +
+  theme_minimal(base_size = 6) +
+  theme(legend.title=element_blank(), legend.position = "top",
+        plot.caption = element_text(hjust = 0)) +
+  facet_wrap(~ Utility, drop = FALSE) +
+  # facet_wrap(~ Utility, scales = "free_y", drop = FALSE) +
+  labs(x = NULL, 
+       y = "Ratio of group population-weighted mean leak age (days) to general population-weighted mean",
+       title = "Relative Exposure to Mean Age of Class 3 Unrepaired Leaks in 2019 across Massachusetts by Utility", caption = "Shapes indicate scale or unit of analysis. Colors indicate if exposure is above (orange), below (blue), or equal to (gray) general population. Colors of horizontal bars through shapes\nindicate if exposure is consistently above (orange) or below (blue), or if it is mixed (gray). Environmental Justice communities ('MA') only evaluated at Block Group scale.\nDisabled Adults and Housing Burdened only evaluated at Tract and Municipality scales.")
+
+# ggsave("Images/pub/DotAgeUtilityREclass3.png")
+```
