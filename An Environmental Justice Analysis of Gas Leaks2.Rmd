@@ -157,7 +157,7 @@ This analysis looks at variations in exposure for a variety of demographic group
 
 Population numbers for this analysis were derived from the ACS 5-year estimates for the period 2015-2019. After the 2000 census, detailed data on demographic characteristics (e.g., income, education, housing) are only available from the ACS. While the decennial Census is based on a total enumeration of the population at one point in time, ACS estimates are based on a rolling sample of responses – about 3.5 million annually across the country – which are pooled from surveys compiled on a monthly basis across the year [@ACS_2020]. For small areas with populations less than 65,000, estimates are only available as pooled 5-year estimates. Because the ACS is based on a sample, estimates are subject to uncertainty or sampling error. This uncertainty is communicated through a Margin of Error (MOE) which accompanies each ACS estimate. For some population subgroups, such as racial and ethnic minorities, children, and renters, Census response rates can be low and uncertainty high [@OHare_2019]. Moreover, smaller geographic units, such as Block Groups, will also tend to have higher MOEs because they are derived from small samples. One approach to dealing with the high MOE of small area estimates is to aggregate groups (e.g., combining individual racial categories into one ‘People of Color’ category) or to use larger geographic units (e.g., Census Tracts rather than Census Block Groups). Both techniques reduce uncertainty for estimates, although this reduced uncertainty comes at the expense of demographic or spatial resolution. Both methods – aggregating groups and using larger geographic units - are applied here to consider the impacts of uncertainty and aggregation. 
 
-A separate but related issue to the uncertainty of sampling and estimation is the Modifiable Areal Unit Problem (MAUP). MAUP refers to the fact that analytical results can be influenced by the geographic size or shape of units of analysis. In other words, different geographic definitions of a study area may result in different outcomes. The MAUP is a long-recognized challenge in geographic analysis [@Openshaw_Taylor_1979], but analysts are often constrained by data availability (e.g., administrative databases, sensor resolution, reporting conventions), as well as by lack of clear guidance or theory on an appropriate geographic unit of analysis [@Dark_Bram_2007]. Varying both the areal size and shape of the units of analysis can show whether results are dependent on choices for the scale and shape of the unit of analysis. Although cumbersome, this is recommended practice in environmental justice analyses [@Cutter_Holm_1996; @Baden_Noonan_Turaga_2007; @Karner2013]. To explore the impact of geographic scale and choice of unit of analysis, we replicated our analyses at the Census Block Group level, Census Tract level, and municipality level (i.e., Census County Subdivision) (see Figure \@ref(fig:MAUP)).
+A separate but related issue to the uncertainty of sampling and estimation is the Modifiable Areal Unit Problem (MAUP). MAUP refers to the fact that analytical results can be influenced by the geographic size or shape of units of analysis. In other words, different geographic definitions of a study area may result in different outcomes. The MAUP is a long-recognized challenge in geographic analysis [@Openshaw_Taylor_1979], but analysts are often constrained by data availability (e.g., administrative databases, sensor resolution, reporting conventions), as well as by lack of clear guidance or theory on an appropriate geographic unit of analysis [@Dark_Bram_2007]. Varying both the areal size and shape of the units of analysis can show whether results are dependent on choices for the scale and shape of the unit of analysis. Although cumbersome, this is recommended practice in environmental justice analyses [@Cutter_Holm_1996; @Baden_Noonan_Turaga_2007; @Karner2013]. To explore the impact of geographic scale and choice of unit of analysis, we replicated our analyses at the Census Block Group level, Census Tract level, and municipality level (i.e., Census County Subdivision) (see Figure \@ref(fig:MAUP) and Table \@ref(tab:MAUPtab)).
 
 ```{r MAUP, fig.align = "center", fig.cap="Comparison of scales and units of analysis: municipality (i.e., Census County Subdivision), Census Tract, and Census Block Group", echo=FALSE, message=FALSE}
 # # create a graphic to illustrate relationship of block groups, tracts, and county subdivisions
@@ -252,16 +252,18 @@ A separate but related issue to the uncertainty of sampling and estimation is th
 # 
 # # make the maps
 # a <- tm_shape(a_bm) + tm_rgb() +
-#   tm_shape(ma_counties) + tm_fill(col = "gray88", alpha = 0.8) +
+#   # tm_shape(ma_counties) + tm_fill(col = "grey88", alpha = 0.5) +
+#   tm_shape(ma_cosub) + tm_fill(col = "#7570b3", alpha = 0.3) +
 #   tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
 #   # tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
 #   # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
 #   tm_scale_bar(breaks = c(0,5,10), position = c("center","BOTTOM")) +
-#   tm_layout(title = "Municipality (i.e., Census\nCounty Subdivision)",
+#   tm_layout(title = "Municipality", title.size = 0.9,
 #             inner.margins = c(0.03,0.02,0.18,0.02))
 # 
 # b <- tm_shape(b_bm) + tm_rgb() +
-#   tm_shape(ma_cosub, unit = "km") + tm_fill(col = "gray88", alpha = 0.8) +
+#   tm_shape(ma_cosub, unit = "km") + tm_fill(col = "#7570b3", 
+#                                             alpha = 0.3) +
 #   tm_shape(ma_tracts_1) + tm_fill(col = "#d95f02") +
 #   # tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
 #   tm_shape(ma_cosub) + tm_borders(col = "#7570b3", lwd = 3) +
@@ -273,7 +275,8 @@ A separate but related issue to the uncertainty of sampling and estimation is th
 #             inner.margins = c(0.01,0.02,0.16,0.02))
 # 
 # c <- tm_shape(c_bm, unit = "m", bbox = ma_tracts_1) + tm_rgb() +
-#   tm_shape(ma_tracts_1, unit = "m") + tm_fill(col = "gray88", alpha = 0.8) +
+#   tm_shape(ma_tracts_1, unit = "m") + tm_fill(col = "#d95f02", 
+#                                               alpha = 0.3) +
 #   tm_shape(ma_blkgrp_4) + tm_fill(col = "#1b9e77") +
 #   tm_shape(ma_tracts_1) + tm_borders(col = "#d95f02", lwd = 3) +
 #   tm_credits("Block\nGroup", position = c(0.19,0.41)) +
@@ -291,6 +294,72 @@ knitr::include_graphics("Images/pub/census_geog.png")
 ```
 
 
+```{r MAUPtab, echo=FALSE, message=FALSE, warning=FALSE, comment="", fig.align='center'}
+library(tidycensus)
+library(tidyverse)
+library(sf)
+library(kableExtra)
+# BGstats <- get_acs(geography = "block group", 
+#                                variables = "B01001_001", 
+#                                state = "MA", geometry = TRUE,
+#                    show_call = FALSE) %>% 
+#   mutate(sqkm = as.numeric(st_area(.))/10^6) %>% 
+#   as.data.frame() %>% 
+#   select(estimate, sqkm) %>% 
+#   filter(sqkm > 0 & estimate > 0) %>% 
+#   summarize(count = n(), minArea = min(sqkm), medArea = median(sqkm),
+#             avgArea = mean(sqkm), maxArea = max(sqkm), 
+#             minPop = min(estimate), medPop = median(estimate),
+#             avgPop = mean(estimate), maxPop = max(estimate))
+# 
+# TRstats <- get_acs(geography = "tract", 
+#                                variables = "B01001_001", 
+#                                state = "MA", geometry = TRUE,
+#                    show_call = FALSE) %>% 
+#   mutate(sqkm = as.numeric(st_area(.))/10^6) %>% 
+#   as.data.frame() %>% 
+#   select(estimate, sqkm) %>% 
+#   filter(sqkm > 0 & estimate > 0) %>% 
+#   summarize(count = n(), minArea = min(sqkm), medArea = median(sqkm),
+#             avgArea = mean(sqkm), maxArea = max(sqkm), 
+#             minPop = min(estimate), medPop = median(estimate),
+#             avgPop = mean(estimate), maxPop = max(estimate))
+# 
+# COstats <- get_acs(geography = "county subdivision", 
+#                                variables = "B01001_001", 
+#                                state = "MA", geometry = TRUE,
+#                    show_call = FALSE) %>% 
+#   mutate(sqkm = as.numeric(st_area(.))/10^6) %>% 
+#   as.data.frame() %>% 
+#   select(estimate, sqkm) %>% 
+#   filter(sqkm > 0 & estimate > 0) %>% 
+#   summarize(count = n(), minArea = min(sqkm), medArea = median(sqkm),
+#             avgArea = mean(sqkm), maxArea = max(sqkm), 
+#             minPop = min(estimate), medPop = median(estimate),
+#             avgPop = mean(estimate), maxPop = max(estimate))
+# 
+# # compile into one df and format and save
+# geoStats <- rbind(BGstats,TRstats,COstats) %>% 
+#   cbind(data.frame(Geography = c("Block Group", "Tract",
+#                                  "Municipality"))) %>% 
+#   select(Geography, everything()) %>% 
+#   mutate(minArea = round(minArea, 2), medArea = round(medArea,1), avgArea = round(avgArea,1), maxArea = round(maxArea,1), avgPop = round(avgPop,0), medPop = round(medPop,0))
+# 
+# save(geoStats, file = "Data/geoStats.Rds")
+
+load("Data/geoStats.Rds")
+
+geoStats %>% kable(longtable = T, booktabs = T,
+                    format.args = list(big.mark = ','),
+                    caption = "Comparison of areas and populations for 
+        units of analysis in Massachusetts", align = "r", 
+        col.names = c("Geography", "count", "min", "med", "avg", 
+                      "max", "min", "med", "avg", "max")) %>% 
+  add_header_above(c(" " = 2, "Area (sqkm)" = 4, "Population" = 4)) %>% 
+  kableExtra::kable_styling(latex_options = c("repeat_header"))
+```
+
+
 # Results
 ```{r data, include=FALSE}
 # load packages and data
@@ -305,7 +374,6 @@ library(foreign) # for reading in dbf
 library(kableExtra)
 # library(sp)
 # library(spdep)
-library(tigris)
 # library(bibtex)
 
 # Load demographic and gas leaks data
@@ -443,7 +511,91 @@ newton <- ma_towns_sf %>%
   st_transform(., crs = 26986) %>% 
   st_centroid(of_largest_polygon = TRUE)
 ```
-In calendar year 2019, there were `r format(nrow(unrepaired2019)+nrow(repaired2019), big.mark = ",")` natural gas leaks in the distribution system reported by six of the seven investor-owned utilities in Massachusetts that filed leak reports with the DPU. These utilities represent 98% of natural gas customers in the state [@AGA].[^d] Repairs were reported for `r format(nrow(repaired2019), big.mark = ",")` (`r round(nrow(repaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) of these, leaving `r format(nrow(unrepaired2019), big.mark = ",")` (`r round(nrow(unrepaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) unrepaired leaks across the state as of December 31, 2019 (see Table  \@ref(tab:tabLeaks)). 
+In calendar year 2019, there were `r format(nrow(unrepaired2019)+nrow(repaired2019), big.mark = ",")` natural gas leaks in the distribution system reported by six of the seven investor-owned utilities in Massachusetts that filed leak reports with the DPU. These utilities represent 98% of natural gas customers in the state [@AGA].[^d] 
+
+```{r mapUtilities, fig.align='center', fig.cap= "Massachusetts Natural Gas Utility Territories, 2019", cache=TRUE}
+# Map of utility territories
+
+# create two subsets of territories to break up legend
+# first extract names of utilities and convert to sorted text
+util_names1 <- unique(ng_service_areas$GAS_LABEL) %>% 
+  as.character(.) %>% 
+  sort(.) %>% 
+  .[1:8]
+
+util_names2 <- unique(ng_service_areas$GAS_LABEL) %>% 
+  as.character(.) %>% 
+  sort(.) %>% 
+  .[9:15]
+# create subsets of sf utility territories
+ng_service_areas_BE <- ng_service_areas %>% 
+  filter(GAS_LABEL %in% util_names1) %>% 
+  mutate(GAS_LABEL = as.character(GAS_LABEL))
+
+ng_service_areas_LU <- ng_service_areas %>% 
+  filter(GAS_LABEL %in% util_names2)%>% 
+  mutate(GAS_LABEL = as.character(GAS_LABEL))
+
+# set palette of colors for all territories based on full sf
+myPal <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99",
+           "#e31a1c", "#fdbf6f", "#ff7f00", "blue", "ivory2", "#cab2d6",
+           "#6a3d9a", "gray88", "#ffff99", "#b15928")
+
+# create palette subsets for legend only layouts
+myPal1 <- myPal[1:8]
+myPal2 <- myPal[9:15]
+
+# create main map object of utility territories
+m_Util <- tm_shape(ng_service_areas_BE, bbox = ng_service_areas2) + 
+  tm_fill(col = "GAS_LABEL", palette = myPal1, title = "") +
+  tm_shape(ng_service_areas_LU) + 
+  tm_fill(col = "GAS_LABEL", palette = myPal2, title = "") + 
+  tm_shape(ma_towns_sf_pts) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = 0.7, ymod = 0.2, shadow = TRUE) +
+  tm_shape(newton) + tm_dots() +
+  tm_text("NAME", size = 0.4, col = "black",
+          xmod = -0.7, ymod = 0.2, shadow = TRUE) +
+  tm_scale_bar(breaks = c(0,25,50), position = c("center","BOTTOM")) +
+  tm_layout(legend.position = c(0.02,0.04), 
+            legend.stack = "horizontal", legend.text.size = 0.5,
+            legend.width = 0.65, title = "Massachusetts Natural Gas Utility Territories, 2019",
+            title.size = 0.9,
+            inner.margins = c(0.02,0.02,0.09,0.02))
+
+
+# create inset map of US states for context
+us_states <- tigris::states(cb = TRUE) %>% 
+  filter(!NAME %in% c("Alaska", "Hawaii", "Puerto Rico", "American Samoa", "Commonwealth of the Northern Mariana Islands", "United States Virgin Islands"))
+ma_state <- us_states %>% 
+  filter(NAME == "Massachusetts")
+
+# create modified bbox to focus inset on contiguous US
+bbox_new <- st_bbox(us_states)
+bbox_new["xmax"] <- -67
+bbox_new["ymin"] <- 25
+
+bbox_new <- bbox_new %>%  # take the bounding box ...
+  st_as_sfc() # ... and make it a sf polygon
+
+# create the inset map object
+inset <- tm_shape(us_states, bbox = bbox_new) + 
+  tm_polygons(col = "grey88", border.col = "grey", alpha = 0.7) +
+  tm_shape(ma_state) + tm_fill(col = "red")
+
+# create viewport to specify dimensions of inset
+vp_inset <- grid::viewport(x = 0.795, y = 0.85, width = 0.5, 
+                           height = 0.25)
+
+tmap_save(m_Util, filename = "Images/pub/m_Util.png", 
+          dpi = 600, height = 4, width = 8, units = "in",
+          insets_tm = inset,
+          insets_vp = vp_inset)
+
+knitr::include_graphics("Images/pub/m_Util.png")
+```
+
+Repairs were reported for `r format(nrow(repaired2019), big.mark = ",")` (`r round(nrow(repaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) of these, leaving `r format(nrow(unrepaired2019), big.mark = ",")` (`r round(nrow(unrepaired2019)/(nrow(unrepaired2019)+nrow(repaired2019)),2)*100`%) unrepaired leaks across the state as of December 31, 2019 (see Table  \@ref(tab:tabLeaks)). 
 
 [^d]: No gas leak data was reported by Blackstone Gas Company.
 
@@ -2300,16 +2452,56 @@ ggsave("Images/pub/DotGraphTimeallscalesRE.png")
 Median ages of repaired leaks vary only slightly by utility, but there are significant differences in terms of outliers (see Figure \@ref(fig:boxTimeU)). Liberty Utilities and Berkshire Gas exhibited the highest median age of repaired leaks, but National Grid showed the highest frequency and magnitudes of outliers. 
 
 ```{r boxTimeU, fig.align='center', fig.cap="Boxplot of ages of repaired gas leaks by utility in 2019"}
-# ordered boxplot of time to repair by utility
-repaired2019 %>% 
+# # ordered boxplot of time to repair by utility
+# repaired2019 %>% 
+#   as.data.frame() %>% 
+#   mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
+#                           "National Grid - Colonial Gas" = "National Grid",
+#                           "Fitchburg" = "Unitil/Fitchburg Gas")) %>% 
+#   ggplot(aes(x = reorder(Utility, DaysToRepair, FUN = median, na.rm = TRUE), 
+#              y = DaysToRepair, fill = Utility)) +
+#   # geom_violin(width=1.4) +
+#   # geom_boxplot(width=0.1, color="grey", alpha=0.2) + 
+#   geom_boxplot() + 
+#   coord_flip() +
+#   theme_minimal() +
+#   theme(
+#     legend.position="none") +
+#   ggtitle("Ages (days) of Repaired Leaks by Utility in 2019") +
+#   xlab("") + ylab("Days to repair through Dec 31, 2019") + 
+#   scale_y_continuous(labels = function(x) format(x, big.mark = ","))
+#   # facet_wrap("Class", scales = "free")
+# 
+# ggsave(filename = "Images/pub/boxplotLeaksByUtilityTime.png")
+
+
+# create a faceted boxplot for utility leak repair ages by leak class
+# create simplified dfs to rbind 
+boxplotUtime <- repaired2019 %>% 
   as.data.frame() %>% 
-  mutate(Utility = recode(Utility, "National Grid - Boston Gas" = "National Grid",
+  transmute(Class = recode(Class, 
+                           "1" = paste0("Class 1 Leaks",
+                                        " (n = ", 
+                                        formatC(nrow(filter(., Class == "1")),big.mark = ","),")"),
+                           "2" = paste0("Class 2 Leaks",
+                                        " (n = ", 
+                                        formatC(nrow(filter(., Class == "2")),big.mark = ","),")"),
+                           "3" = paste0("Class 3 Leaks",
+                                        " (n = ", 
+                                        formatC(nrow(filter(., Class == "3")),big.mark = ","),")")),
+            Utility = recode(Utility, 
+                          "National Grid - Boston Gas" = "National Grid",
                           "National Grid - Colonial Gas" = "National Grid",
-                          "Fitchburg" = "Unitil/Fitchburg Gas")) %>% 
-  ggplot(aes(x = reorder(Utility, DaysToRepair, FUN = median, na.rm = TRUE), 
+                          "Fitchburg" = "Unitil/Fitchburg Gas"),
+            DaysToRepair = DaysToRepair)
+
+# create "all leak class", assemble df and generate faceted graph
+boxplotUtime %>% 
+  mutate(Class = "All Leaks") %>% 
+  rbind(., boxplotUtime) %>% 
+  ggplot(aes(x = reorder(Utility, DaysToRepair, FUN = median, 
+                         na.rm = TRUE), 
              y = DaysToRepair, fill = Utility)) +
-  # geom_violin(width=1.4) +
-  # geom_boxplot(width=0.1, color="grey", alpha=0.2) + 
   geom_boxplot() + 
   coord_flip() +
   theme_minimal() +
@@ -2317,8 +2509,8 @@ repaired2019 %>%
     legend.position="none") +
   ggtitle("Ages (days) of Repaired Leaks by Utility in 2019") +
   xlab("") + ylab("Days to repair through Dec 31, 2019") + 
-  scale_y_continuous(labels = function(x) format(x, big.mark = ","))
-  # facet_wrap("Class", scales = "free")
+  scale_y_continuous(labels = function(x) format(x, big.mark = ",")) +
+  facet_wrap("Class")
 
 ggsave(filename = "Images/pub/boxplotLeaksByUtilityTime.png")
 ```
