@@ -146,8 +146,8 @@ save(unrepaired2020, repaired2020, file = "Data/HEET2020Leaks.rds")
 # view sheets in workbook to identify sheet names
 excel_sheets("Data/DATA - cleaned.xlsx")
 
-# NOTE PROBLEM WITH EVERSOURCE-REPAIRED SHEET. `DATE REPORTED` COLUMN WOULD NOT IMPORT CORRECTLY INTO R BECAUSE 48 DATES WERE FORMATTED ODDLY IN EXCEL. TO FIX, IN EXCEL, CREATE NEW COLUMN, USE DATEVALUE FORMULA TO EXTRACT DATE VALUES ONLY FOR MESSED UP DATES, SORT TO IDENTIFY THEM, SET FORMAT OF DATE VALUES TO SAME AS ORIGINAL CUSTOM FORMAT, PASTE VALUES BACK INTO ORIGINAL COLUMN.
-# NOTE THAT REPAIRED LEAKS FOR COLUMBIA INCLUDE THOSE THAT WERE 'REPAIRED BY REPLACEMENT' WHICH IS NOT THE SAME AS THE OTHER UTILITIES. THOSE REPAIRED BY REPLACEMENT HAVE BEEN DELETED IN THE EXCEL SHEET.
+# NOTE PROBLEM WITH EVERSOURCE-REPAIRED SHEET. `DATE REPORTED` COLUMN WOULD NOT IMPORT CORRECTLY INTO R BECAUSE 48 DATES WERE FORMATTED ODDLY IN EXCEL. TO FIX, IN EXCEL, CREATE NEW COLUMN, USE DATEVALUE FORMULA TO EXTRACT DATE VALUES ONLY FOR MESSED UP DATES, SORT TO IDENTIFY THEM, SET FORMAT OF DATE VALUES TO SAME AS ORIGINAL CUSTOM FORMAT, PASTE VALUES BACK INTO ORIGINAL COLUMN. DATA - cleaned2.xlsx"
+# NOTE THAT REPAIRED LEAKS FOR COLUMBIA INCLUDE THOSE THAT WERE 'REPAIRED BY REPLACEMENT' WHICH IS NOT THE SAME AS THE OTHER UTILITIES. THOSE REPAIRED BY REPLACEMENT HAVE BEEN DELETED IN THE EXCEL SHEET. DATA - cleaned3.xlsx"
 
 # Desired variable names
 # [1] "Address"      "RptDate"      "Class"        "LeakNo"       "RepairDate"  
@@ -180,7 +180,7 @@ repairV <- c("Repair", "Repair Dates (during 2019)", "Repair Dates (during quart
 repaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>% 
   .[str_detect(., "- re")|str_detect(., "- Colonial")] %>% 
   lapply(., function(x) {
-    ret <- read_excel(path = "Data/DATA - cleanedFIXED.xlsx", sheet = x)
+    ret <- read_excel(path = "Data/DATA - cleaned3.xlsx", sheet = x)
     ret$Utility = str_extract_all(x, "^.*?(?= -)")
     ret}) %>% 
   lapply(., function(x){
@@ -193,23 +193,25 @@ repaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>%
            lon,
            lat) %>% 
       transmute(Address = formatted_address,
-                RptDate = .[[2]],
+                RptDate = as.Date(.[[2]]),
                 Class = .[[3]],
-                RepairDate = .[[4]],
+                RepairDate = as.Date(.[[4]]),
                 Utility = as.character(Utility),
-                DaysToRepair = abs(interval(RptDate, RepairDate)/days(1)),
+                DaysToRepair = 
+                  abs(interval(RptDate, RepairDate)/days(1)) + 1,
                 lon = as.numeric(lon),
                 lat = as.numeric(lat))
   }) %>% 
   do.call(rbind, .)
 
-# Standardize leak grades and filter out anything after 2019
+# Standardize leak grades and filter out anything after 2019 or where report date is after repair date
 repaired2019 <- repaired2019 %>% 
   mutate(Class = recode(Class, "Grade 1" = "1",
                         "Grade 2" = "2",
                         "Grade 3" = "3",
                         "2A" = "2")) %>% 
-  filter(RepairDate < "2020-01-01" & RptDate < "2020-01-01")
+  filter(RepairDate < "2020-01-01" & RptDate < "2020-01-01") %>% 
+  filter(RepairDate >= RptDate)
          
 # RptDate = if_else(year(RptDate) > 2019, 
 #                            `year<-`(RptDate, 2019), RptDate))
@@ -242,11 +244,12 @@ unrepaired2019 <- excel_sheets("Data/DATA - cleaned.xlsx") %>%
            lon,
            lat) %>% 
       transmute(Address = formatted_address,
-                RptDate = .[[2]],
+                RptDate = as.Date(.[[2]]),
                 Class = .[[3]],
                 Utility = as.character(Utility),
                 EndDate = as.Date("2019-12-31"),
-                LeakAgeDays = abs(interval(EndDate,RptDate)/days(1)),
+                LeakAgeDays = 
+                  abs(interval(EndDate,RptDate)/days(1)) + 1,
                 lon = as.numeric(lon),
                 lat = as.numeric(lat))
   }) %>% 
